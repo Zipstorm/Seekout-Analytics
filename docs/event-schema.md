@@ -9,7 +9,7 @@ confluence:
 
 **Product:** Helix (SeekOut.ai)  
 **Analytics Platform:** PostHog  
-**Last Updated:** March 2026
+**Last Updated:** April 2026
 
 For the event catalog and implementation status, see [Helix Analytics Events Tracker](./event-catalog.md).
 For dashboards and funnel mappings, see [Helix Analytics Dashboards & Funnels](./dashboards.md).
@@ -51,8 +51,10 @@ These are the canonical object names for Helix. Always use these exact names in 
 
 | Object | Entity | Example Events |
 |--------|--------|---------------|
+| Page | Any meaningful product page/screen | Page Viewed |
+| Login | Auth flow initiation | Login Started, Login Cancelled |
 | Account | User (account-level actions) | Account Created, Account Activated |
-| Signup | Signup flow | Signup Started |
+| Intro | Onboarding intro screen | Intro Completed |
 | Profile | Prospect's career profile | Profile Created, Profile Section Updated |
 | Job | Job posting | Job Created, Job Shared |
 | Interest | Expression of Interest | Interest Expressed, Interest Reviewed |
@@ -63,7 +65,6 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Surface | Prospect/Hiring surface | Surface Activated |
 | Job Link | Shared job posting link viewed by anonymous visitors | Job Link Viewed, Job Link Engaged |
 | Profile Link | Prospect's shareable profile link viewed by visitors | Profile Link Viewed, Profile Link Engaged |
-| Persona | User persona selection | Persona Selected |
 | Job Wizard | Job creation wizard session | Job Wizard Started |
 | Job Wizard Step | Job creation wizard step | Job Wizard Step Completed |
 | Voice Session | AI hiring partner conversation | Voice Session Started, Voice Session Ended, Voice Session Setup Failed |
@@ -104,32 +105,79 @@ posthog.group('job', jobId, {
 
 ### Person Properties
 
-Set on identify. Describe the user across all events.
+Describe the user across all events. Set via `$set_once` (immutable, first value wins) or `$set` (updated on every login).
 
-| Property | Type | Method | Values | Description |
+#### `$set_once` — Immutable, set once per user
+
+| Property | Type | Values | Set By | Description |
 |----------|------|--------|--------|-------------|
-| `signup_context` | enum | `$set_once` | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite` | How user arrived. Immutable. |
-| `first_surface` | enum | `$set_once` | `prospect`, `hiring` | First activated surface. Immutable. |
-| `activated_surfaces` | array | `$set` | `["prospect"]`, `["prospect", "hiring"]` | Currently activated surfaces. Grows over time. |
-| `referred_by` | UUID | `$set_once` | user ID | User ID of referrer. Immutable. |
-| `account_created_at` | ISO date | `$set_once` | | Account creation timestamp |
-| `persona` | enum | `$set_once` | `hiring_manager`, `recruiter`, `job_seeker` | User persona selected during onboarding. Immutable. |
+| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Login Started, Account Created | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. |
+| `first_referrer` | string | URL or null | Login Started | HTTP referrer at first visit (`document.referrer`). |
+| `first_landing_url` | string | URL | Login Started | Full landing URL including query params at first visit. |
+| `first_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Account Created | First persona chosen during onboarding. Never changes even if user switches role later. |
+| `account_created_at` | ISO date | | Account Created | Account creation timestamp. |
+| `signup_context` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Account Created (backend) | How user arrived. Same values as `entry_point`. |
+| `referred_by` | UUID | user ID | Account Created (backend) | User ID of referrer. |
+| `activated_surfaces` | array | `["prospect"]`, `["prospect", "hiring"]` | Surface Activated | Currently activated surfaces. Grows over time. Uses `$set` (not `$set_once`). |
 
-**Role is NOT a person property.** The same user has different roles on different jobs. Role is always sent as an event property (`acting_as`).
+#### `$set` — Updated on every login
 
-**Identifying a user and setting person properties:**
+| Property | Type | Set By | Description |
+|----------|------|--------|-------------|
+| `email` | string | `identifyUser()` | User's current email |
+| `name` | string | `identifyUser()` | User's current name |
+| `role` | string | `identifyUser()` | User's current role (may change over time) |
+| `org_id` | string | `identifyUser()` | User's current organization ID |
+
+**Role is NOT an immutable person property.** The same user can switch roles. `role` (`$set`) reflects their current state. `first_persona` (`$set_once`) preserves what they originally chose. Role context on hiring events is sent as the event property `acting_as`.
+
+**Identifying a user (JS SDK — called after auth succeeds):**
 
 ```javascript
-posthog.identify(user.id, {
+// In lib/posthog.ts → identifyUser()
+posthog.identify(user.id,
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId },  // $set
+  { account_created_at: user.createdAt }  // $set_once
+);
+```
+
+**Setting first-touch attribution (JS SDK — fires on Login Started, before auth):**
+
+```javascript
+// In pages/SignUp.tsx → handleLogin()
+posthog.capture('Login Started', {
+  action: 'click',
+  action_value: 'continue_with_google_or_email_button',
+  current_page_context: 'auth/landing',
+  entry_point: entryPoint,
+  entity_type: 'account',
+  component: 'auth_landing_hero_card_cta',
   $set_once: {
-    signup_context: 'job_link',
-    first_surface: 'prospect',
-    referred_by: referrerUserId,
-    account_created_at: new Date().toISOString()
+    entry_point: entryPoint,
+    first_referrer: document.referrer || null,
+    first_landing_url: window.location.href,
   },
-  $set: {
-    activated_surfaces: ['prospect']
-  }
+});
+```
+
+**Setting first_persona (JS SDK — fires on Account Created, after role selection):**
+
+```javascript
+// In pages/RoleSelection.tsx → handleContinue()
+posthog.capture('Account Created', {
+  action: 'click',
+  action_value: 'continue_as_hiring_manager_button',
+  current_page_context: 'onboarding/role_selection',
+  entry_point: entryPoint,
+  entity_type: 'onboarding',
+  component: 'onboarding_role_selection_footer_cta',
+  persona: 'hiring_manager',
+  signup_context: entryPoint,
+  $set_once: {
+    first_persona: 'hiring_manager',
+    entry_point: entryPoint,
+    account_created_at: new Date().toISOString(),
+  },
 });
 ```
 
@@ -139,18 +187,96 @@ Include on every event where applicable.
 
 | Property | Type | Values | When to Include |
 |----------|------|--------|----------------|
-| `surface` | enum | `prospect`, `hiring` | All authenticated events (exclude Anonymous User Events and Persona Selected) |
+| `surface` | enum | `prospect`, `hiring` | All authenticated events (exclude Anonymous User Events and login/onboarding events) |
 | `acting_as` | enum | `hiring_manager`, `recruiter`, `team_member` | All hiring surface events (except Team Member Joined) |
 | `job_id` | UUID | | All job-related events |
 
+**Login & onboarding events** (`Login Started`, `Account Created`, `Intro Completed`, `Page Viewed` during onboarding) do NOT include `surface` — these happen before any surface context exists. They use `entity_type` (`account` or `onboarding`) instead.
+
 **Pre-activation flows:** During onboarding (before surface activation), set
 `surface` to the surface the user is currently engaging with. For the job
-creation wizard, use `hiring`. For Persona Selected, omit `surface` — persona
-selection happens before any surface context exists.
+creation wizard, use `hiring`.
 
 ---
 
 ## Sample Event Calls
+
+### Login & onboarding events (JS SDK — frontend)
+
+```javascript
+// Page Viewed — fires on page mount
+posthog.capture('Page Viewed', {
+  current_page_context: 'auth/landing',
+  previous_page_context: null,
+  entry_point: 'direct',
+});
+
+// Login Started — fires on CTA click, before auth
+const searchParams = new URLSearchParams(window.location.search);
+const entryPoint = searchParams.get('context') || 'direct';
+
+posthog.capture('Login Started', {
+  action: 'click',
+  action_value: 'continue_with_google_or_email_button',
+  current_page_context: 'auth/landing',
+  previous_page_context: null,
+  entry_point: entryPoint,
+  entity_type: 'account',
+  component: 'auth_landing_hero_card_cta',
+  context_object_type: null,
+  context_object_id: null,
+  $set_once: {
+    entry_point: entryPoint,
+    first_referrer: document.referrer || null,
+    first_landing_url: window.location.href,
+  },
+});
+
+// Account Created — fires after role selection + server confirms
+posthog.capture('Account Created', {
+  action: 'click',
+  action_value: 'continue_as_hiring_manager_button',
+  current_page_context: 'onboarding/role_selection',
+  previous_page_context: 'auth/landing',
+  entry_point: entryPoint,
+  entity_type: 'onboarding',
+  component: 'onboarding_role_selection_footer_cta',
+  context_object_type: null,
+  context_object_id: null,
+  persona: 'hiring_manager',
+  signup_context: entryPoint,
+  auth_method: 'google',
+  $set_once: {
+    first_persona: 'hiring_manager',
+    entry_point: entryPoint,
+    account_created_at: new Date().toISOString(),
+  },
+});
+
+// Intro Completed — fires on "Let's go" click
+posthog.capture('Intro Completed', {
+  action: 'click',
+  action_value: 'lets_go_button',
+  current_page_context: 'onboarding/intro',
+  previous_page_context: 'onboarding/role_selection',
+  entry_point: null,
+  entity_type: 'onboarding',
+  component: 'onboarding_intro_footer_cta',
+  context_object_type: null,
+  context_object_id: null,
+});
+```
+
+### Identifying a user (JS SDK — after auth succeeds)
+
+```javascript
+// Called in identifyUser() after login/session restore
+// Uses positional args: (distinctId, $set, $set_once)
+posthog.identify(user.id,
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId },
+  { account_created_at: user.createdAt }
+);
+```
 
 ### Prospect surface event
 
@@ -177,14 +303,14 @@ posthog.capture('Team Member Invited', {
 });
 ```
 
-### Viral loop event (with referral attribution)
+### Viral loop event — Python SDK (backend)
 
 ```python
+# Python SDK uses $set/$set_once inside properties dict
 posthog.capture(
-    distinct_id=new_user.id,
     event='Account Created',
+    distinct_id=str(new_user.id),
     properties={
-        'surface': 'prospect',
         'signup_context': 'job_link',
         'referred_by': referrer_user_id,
         'referrer_job_id': job_id,
@@ -231,9 +357,9 @@ For critical flows, track the UI interaction (intent) and the server-confirmed r
 
 | Flow | Intent Event | Success Event | Failure Event |
 |------|-------------|---------------|---------------|
+| Login / Signup | Login Started | Account Created (new) or Login Succeeded (returning) | Login Cancelled, Login Failed |
 | Sharing a job | Share Button Clicked | Job Shared | Job Share Failed |
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
 | Creating a job | Create Job Button Clicked | Job Created | Job Creation Failed |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
-| Signing up | Signup Started | Account Created | -- |
