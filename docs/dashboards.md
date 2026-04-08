@@ -9,10 +9,56 @@ confluence:
 
 **Product:** Helix (SeekOut.ai)  
 **Analytics Platform:** PostHog  
-**Last Updated:** March 2026
+**Last Updated:** April 2026
 
 For event definitions and properties, see [Helix Analytics Events Tracker](./event-catalog.md).
 For naming conventions and PostHog setup, see [Helix Analytics Events Schema](./event-schema.md).
+
+---
+
+## Login & Onboarding Funnel
+
+**Dashboard:** PostHog — Funnel Insight
+**Status:** Live
+
+### New User Signup Funnel
+
+Tracks the full journey from landing page to product entry for new users.
+
+| Step | Event | Filter | Drop-off means |
+|------|-------|--------|---------------|
+| 1 | `Page Viewed` | `current_page_context = auth/landing` | — |
+| 2 | `Login Started` | | User saw page but didn't click CTA (bounce) |
+| 3 | `Page Viewed` | `current_page_context = onboarding/role_selection` | User clicked CTA but didn't complete auth |
+| 4 | `Account Created` | | User saw persona options but didn't commit |
+| 5 | `Page Viewed` | `current_page_context = onboarding/intro` | Should be ~100% (auto-navigates) |
+| 6 | `Intro Completed` | | User saw intro but didn't click "Let's go" |
+| 7 | `Page Viewed` | `current_page_context` starts with `hiring_manager/` or `recruiter/` or `candidate/` | Should be ~100% (auto-navigates) |
+
+**Recommended breakdowns:**
+- `entry_point` (person property) — which acquisition channel converts best
+- `first_persona` (person property) — does persona affect completion rate
+
+### Key Metrics from This Funnel
+
+| Metric | Formula |
+|--------|---------|
+| Landing → CTA rate | Step 2 / Step 1 |
+| Auth completion rate | Step 3 / Step 2 |
+| Role selection rate | Step 4 / Step 3 |
+| Full signup rate | Step 4 / Step 1 |
+| Intro engagement rate | Step 6 / Step 5 |
+
+### Events Used
+
+| Event | Type | Source | Implemented? |
+|-------|------|--------|-------------|
+| `Page Viewed` | page_view | Frontend (JS) | Yes |
+| `Login Started` | user_action | Frontend (JS) | Yes |
+| `Account Created` | user_action | Frontend (JS) | Yes |
+| `Intro Completed` | user_action | Frontend (JS) | Yes |
+
+For full event specs, see [event-definitions/login-onboarding/](../event-definitions/login-onboarding/).
 
 ---
 
@@ -57,11 +103,12 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 | Platform Health Dashboard | Platform Team | Not Started |
 
 ### Growth Dashboard (Platform Team)
-- New accounts per day/week, broken down by `signup_context`
+- New accounts per day/week, broken down by `entry_point` (person property) and `first_persona`
+- Login & Onboarding funnel (see above): Page Viewed (auth/landing) → Login Started → Account Created → Intro Completed → Page Viewed (home)
 - K-factor per viral loop (job sharing, profile sharing)
-- Conversion funnel: Job Link Viewed → Job Link Engaged → Signup Started → Account Created → Activated
-- Activation rate by signup context
-- Onboarding-to-job conversion: Account Created → Persona Selected → Job Wizard Started → Job Wizard Step Completed (step 1) → Job Created
+- Viral conversion funnel: Job Link Viewed → Job Link Engaged → Login Started → Account Created → Activated
+- Activation rate by entry_point and first_persona
+- Onboarding-to-job conversion: Account Created → Job Wizard Started → Job Wizard Step Completed (step 1) → Job Created
 - Retention: WAU, MAU, D7/D30 return rates
 
 ### Prospect Dashboard (Prospect Team)
