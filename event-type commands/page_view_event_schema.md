@@ -80,29 +80,45 @@ Fire a `page_view` ONLY when ALL of these are true:
 
 ## Canonical Shape
 
-```json
-{
-  "schema_version": "1.0",
-  "event_type": "page_view",
+The `page_view` event only includes properties that are manually set by the developer. Identity, device, and timing properties are auto-captured by the PostHog SDK and MUST NOT be set manually.
 
-  "user_id": "",
-  "org_id": "",
-  "user_role": "",
-  "acting_as": null,
-
-  "timestamp": "",
-  "session_id": "",
-  "current_page_context": "",
-  "previous_page_context": null,
-  "entry_point": null,
-
-  "context_object_type": null,
-
-  "platform": "",
-  "device_type": "",
-  "browser": ""
-}
+```javascript
+capture(PAGE_VIEWED, {
+  current_page_context: '',
+  previous_page_context: null,
+  entry_point: null,
+  context_object_type: null,
+});
 ```
+
+### Auto-Captured Properties (PostHog SDK — do NOT set manually)
+
+These are automatically included on every event by the PostHog SDK:
+
+| Property | Description | Source |
+|---|---|---|
+| `distinct_id` | User identifier | Set via `posthog.identify()` after auth |
+| `$current_url` | Full page URL | PostHog SDK |
+| `$referrer` | HTTP referrer | PostHog SDK |
+| `$browser` | Browser name | PostHog SDK |
+| `$os` | Operating system | PostHog SDK |
+| `$device_type` | desktop / mobile / tablet | PostHog SDK |
+| `$screen_height` / `$screen_width` | Screen dimensions | PostHog SDK |
+| `timestamp` | Event timestamp | PostHog SDK |
+| `$session_id` | Session identifier | PostHog SDK |
+
+### Person Properties (set via `identifyUser()`, not per-event)
+
+These are set on the user profile via `posthog.identify()` and are available on all events for that user. They are NOT included in event capture calls.
+
+| Property | Scope | Description |
+|---|---|---|
+| `email` | `$set` | User's current email |
+| `name` | `$set` | User's current name |
+| `org_id` | `$set` | User's current organization ID |
+| `current_persona` | `$set` | Active persona (updated on login + persona switch) |
+| `first_persona` | `$set_once` | First persona chosen during onboarding |
+| `account_created_at` | `$set_once` | Account creation timestamp |
 
 ---
 
@@ -116,56 +132,7 @@ Each property is classified as **Required** (MUST be present, MUST NOT be null/e
 
 ## Property Documentation
 
-### 1. Identity Properties
-
-All identity properties are **Required** unless marked otherwise.
-
-#### `user_id`
-- **Required**
-- What it is: Unique identifier of the user performing the action.
-- What it tracks: Which user took the action.
-- Format: String, prefixed by convention (e.g., `usr_12345`).
-- Example: `"user_id": "usr_12345"`
-
-#### `org_id`
-- **Required**
-- What it is: Unique identifier of the organization the user belongs to.
-- What it tracks: Which org/account the action belongs to. Enables org-level segmentation and multi-tenant analysis.
-- Example: `"org_id": "org_789"`
-
-#### `user_role`
-- **Required** — MUST never be null.
-- What it is: The user's actual role in the product, determined by their account type.
-- What it tracks: Who the user IS. Set once per session based on account type. Does not change within a session.
-- Values: Defined per product in product configuration (e.g., `recruiter`, `hiring_manager`, `candidate`, `admin`).
-- Example: `"user_role": "recruiter"`
-
-#### `acting_as`
-- **Conditional** — Include ONLY when the user operates in a role different from their `user_role`.
-- What it is: The role the user is temporarily operating as, when performing actions on behalf of another role.
-- What it tracks: Delegation and role-switching behavior.
-- Rule: If `acting_as` equals `user_role`, do NOT include it. It should only appear when the active context differs from the user's actual role.
-- Example: `"acting_as": "hiring_manager"` (when a recruiter is reviewing a pipeline as a hiring manager)
-- When not applicable: `"acting_as": null`
-
-> **Note on `first_acting_as`:** The very first role a user selects during onboarding is a **user-level property**, not an event property. It MUST be set once via the analytics platform's user identification method (e.g., `identify()` call) and stored on the user profile. It is NOT included in event payloads.
-
----
-
-### 2. View Context Properties
-
-#### `timestamp`
-- **Required** — Auto-captured by the analytics SDK; do NOT set manually.
-- What it is: ISO 8601 timestamp when the event occurred.
-- What it tracks: Event chronology, ordering, and time-based analysis.
-- Format: `YYYY-MM-DDTHH:mm:ssZ` (UTC)
-- Example: `"timestamp": "2026-03-30T10:25:42Z"`
-
-#### `session_id`
-- **Required** — Auto-captured by the analytics SDK.
-- What it is: Identifier for the current user session.
-- What it tracks: Groups events within a single session for path analysis.
-- Example: `"session_id": "sess_456789"`
+### 1. View Context Properties
 
 #### `current_page_context`
 - **Required**
@@ -208,7 +175,7 @@ All identity properties are **Required** unless marked otherwise.
 
 ---
 
-### 3. Scope Properties
+### 2. Scope Properties
 
 These properties identify the container or scope the page view happens within.
 
@@ -219,32 +186,6 @@ These properties identify the container or scope the page view happens within.
 - Values: Defined per product in product configuration (e.g., `project`, `workspace`, `campaign`, `board`).
 - Example: `"context_object_type": "project"`
 - When not scoped: `"context_object_type": null`
-
----
-
-### 4. Device Properties
-
-All device properties are **Required** — auto-captured by the analytics SDK.
-
-#### `platform`
-- **Required**
-- What it is: The product platform.
-- What it tracks: Web vs. mobile vs. desktop app segmentation.
-- Allowed values: `web`, `mobile_web`, `ios`, `android`, `desktop_app`
-- Example: `"platform": "web"`
-
-#### `device_type`
-- **Required**
-- What it is: The device class.
-- What it tracks: Desktop vs. mobile vs. tablet behavior patterns.
-- Allowed values: `desktop`, `mobile`, `tablet`
-- Example: `"device_type": "desktop"`
-
-#### `browser`
-- **Required**
-- What it is: The browser used by the user.
-- What it tracks: Browser segmentation for debugging and compatibility analysis.
-- Example: `"browser": "Chrome"`
 
 ---
 
@@ -334,80 +275,46 @@ Has the user landed on or been shown a distinct page/screen/state?
 
 ### Example 1: User lands on search results page from dashboard
 
-```json
-{
-  "schema_version": "1.0",
-  "event_type": "page_view",
-
-  "user_id": "usr_12345",
-  "org_id": "org_789",
-  "user_role": "recruiter",
-  "acting_as": null,
-
-  "timestamp": "2026-03-30T10:21:10Z",
-  "session_id": "sess_456789",
-  "current_page_context": "search/results_page",
-  "previous_page_context": "dashboard",
-  "entry_point": "dashboard_click_sidebar_navigation",
-
-  "context_object_type": null,
-
-  "platform": "web",
-  "device_type": "desktop",
-  "browser": "Chrome"
-}
+```javascript
+capture(PAGE_VIEWED, {
+  current_page_context: 'search/results_page',
+  previous_page_context: 'dashboard',
+  entry_point: 'dashboard_click_sidebar_navigation',
+  context_object_type: null,
+});
 ```
 
 ### Example 2: User opens a specific project page from search results
 
-```json
-{
-  "schema_version": "1.0",
-  "event_type": "page_view",
-
-  "user_id": "usr_12345",
-  "org_id": "org_789",
-  "user_role": "recruiter",
-  "acting_as": null,
-
-  "timestamp": "2026-03-30T10:24:55Z",
-  "session_id": "sess_456789",
-  "current_page_context": "project/details_page",
-  "previous_page_context": "search/results_page",
-  "entry_point": "search_results_click_project_card",
-
-  "context_object_type": "project",
-
-  "platform": "web",
-  "device_type": "desktop",
-  "browser": "Chrome"
-}
+```javascript
+capture(PAGE_VIEWED, {
+  current_page_context: 'project/details_page',
+  previous_page_context: 'search/results_page',
+  entry_point: 'search_results_click_project_card',
+  context_object_type: 'project',
+});
 ```
 
 ### Example 3: User reaches job creation step 1 after clicking "Create Job"
 
-```json
-{
-  "schema_version": "1.0",
-  "event_type": "page_view",
+```javascript
+capture(PAGE_VIEWED, {
+  current_page_context: 'job_creation/job_details',
+  previous_page_context: 'jobs/list_page',
+  entry_point: 'jobs_list_click_create_job',
+  context_object_type: null,
+});
+```
 
-  "user_id": "usr_12345",
-  "org_id": "org_789",
-  "user_role": "recruiter",
-  "acting_as": null,
+### Example 4: Hiring Manager home page — returning user after login
 
-  "timestamp": "2026-03-30T11:02:00Z",
-  "session_id": "sess_456789",
-  "current_page_context": "job_creation/job_details",
-  "previous_page_context": "jobs/list_page",
-  "entry_point": "jobs_list_click_create_job",
-
-  "context_object_type": null,
-
-  "platform": "web",
-  "device_type": "desktop",
-  "browser": "Chrome"
-}
+```javascript
+capture(PAGE_VIEWED, {
+  current_page_context: 'hiring_manager/job_postings',
+  previous_page_context: 'auth/landing',
+  entry_point: 'auth_landing_login_redirect',
+  context_object_type: null,
+});
 ```
 
 ---

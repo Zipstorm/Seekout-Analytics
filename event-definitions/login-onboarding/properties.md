@@ -45,7 +45,7 @@ Updated on every login. Always reflect current state.
 |----------|------|--------|--------|-------------|
 | `email` | string | `identifyUser()` | `/auth/me` response | User's email |
 | `name` | string | `identifyUser()` | `/auth/me` response | User's name |
-| `role` | string | `identifyUser()` | `/auth/me` response | Current role (changes over time) |
+| `current_persona` | enum | `identifyUser()` + persona switch | Derived from role via `ROLE_TO_PERSONA` mapping | Active persona — `hiring_manager`, `recruiter`, `job_seeker` |
 | `org_id` | string | `identifyUser()` | `/auth/me` response | Organization ID |
 
 ---

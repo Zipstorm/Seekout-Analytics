@@ -43,7 +43,7 @@ Every event follows the pattern: **Object Action**
 
 ### Property Names: snake_case
 
-All event and person properties use `snake_case`: `job_id`, `acting_as`, `signup_context`, `share_channel`. No Proper Case or camelCase for properties.
+All event and person properties use `snake_case`: `job_id`, `current_persona`, `signup_context`, `share_channel`. No Proper Case or camelCase for properties.
 
 ### Standard Objects
 
@@ -126,17 +126,18 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 |----------|------|--------|-------------|
 | `email` | string | `identifyUser()` | User's current email |
 | `name` | string | `identifyUser()` | User's current name |
-| `role` | string | `identifyUser()` | User's current role (may change over time) |
 | `org_id` | string | `identifyUser()` | User's current organization ID |
+| `current_persona` | enum | `identifyUser()` + persona switch | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Updated on every login and on persona switch via sidebar toggle. Replaces the old `role` person property and `acting_as` event property. |
 
-**Role is NOT an immutable person property.** The same user can switch roles. `role` (`$set`) reflects their current state. `first_persona` (`$set_once`) preserves what they originally chose. Role context on hiring events is sent as the event property `acting_as`.
+**Persona is NOT an immutable person property.** The same user can switch personas. `current_persona` (`$set`) reflects their current state. `first_persona` (`$set_once`) preserves what they originally chose during onboarding.
 
 **Identifying a user (JS SDK — called after auth succeeds):**
 
 ```javascript
 // In lib/posthog.ts → identifyUser()
+const persona = ROLE_TO_PERSONA[user.role] || 'unknown';
 posthog.identify(user.id,
-  { email: user.email, name: user.name, role: user.role, org_id: user.orgId },  // $set
+  { email: user.email, name: user.name, org_id: user.orgId, current_persona: persona },  // $set
   { account_created_at: user.createdAt }  // $set_once
 );
 ```
@@ -187,15 +188,9 @@ Include on every event where applicable.
 
 | Property | Type | Values | When to Include |
 |----------|------|--------|----------------|
-| `surface` | enum | `prospect`, `hiring` | All authenticated events (exclude Anonymous User Events and login/onboarding events) |
-| `acting_as` | enum | `hiring_manager`, `recruiter`, `team_member` | All hiring surface events (except Team Member Joined) |
 | `job_id` | UUID | | All job-related events |
 
-**Login & onboarding events** (`Login Started`, `Account Created`, `Intro Completed`, `Page Viewed` during onboarding) do NOT include `surface` — these happen before any surface context exists. They use `entity_type` (`account` or `onboarding`) instead.
-
-**Pre-activation flows:** During onboarding (before surface activation), set
-`surface` to the surface the user is currently engaging with. For the job
-creation wizard, use `hiring`.
+> **Note:** `acting_as` and `surface` have been removed as standard event properties. The user's active persona is now tracked via the `current_persona` person property (`$set`), which is automatically available on all events — this replaces `acting_as`. The surface context is derivable from `current_persona` (hiring_manager/recruiter → hiring, job_seeker → prospect) — this replaces `surface`.
 
 ---
 
@@ -272,17 +267,17 @@ posthog.capture('Intro Completed', {
 ```javascript
 // Called in identifyUser() after login/session restore
 // Uses positional args: (distinctId, $set, $set_once)
+const persona = ROLE_TO_PERSONA[user.role] || 'unknown';
 posthog.identify(user.id,
-  { email: user.email, name: user.name, role: user.role, org_id: user.orgId },
+  { email: user.email, name: user.name, org_id: user.orgId, current_persona: persona },
   { account_created_at: user.createdAt }
 );
 ```
 
-### Prospect surface event
+### Prospect event
 
 ```javascript
 posthog.capture('Custom Link Created', {
-  surface: 'prospect',
   link_name: 'Google SWE Application',
   is_job_specific: true,
   target_job_title: 'Software Engineer',
@@ -290,13 +285,11 @@ posthog.capture('Custom Link Created', {
 });
 ```
 
-### Hiring surface event (with job group and acting_as)
+### Hiring event (with job group)
 
 ```javascript
 posthog.group('job', jobId);
 posthog.capture('Team Member Invited', {
-  surface: 'hiring',
-  acting_as: 'hiring_manager',
   job_id: jobId,
   invited_role_label: 'recruiter',
   invite_method: 'email'
@@ -324,16 +317,12 @@ posthog.capture(
 ```javascript
 // Intent (fired on button click)
 posthog.capture('Share Button Clicked', {
-  surface: 'hiring',
-  acting_as: 'hiring_manager',
   job_id: jobId,
   share_source: 'dashboard'
 });
 
 // Outcome - success (fired on server confirmation)
 posthog.capture('Job Shared', {
-  surface: 'hiring',
-  acting_as: 'hiring_manager',
   job_id: jobId,
   share_channel: 'email',
   shared_by_user_id: user.id
@@ -341,8 +330,6 @@ posthog.capture('Job Shared', {
 
 // Outcome - failure (fired on error)
 posthog.capture('Job Share Failed', {
-  surface: 'hiring',
-  acting_as: 'hiring_manager',
   job_id: jobId,
   error_reason: 'network_error',
   error_category: 'network'

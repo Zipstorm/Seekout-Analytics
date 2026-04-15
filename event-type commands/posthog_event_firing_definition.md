@@ -293,8 +293,27 @@ This behavioral test proves that the backend commits the account at persona conf
 | **Fires when** | Home page renders (e.g., `/hiring-manager/job-postings`) |
 | **User type** | All |
 | **current_page_context** | `hiring_manager/job_postings` (HM), TBD (recruiter), TBD (job seeker) |
+| **Re-fires on refresh?** | Yes — with `entry_point` = `browser_reload` |
+| **Re-fires on return navigation?** | Yes — every time the page mounts |
 
 **Justification:** Distinct routed page, the primary destination of both login and onboarding flows. For new users, this is where `Onboarding Completed` fires. For returning users, this is the first meaningful page after `Login Succeeded`.
+
+**Dynamic `previous_page_context` — behavioral rules:**
+
+The home page is reachable through multiple paths. The `previous_page_context` MUST reflect the actual previous page in the user's session, not a hardcoded value.
+
+| User Journey | previous_page_context | entry_point | Behavioral Evidence |
+|---|---|---|---|
+| New user — completed full onboarding (clicked "Let's go" on intro) | `onboarding/intro` | `onboarding_intro_click_lets_go_button` | Intro page navigates to home after CTA click |
+| New user — created account at role selection, left at intro page, re-logged in later | `auth/landing` | `auth_landing_login_redirect` | Account exists (persona persisted) → system treats as returning user → routes to home, skipping intro |
+| New user — selected HM role, cancelled/closed intro, logged out, logged back in | `auth/landing` | `auth_landing_login_redirect` | Same as above — account was created at role confirmation, so re-login goes to home |
+| Returning user — standard login | `auth/landing` | `auth_landing_login_redirect` | Auth callback detects persisted persona → routes to home |
+| Direct URL / bookmark | `null` | `direct_url` | No previous page in session — user entered URL directly |
+| Browser refresh | `hiring_manager/job_postings` | `browser_reload` | Same page reloaded by user |
+
+**Implementation note:** `previous_page_context` should be derived from session-level navigation state (e.g., router state or sessionStorage), NOT from user type heuristics. The source page sets the value before navigating; the home page reads it on mount.
+
+**Person property update:** On every home page load, the `current_persona` person property is updated via `$set` to reflect the active persona shown in the sidebar. See `event-definitions/hiring-manager-home/properties.md` for the full `current_persona` definition.
 
 ---
 

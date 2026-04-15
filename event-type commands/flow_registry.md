@@ -291,17 +291,39 @@ New users only. Persona-specific intro page showing the value prop and steps ahe
 **URL (Recruiter):** TBD
 **URL (Job Seeker):** TBD
 
-The landing page after onboarding completes (new users) or after login (returning users). Content varies by persona.
+The landing page after onboarding completes (new users) or after login (returning users). Content varies by persona. The sidebar shows the active persona (e.g., "Hiring Manager") and persona-specific navigation.
+
+For full event definitions on the Hiring Manager home page, see [`event-definitions/hiring-manager-home/`](../event-definitions/hiring-manager-home/).
 
 #### page_view
 
-| Property | Value (new user) | Value (returning user) |
-|----------|-----------------|----------------------|
-| `event_type` | `page_view` | `page_view` |
-| `current_page_context` | `hiring_manager/job_postings` | `hiring_manager/job_postings` |
-| `previous_page_context` | `onboarding/intro` | `null` |
-| `entry_point` | `onboarding_intro_click_lets_go_button` | `direct_url` or `login_redirect` |
-| `context_object_type` | `null` | `null` |
+| Property | Value (new user — completed intro) | Value (new user — skipped intro, re-logged) | Value (returning user) |
+|----------|-----------------------------------|---------------------------------------------|----------------------|
+| `event_type` | `page_view` | `page_view` | `page_view` |
+| `current_page_context` | `hiring_manager/job_postings` | `hiring_manager/job_postings` | `hiring_manager/job_postings` |
+| `previous_page_context` | `onboarding/intro` | `auth/landing` | `auth/landing` |
+| `entry_point` | `onboarding_intro_click_lets_go_button` | `auth_landing_login_redirect` | `auth_landing_login_redirect` |
+| `context_object_type` | `null` | `null` | `null` |
+
+**Dynamic `previous_page_context` rules:**
+
+| User Journey | previous_page_context | entry_point | Why |
+|---|---|---|---|
+| New user completed full onboarding (intro → home) | `onboarding/intro` | `onboarding_intro_click_lets_go_button` | User clicked "Let's go" on intro page |
+| New user created account, skipped/cancelled intro or logged out from intro, re-logged in | `auth/landing` | `auth_landing_login_redirect` | Account exists, system routes to home after login |
+| Returning user logged in | `auth/landing` | `auth_landing_login_redirect` | Standard login → home redirect |
+| Direct URL or bookmark | `null` | `direct_url` | No previous page in session |
+| Browser refresh | `hiring_manager/job_postings` | `browser_reload` | Same page reloaded |
+
+#### Person property update: `current_persona`
+
+On every home page load, the user's `current_persona` person property is updated via `$set` to reflect the active persona. This is distinct from `first_persona` (`$set_once`, set at onboarding, never changes).
+
+| Property | Type | Scope | Values | Set By |
+|---|---|---|---|---|
+| `current_persona` | enum | person (`$set`) | `hiring_manager`, `recruiter`, `job_seeker` | `identifyUser()` on login + persona switch |
+
+See [`event-definitions/hiring-manager-home/properties.md`](../event-definitions/hiring-manager-home/properties.md) for full definition.
 
 > **Note:** `current_page_context` values per persona:
 > - Hiring Manager: `hiring_manager/job_postings`

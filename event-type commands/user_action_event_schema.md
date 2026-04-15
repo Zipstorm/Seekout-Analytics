@@ -59,37 +59,50 @@ Fire a `user_action` ONLY when ALL of these are true:
 
 ## Canonical Shape
 
-```json
-{
-  "schema_version": "1.0",
-  "event_type": "user_action",
+The `user_action` event only includes properties that are manually set by the developer. Identity, device, and timing properties are auto-captured by the PostHog SDK and MUST NOT be set manually.
 
-  "user_id": "",
-  "org_id": "",
-  "user_role": "",
-  "acting_as": null,
-
-  "action": "",
-  "action_value": "",
-
-  "timestamp": "",
-  "session_id": "",
-  "current_page_context": "",
-  "previous_page_context": "",
-  "entry_point": "",
-
-  "context_object_type": null,
-  "context_object_id": null,
-
-  "platform": "",
-  "device_type": "",
-  "browser": "",
-
-  "entity_type": "",
-
-  "component": ""
-}
+```javascript
+capture(EVENT_NAME, {
+  action: '',
+  action_value: '',
+  current_page_context: '',
+  previous_page_context: null,
+  entry_point: null,
+  entity_type: '',
+  component: '',
+  context_object_type: null,
+  context_object_id: null,
+});
 ```
+
+### Auto-Captured Properties (PostHog SDK — do NOT set manually)
+
+These are automatically included on every event by the PostHog SDK:
+
+| Property | Description | Source |
+|---|---|---|
+| `distinct_id` | User identifier | Set via `posthog.identify()` after auth |
+| `$current_url` | Full page URL | PostHog SDK |
+| `$referrer` | HTTP referrer | PostHog SDK |
+| `$browser` | Browser name | PostHog SDK |
+| `$os` | Operating system | PostHog SDK |
+| `$device_type` | desktop / mobile / tablet | PostHog SDK |
+| `$screen_height` / `$screen_width` | Screen dimensions | PostHog SDK |
+| `timestamp` | Event timestamp | PostHog SDK |
+| `$session_id` | Session identifier | PostHog SDK |
+
+### Person Properties (set via `identifyUser()`, not per-event)
+
+These are set on the user profile via `posthog.identify()` and are available on all events for that user. They are NOT included in event capture calls.
+
+| Property | Scope | Description |
+|---|---|---|
+| `email` | `$set` | User's current email |
+| `name` | `$set` | User's current name |
+| `org_id` | `$set` | User's current organization ID |
+| `current_persona` | `$set` | Active persona (updated on login + persona switch) |
+| `first_persona` | `$set_once` | First persona chosen during onboarding |
+| `account_created_at` | `$set_once` | Account creation timestamp |
 
 ---
 
@@ -103,43 +116,7 @@ Each property is classified as **Required** (MUST be present, MUST NOT be null/e
 
 ## Property Documentation
 
-### 1. Identity Properties
-
-All identity properties are **Required** unless marked otherwise.
-
-#### `user_id`
-- **Required**
-- What it is: Unique identifier of the user performing the action.
-- What it tracks: Which user took the action.
-- Format: String, prefixed by convention (e.g., `usr_12345`).
-- Example: `"user_id": "usr_12345"`
-
-#### `org_id`
-- **Required**
-- What it is: Unique identifier of the organization the user belongs to.
-- What it tracks: Which org/account the action belongs to. Enables org-level segmentation and multi-tenant analysis.
-- Example: `"org_id": "org_789"`
-
-#### `user_role`
-- **Required** — MUST never be null.
-- What it is: The user's actual role in the product, determined by their account type.
-- What it tracks: Who the user IS. Set once per session based on account type. Does not change within a session.
-- Values: Defined per product in product configuration (e.g., `recruiter`, `hiring_manager`, `candidate`, `admin`).
-- Example: `"user_role": "recruiter"`
-
-#### `acting_as`
-- **Conditional** — Include ONLY when the user operates in a role different from their `user_role`.
-- What it is: The role the user is temporarily operating as, when performing actions on behalf of another role.
-- What it tracks: Delegation and role-switching behavior.
-- Rule: If `acting_as` equals `user_role`, do NOT include it. It should only appear when the active context differs from the user's actual role.
-- Example: `"acting_as": "hiring_manager"` (when a recruiter is reviewing a pipeline as a hiring manager)
-- When not applicable: `"acting_as": null`
-
-> **Note on `first_acting_as`:** The very first role a user selects during onboarding is a **user-level property**, not an event property. It MUST be set once via the analytics platform's user identification method (e.g., `identify()` call) and stored on the user profile. It is NOT included in event payloads.
-
----
-
-### 2. Action Properties
+### 1. Action Properties
 
 All action properties are **Required**.
 
@@ -178,20 +155,7 @@ All action properties are **Required**.
 
 ---
 
-### 3. Context Properties
-
-#### `timestamp`
-- **Required** — Auto-captured by the analytics SDK; do NOT set manually.
-- What it is: ISO 8601 timestamp when the event occurred.
-- What it tracks: Event chronology, ordering, and time-based analysis.
-- Format: `YYYY-MM-DDTHH:mm:ssZ` (UTC)
-- Example: `"timestamp": "2026-03-30T10:25:42Z"`
-
-#### `session_id`
-- **Required** — Auto-captured by the analytics SDK.
-- What it is: Identifier for the current user session.
-- What it tracks: Groups events within a single session for path analysis.
-- Example: `"session_id": "sess_456789"`
+### 2. Context Properties
 
 #### `current_page_context`
 - **Required**
@@ -221,7 +185,7 @@ All action properties are **Required**.
 
 ---
 
-### 4. Scope Properties
+### 3. Scope Properties
 
 These properties identify the container or scope the action happens within. Distinct from Entity properties (which capture WHAT the action targets), scope properties capture the CONTEXT the action occurs inside.
 
@@ -242,33 +206,7 @@ These properties identify the container or scope the action happens within. Dist
 
 ---
 
-### 5. Device Properties
-
-All device properties are **Required** — auto-captured by the analytics SDK.
-
-#### `platform`
-- **Required**
-- What it is: The product platform.
-- What it tracks: Web vs. mobile vs. desktop app segmentation.
-- Allowed values: `web`, `mobile_web`, `ios`, `android`, `desktop_app`
-- Example: `"platform": "web"`
-
-#### `device_type`
-- **Required**
-- What it is: The device class.
-- What it tracks: Desktop vs. mobile vs. tablet behavior patterns.
-- Allowed values: `desktop`, `mobile`, `tablet`
-- Example: `"device_type": "desktop"`
-
-#### `browser`
-- **Required**
-- What it is: The browser used by the user.
-- What it tracks: Browser segmentation for debugging and compatibility analysis.
-- Example: `"browser": "Chrome"`
-
----
-
-### 6. Entity Properties
+### 4. Entity Properties
 
 Entity properties capture WHAT business object the action targets.
 
@@ -289,7 +227,7 @@ Entity properties capture WHAT business object the action targets.
 
 ---
 
-### 7. UI Context Properties
+### 5. UI Context Properties
 
 #### `component`
 - **Required**
@@ -345,105 +283,67 @@ Is the interaction intentional and user-initiated?
 
 ### Example 1: User clicks "Start Sequence" for 25 selected candidates
 
-```json
-{
-  "schema_version": "1.0",
-  "event_type": "user_action",
-
-  "user_id": "usr_12345",
-  "org_id": "org_789",
-  "user_role": "recruiter",
-  "acting_as": null,
-
-  "action": "click",
-  "action_value": "start_sequence_button",
-
-  "timestamp": "2026-03-30T10:25:42Z",
-  "session_id": "sess_456789",
-  "current_page_context": "outreach/sequence_setup",
-  "previous_page_context": "search/results_page",
-  "entry_point": "search_results",
-
-  "context_object_type": "project",
-  "context_object_id": "proj_333",
-
-  "platform": "web",
-  "device_type": "desktop",
-  "browser": "Chrome",
-
-  "entity_type": "candidate",
-  "entity_count": 25,
-
-  "component": "outreach_sequence_modal"
-}
+```javascript
+capture('Start Sequence Button Clicked', {
+  action: 'click',
+  action_value: 'start_sequence_button',
+  current_page_context: 'outreach/sequence_setup',
+  previous_page_context: 'search/results_page',
+  entry_point: 'search_results',
+  entity_type: 'candidate',
+  entity_count: 25,
+  component: 'outreach_sequence_modal',
+  context_object_type: 'project',
+  context_object_id: 'proj_333',
+});
 ```
 
 ### Example 2: User clicks Next on job details step
 
-```json
-{
-  "schema_version": "1.0",
-  "event_type": "user_action",
-
-  "user_id": "usr_12345",
-  "org_id": "org_789",
-  "user_role": "recruiter",
-  "acting_as": null,
-
-  "action": "click",
-  "action_value": "next_button",
-
-  "timestamp": "2026-03-30T10:27:12Z",
-  "session_id": "sess_456789",
-  "current_page_context": "job_creation/job_details",
-  "previous_page_context": null,
-  "entry_point": null,
-
-  "context_object_type": null,
-  "context_object_id": null,
-
-  "platform": "web",
-  "device_type": "desktop",
-  "browser": "Chrome",
-
-  "entity_type": "job",
-
-  "component": "job_creation_wizard_form"
-}
+```javascript
+capture('Job Wizard Step Completed', {
+  action: 'click',
+  action_value: 'next_button',
+  current_page_context: 'job_creation/job_details',
+  previous_page_context: null,
+  entry_point: null,
+  entity_type: 'job',
+  component: 'job_creation_wizard_form',
+  context_object_type: null,
+  context_object_id: null,
+});
 ```
 
 ### Example 3: User clicks Close to exit job creation
 
-```json
-{
-  "schema_version": "1.0",
-  "event_type": "user_action",
+```javascript
+capture('Job Wizard Exited', {
+  action: 'click',
+  action_value: 'close_button',
+  current_page_context: 'job_creation/job_details',
+  previous_page_context: null,
+  entry_point: null,
+  entity_type: 'job',
+  component: 'job_creation_wizard_header',
+  context_object_type: null,
+  context_object_id: null,
+});
+```
 
-  "user_id": "usr_12345",
-  "org_id": "org_789",
-  "user_role": "recruiter",
-  "acting_as": null,
+### Example 4: User clicks "+ Create Job Posting" on HM home page (header)
 
-  "action": "click",
-  "action_value": "close_button",
-
-  "timestamp": "2026-03-30T11:05:00Z",
-  "session_id": "sess_456789",
-  "current_page_context": "job_creation/job_details",
-  "previous_page_context": null,
-  "entry_point": null,
-
-  "context_object_type": null,
-  "context_object_id": null,
-
-  "platform": "web",
-  "device_type": "desktop",
-  "browser": "Chrome",
-
-  "entity_type": "job",
-
-  "component": "job_creation_wizard_header"
-}
+```javascript
+capture(CREATE_JOB_BUTTON_CLICKED, {
+  action: 'click',
+  action_value: 'create_job_posting_button',
+  current_page_context: 'hiring_manager/job_postings',
+  previous_page_context: previousPageContext,
+  entry_point: null,
+  entity_type: 'job',
+  component: 'job_postings_page_header',
+  context_object_type: null,
+  context_object_id: null,
+});
 ```
 
 ---
