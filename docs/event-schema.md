@@ -29,7 +29,8 @@ Every event follows the pattern: **Object Action**
 **Rules:**
 
 1. **Past-tense verbs only** — Created, Viewed, Submitted, Shared (not Create, View, Submit, Share)
-2. **Clear and descriptive** — No generic names like `Action1` or `User Event`. Every name must be meaningful to anyone reading it.
+2. **Descriptive and meaningful** — Event name should represent intent. No generic names like `Action1` or `User Event`. Every name must be meaningful to anyone reading it.
+   `Account Created`, `Create Job Button Clicked`, `Record Video Button Clicked`.
 3. **Consistent object names** — Always refer to the same object the same way. Use `Team Member` everywhere, never `TeamMember` or `team member`.
 4. **No special characters or trailing spaces** — Letters, numbers, and spaces only. No `/`, `&`, `@`, `#` or other special characters.
 5. **Separate intent from outcome** — Track the user's action (intent) and whether it succeeded or failed:
@@ -39,9 +40,6 @@ Every event follows the pattern: **Object Action**
 6. **Intent events use present tense** — Intent events follow the pattern
    `[Action] [Object] Button Clicked` where the action is present tense:
    `Share Button Clicked`, `Create Job Button Clicked`,
-   `Record Video Button Clicked`. This is exception to the past-tense rule.
-7. **Event naming should be descriptive and meaningful** — Event name should represent intent.
-   `Account Created`, `Create Job Button Clicked`,
    `Record Video Button Clicked`. This is exception to the past-tense rule.
 
 ### Property Names: snake_case
@@ -57,7 +55,7 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Object | Entity | Example Events |
 |--------|--------|---------------|
 | Page | Any meaningful product page/screen | Page Viewed |
-| Auth | Authentication and session lifecycle | Auth Login Succeeded, Auth Login Failed, Auth Session Restore Succeeded, Auth Session Restore Failed, Auth Refresh Failed, Auth Logout Completed, Auth Email Verified, Auth Email Verify Failed |
+| Auth | Authentication and session lifecycle | Auth Login Succeeded, Auth Login Failed, Auth Session Restore Succeeded, Auth Session Restore Failed |
 | Login | Auth flow initiation | Login Started, Login Cancelled |
 | Account | User (account-level actions) | Account Created, Account Activated |
 | Intro | Onboarding intro screen | Intro Completed |
@@ -125,7 +123,7 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 
 | Property | Type | Values | Set By | Description |
 |----------|------|--------|--------|-------------|
-| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Login Started, Account Created | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. |
+| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Login Started | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. |
 | `first_referrer` | string | URL or null | Login Started | HTTP referrer at first visit (`document.referrer`). |
 | `first_landing_url` | string | URL | Login Started | Full landing URL including query params at first visit. |
 | `first_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Account Created | First persona chosen during onboarding. Never changes even if user switches role later. |
@@ -196,7 +194,6 @@ posthog.capture('Account Created', {
   persona,
   $set_once: {
     first_persona: persona,
-    entry_point: entryPoint,
     account_created_at: new Date().toISOString(),
   },
 });
@@ -208,7 +205,13 @@ Include on every event where applicable.
 
 | Property | Type | Values | When to Include |
 |----------|------|--------|----------------|
-| `job_id` | UUID | | All job-related events |
+| `current_page_context` | string | snake_case page identifier | All frontend events |
+| `previous_page_context` | string | snake_case page identifier or null | All frontend events |
+| `entity_type` | string | `account`, `onboarding`, `job`, `persona`, etc. | All frontend events (`user_action` and `page_view`) |
+| `action` | enum | `click`, `submit`, `toggle` | All `user_action` events |
+| `action_value` | string | exact UI button/link text in snake_case | All `user_action` events |
+| `component` | string | snake_case UI container identifier | All `user_action` events |
+| `job_id` | UUID | alphanumeric or number | All job-related events |
 
 > **Note:** The user's active persona is tracked via the `current_persona` person property (`$set`), which is automatically available on all events. No need to pass persona per-event.
 
@@ -265,7 +268,6 @@ posthog.capture('Account Created', {
   auth_method: 'google',
   $set_once: {
     first_persona: 'hiring_manager',
-    entry_point: entryPoint,
     account_created_at: new Date().toISOString(),
   },
 });
@@ -375,6 +377,7 @@ posthog.capture(
     properties={
         'job_id': str(job_id),
         'error_reason': str(e),
+        'error_category': 'network',  # network, permission, validation, server, timeout
     },
     groups={'job': str(job_id)},
 )
