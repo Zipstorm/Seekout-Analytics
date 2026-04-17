@@ -26,11 +26,11 @@ Events for the login and new user onboarding flow. Full specs in [event-definiti
 
 | Event             | Area       | Type        | Trigger                                                        | Source   | Properties                                                                                                                              | Group | Property Updates                                                              | Status |
 | ----------------- | ---------- | ----------- | -------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------- | ------ |
-| Page Viewed       | Navigation | page_view   | User lands on a meaningful page                                | Frontend | `current_page_context`, `previous_page_context`, `entry_point`                                                                          | --    | --                                                                            | Live   |
-| Login Started     | Account    | user_action | User clicks "Continue with Google or Email" on auth landing    | Frontend | `action`, `action_value`, `current_page_context`, `entry_point`, `entity_type`, `component`                                             | --    | `$set_once: entry_point, first_referrer, first_landing_url`                   | Live   |
+| Page Viewed       | Navigation | page_view   | User lands on a meaningful page                                | Frontend | `current_page_context`, `previous_page_context`, `entry_point`                                                                          | --    | `$set_once: entry_point, first_referrer, first_landing_url`                   | Live   |
+| Login Started     | Account    | user_action | User clicks "Continue with Google or Email" on auth landing    | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`                    | --    | --                                                                            | Live   |
 | Login Cancelled   | Account    | user_action | User closes MSAL popup without completing auth                 | Frontend | `auth_mode`, `error_code`                                                                                                               | --    | --                                                                            | Live   |
-| Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | `action`, `action_value`, `current_page_context`, `entry_point`, `entity_type`, `component`, `persona`, `signup_context`, `auth_method` | --    | `$set_once: first_persona, entry_point, account_created_at`                   | Live   |
-| Intro Completed   | Account    | user_action | User clicks "Let's go" on onboarding intro page               | Frontend | `action`, `action_value`, `current_page_context`, `entity_type`, `component`                                                            | --    | --                                                                            | Live   |
+| Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `first_persona`, `auth_method`, `referred_by` | --    | `$set_once: first_persona, account_created_at, referred_by`                   | Live   |
+| Intro Completed   | Account    | user_action | User clicks "Let's go" on onboarding intro page               | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `auth_method`     | --    | --                                                                            | Live   |
 
 
 ### Auth Lifecycle Events (existing — to be replaced)
@@ -40,11 +40,11 @@ These events are still firing from `authStore.ts` and will be replaced when the 
 
 | Event                          | Area    | Type | Trigger                                        | Source   | Properties                                     | Group | Property Updates | Status       |
 | ------------------------------ | ------- | ---- | ---------------------------------------------- | -------- | ---------------------------------------------- | ----- | ---------------- | ------------ |
-| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `role`, `verification_required`   | --    | --               | Live (legacy) |
+| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | --               | Live (legacy) |
 | Auth Login Failed              | Account | --   | Backend returns auth error                     | Frontend | `auth_mode`, `status_code`, `error_detail`     | --    | --               | Live (legacy) |
-| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`, `role`                            | --    | --               | Live (legacy) |
-| Auth Session Restore Failed    | Account | --   | Session restore failed                         | Frontend | `error_detail`                                 | --    | --               | Live (legacy) |
-| Auth Refresh Failed            | Account | --   | Token refresh failed                           | Frontend | `source`                                       | --    | --               | Live (legacy) |
+| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | --               | Live (legacy) |
+| Auth Session Restore Failed    | Account | --   | Session restore failed                         | Frontend | `status_code`                                  | --    | --               | Live (legacy) |
+| Auth Refresh Failed            | Account | --   | Token refresh failed                           | Frontend | `source`, `status_code`                        | --    | --               | Live (legacy) |
 | Auth Logout Completed          | Account | --   | User logs out                                  | Frontend | `auth_mode`                                    | --    | --               | Live (legacy) |
 
 
@@ -54,8 +54,8 @@ These events are still firing from `authStore.ts` and will be replaced when the 
 | Event                    | Area    | Type | Trigger                  | Source   | Properties               | Group | Property Updates | Status    |
 | ------------------------ | ------- | ---- | ------------------------ | -------- | ------------------------ | ----- | ---------------- | --------- |
 | Auth Dev Login Started   | Account | --   | Dev login initiated      | Frontend | `auth_mode`              | --    | --               | Dev only  |
-| Auth Dev Login Succeeded | Account | --   | Dev login succeeded      | Frontend | `auth_mode`, `role`      | --    | --               | Dev only  |
-| Auth Dev Login Failed    | Account | --   | Dev login failed         | Frontend | `auth_mode`, `error`     | --    | --               | Dev only  |
+| Auth Dev Login Succeeded | Account | --   | Dev login succeeded      | Frontend | `auth_mode`              | --    | --               | Dev only  |
+| Auth Dev Login Failed    | Account | --   | Dev login failed         | Frontend | `auth_mode`, `status_code`, `error_detail` | --    | --               | Dev only  |
 
 
 ### Email Verification Events
@@ -66,8 +66,8 @@ These events are still firing from `authStore.ts` and will be replaced when the 
 | Auth Email Verify Code Sent        | Account | --   | Verification code sent to user's email | Frontend | `cooldown_seconds`                  | --    | --               | Live   |
 | Auth Email Verify Code Send Failed | Account | --   | Failed to send verification code       | Frontend | `status_code`, `error_detail`       | --    | --               | Live   |
 | Auth Email Verify Resend Clicked   | Account | --   | User clicks resend verification link   | Frontend | --                                  | --    | --               | Live   |
-| Auth Email Verified                | Account | --   | Email verification succeeds            | Frontend | `role`                              | --    | --               | Live   |
-| Auth Email Verify Failed           | Account | --   | Email verification fails               | Frontend | `status_code`, `error_detail`       | --    | --               | Live   |
+| Auth Email Verified                | Account | --   | Email verification succeeds            | Frontend | --                                  | --    | --               | Live   |
+| Auth Email Verify Failed           | Account | --   | Email verification fails               | Frontend | `status_code`, `error_detail`, `attempts_remaining` | --    | --               | Live   |
 
 
 ### Phone Collection Events
@@ -75,9 +75,9 @@ These events are still firing from `authStore.ts` and will be replaced when the 
 
 | Event                     | Area    | Type | Trigger                       | Source   | Properties                    | Group | Property Updates | Status |
 | ------------------------- | ------- | ---- | ----------------------------- | -------- | ----------------------------- | ----- | ---------------- | ------ |
-| Auth Phone Submitted      | Account | --   | User submits phone number     | Frontend | `phone_length`, `country_code`| --    | --               | Live   |
-| Auth Phone Submit Failed  | Account | --   | Phone submission fails        | Frontend | `status_code`, `error_detail` | --    | --               | Live   |
-| Auth Phone Skipped        | Account | --   | User skips phone collection   | Frontend | `role`                        | --    | --               | Live   |
+| Auth Phone Submitted      | Account | --   | User submits phone number     | Frontend | `phone_length`, `country_code` | --    | --               | Live   |
+| Auth Phone Submit Failed  | Account | --   | Phone submission fails        | Frontend | `status_code`, `error_detail`  | --    | --               | Live   |
+| Auth Phone Skipped        | Account | --   | User skips phone collection   | Frontend | --                             | --    | --               | Live   |
 
 
 ### Account & Persona Events
