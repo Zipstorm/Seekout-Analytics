@@ -193,11 +193,11 @@ Events that were previously defined but have been removed or replaced.
 
 | Property                | Type | Scope                     | Allowed Values                                                                      | Used In                                                        |
 | ----------------------- | ---- | ------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `entry_point`           | enum | event, person ($set_once) | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct`             | Login Started, Account Created, Page Viewed                    |
+| `entry_point`           | enum | event, person ($set_once) | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct`             | Login Started, Account Created, Intro Completed, Page Viewed   |
 | `first_persona`         | enum | person ($set_once)        | `hiring_manager`, `recruiter`, `job_seeker`                                         | Account Created                                                |
 | `persona`               | enum | event                     | `hiring_manager`, `recruiter`, `job_seeker`                                         | Persona Activated                                              |
 | `signup_context`        | enum | event, person ($set_once) | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct`             | Team Member Joined                                             |
-| `current_persona`       | enum | person ($set)             | `hiring_manager`, `recruiter`, `job_seeker`                                         | `identifyUser()`, persona switch                               |
+| `current_persona`       | enum | person ($set)             | `hiring_manager`, `recruiter`, `job_seeker`                                         | (person property)                                              |
 | `activation_action`     | enum | event                     | `profile_created`, `interest_expressed`, `job_created`                              | Account Activated                                              |
 | `trigger`               | enum | event                     | `cta_clicked`, `natural`                                                            | Persona Activated                                              |
 | `input_method`          | enum | event                     | `resume_upload`, `linkedin_import`                                                  | Profile Created                                                |
@@ -226,7 +226,7 @@ Events that were previously defined but have been removed or replaced.
 | `edit_method`           | enum | event                     | `text`, `voice`                                                                     | Intro Script Updated                                           |
 | `ai_recommendation`     | enum | event                     | `shortlisted`, `declined`                                                           | Candidate Viewed                                               |
 | `resume_requirement`    | enum | event                     | `required`, `optional`, `none`                                                      | Job Created                                                    |
-| `auth_method`           | enum | event                     | `google`, `email`, `saml`                                                           | Account Created                                                |
+| `auth_method`           | enum | event                     | `google`, `email`, `saml`                                                           | Account Created, Intro Completed                               |
 | `job_status`            | enum | group (job)               | `draft`, `open`, `closed`, `archived`                                               | All events in job group (group property)                       |
 | `job_visibility`        | enum | group (job)               | `public`, `private`                                                                 | All events in job group (group property)                       |
 
@@ -252,6 +252,7 @@ Events that were previously defined but have been removed or replaced.
 | `has_resume`              | boolean | event       | Interest Expressed                         |
 | `is_authenticated`        | boolean | event       | Job Link Viewed, Profile Link Viewed       |
 | `voice_session_completed` | boolean | event       | Job Created                                |
+| `verification_required`   | boolean | event       | Auth Login Succeeded                       |
 | `has_intro_video`         | boolean | group (job) | All jobs with intro video (group property) |
 
 
@@ -268,6 +269,10 @@ Events that were previously defined but have been removed or replaced.
 | `requirements_count`     | number | event | Role requirements count at job creation        | Job Created                              |
 | `questions_count`        | number | event | Screening questions count at job creation      | Job Created                              |
 | `question_number`        | number | event | Question position in order                     | Candidate Recording Played               |
+| `status_code`            | number | event | HTTP status code from auth backend             | Auth Login Failed, Auth Session Restore Failed, Auth Refresh Failed, Auth Dev Login Failed, Auth Email Verify Code Send Failed, Auth Email Verify Failed, Auth Phone Submit Failed |
+| `cooldown_seconds`       | number | event | Seconds before resend is allowed               | Auth Email Verify Code Sent              |
+| `attempts_remaining`     | number | event | Remaining verification attempts                | Auth Email Verify Failed                 |
+| `phone_length`           | number | event | Phone number length (digits)                   | Auth Phone Submitted                     |
 
 
 ### String Properties
@@ -285,6 +290,11 @@ Events that were previously defined but have been removed or replaced.
 | `target_company`      | string   | event              | Company the link targets (optional, only when `is_job_specific` is true)   | Custom Link Created                              |
 | `reason`              | string   | event              | User-provided reason for withdrawal                                        | Interest Withdrawn                               |
 | `error_reason`        | string   | event              | System error description                                                   | All failure events                               |
+| `auth_mode`           | string   | event              | Auth mode (e.g., `msal`, `posthog`, `dev`)                                 | Login Cancelled, Auth Login Succeeded, Auth Login Failed, Auth Session Restore Succeeded, Auth Logout Completed, Auth Dev Login Started, Auth Dev Login Succeeded, Auth Dev Login Failed |
+| `error_detail`        | string   | event              | Detailed error message                                                     | Auth Login Failed, Auth Dev Login Failed, Auth Email Verify Code Send Failed, Auth Email Verify Failed, Auth Phone Submit Failed |
+| `error_code`          | string   | event              | Error code (e.g., `user_cancelled`)                                        | Login Cancelled                                  |
+| `source`              | string   | event              | Source that triggered the refresh                                          | Auth Refresh Failed                              |
+| `country_code`        | string   | event              | Phone country code (e.g., `+1`)                                            | Auth Phone Submitted                             |
 | `first_referrer`      | string   | person ($set_once) | HTTP referrer at first visit                                               | Login Started (person property)                  |
 | `first_landing_url`   | string   | person ($set_once) | Full landing URL at first visit                                            | Login Started (person property)                  |
 | `account_created_at`  | ISO date | person ($set_once) | Account creation timestamp                                                 | Account Created (person property)                |
