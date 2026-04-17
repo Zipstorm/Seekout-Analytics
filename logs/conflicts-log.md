@@ -14,74 +14,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-03-02 14:47:21 UTC
-
-**Result: 1 error, 2 warnings**
-
-### Errors
-
-- **[Rule 4]** Hiring event "Team Member Joined" missing standard property `acting_as`
-
-### Warnings
-
-- **[Rule 4]** Job-grouped intent event "Create Job Button Clicked" missing `job_id` (may be intentional for creation flow)
-- **[Rule 4]** Job-grouped failure event "Job Creation Failed" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-03-02 14:51:41 UTC
-
-**Result: 2 warnings**
-
-### Warnings
-
-- **[Rule 4]** Job-grouped intent event "Create Job Button Clicked" missing `job_id` (may be intentional for creation flow)
-- **[Rule 4]** Job-grouped failure event "Job Creation Failed" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-03-02 14:56:23 UTC
-
-**Result: 1 error, 2 warnings**
-
-### Errors
-
-- **[Rule 14]** Property Dictionary has duplicate entry for `action`
-
-### Warnings
-
-- **[Rule 4]** Job-grouped intent event "Create Job Button Clicked" missing `job_id` (may be intentional for creation flow)
-- **[Rule 4]** Job-grouped failure event "Job Creation Failed" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-03-02 14:56:47 UTC
-
-**Result: 2 warnings**
-
-### Warnings
-
-- **[Rule 4]** Job-grouped intent event "Create Job Button Clicked" missing `job_id` (may be intentional for creation flow)
-- **[Rule 4]** Job-grouped failure event "Job Creation Failed" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-03-02 14:58:30 UTC
-
-**Result: 2 warnings**
-
-### Warnings
-
-- **[Rule 4]** Job-grouped intent event "Create Job Button Clicked" missing `job_id` (may be intentional for creation flow)
-- **[Rule 4]** Job-grouped failure event "Job Creation Failed" missing `job_id` (may be intentional for creation flow)
-
-
----
-
 ## Run: 2026-03-02 15:01:45 UTC
 
 **Result: All clear**
@@ -430,4 +362,544 @@ All 14 validation rules passed.
 - **[Rule 3]** Catalog sets person property `account_created_at` via {'$set_once'} but it is not in Schema Person Properties table
 - **[Rule 3]** Catalog sets person property `referred_by` via {'$set_once'} but it is not in Schema Person Properties table
 - **[Rule 3]** Catalog sets person property `activated_personas` via {'$set'} but it is not in Schema Person Properties table
+
+
+---
+
+## Run: 2026-04-17 11:21:44 UTC
+
+**Result: 85 errors, 8 warnings**
+
+### Errors
+
+- **[Rule 1]** Event "Chat WebSocket Connected" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Error" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Abnormal Close" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Parse Error" uses an object prefix not in Standard Objects table
+- **[Rule 2]** Intent-Outcome table: "Account Created (new) or Auth Login Succeeded (returning)" (success for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Login Cancelled, Auth Login Failed" (failure for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switch Chevron Clicked" (intent for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switched" (success for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — accepted)*" (success for "Phone collection") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — on app load)*" (intent for "Session restore") not found in Event Catalog
+- **[Rule 4]** Hiring event "Create Job Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Published" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Share Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Shared" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Share Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Status Changed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Invite Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invited" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invite Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Joined" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Interest Reviewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Review Decision Made" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Step Completed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Ended" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Setup Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Requirement Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Question Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Record Video Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Deleted" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Script Updated" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Tab Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Recording Played" missing standard property `acting_as`
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 10]** `entry_point` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` lists "`identifyUser()`" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `current_persona` lists "persona switch" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `auth_method` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `first_referrer` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `first_landing_url` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `account_created_at` lists "Account Created (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 13]** "Login Cancelled": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Login Cancelled": property `error_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `verification_required` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `source` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Logout Completed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Started": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Sent": property `cooldown_seconds` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `attempts_remaining` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `phone_length` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `country_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `error_detail` has no entry in Property Dictionary
+
+### Warnings
+
+- **[Rule 3]** Catalog sets person property `entry_point` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_referrer` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_landing_url` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_persona` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `account_created_at` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `referred_by` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `activated_personas` via {'$set'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `signup_context` via {'$set_once'} but it is not in Schema Person Properties table
+
+*(1 known warning suppressed)*
+
+
+---
+
+## Run: 2026-04-17 11:21:49 UTC
+
+**Result: 85 errors, 8 warnings**
+
+### Errors
+
+- **[Rule 1]** Event "Chat WebSocket Connected" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Error" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Abnormal Close" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Parse Error" uses an object prefix not in Standard Objects table
+- **[Rule 2]** Intent-Outcome table: "Account Created (new) or Auth Login Succeeded (returning)" (success for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Login Cancelled, Auth Login Failed" (failure for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switch Chevron Clicked" (intent for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switched" (success for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — accepted)*" (success for "Phone collection") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — on app load)*" (intent for "Session restore") not found in Event Catalog
+- **[Rule 4]** Hiring event "Create Job Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Published" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Share Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Shared" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Share Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Status Changed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Invite Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invited" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invite Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Joined" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Interest Reviewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Review Decision Made" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Step Completed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Ended" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Setup Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Requirement Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Question Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Record Video Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Deleted" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Script Updated" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Tab Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Recording Played" missing standard property `acting_as`
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+- **[Rule 10]** `entry_point` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` lists "`identifyUser()`" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `current_persona` lists "persona switch" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `auth_method` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `first_referrer` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `first_landing_url` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `account_created_at` lists "Account Created (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 13]** "Login Cancelled": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Login Cancelled": property `error_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `verification_required` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `source` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Logout Completed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Started": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Sent": property `cooldown_seconds` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `attempts_remaining` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `phone_length` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `country_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `error_detail` has no entry in Property Dictionary
+
+### Warnings
+
+- **[Rule 3]** Catalog sets person property `entry_point` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_referrer` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_landing_url` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_persona` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `account_created_at` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `referred_by` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `activated_personas` via {'$set'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `signup_context` via {'$set_once'} but it is not in Schema Person Properties table
+
+*(1 known warning suppressed)*
+
+
+---
+
+## Run: 2026-04-17 11:22:14 UTC
+
+**Result: 85 errors, 8 warnings**
+
+### Errors
+
+- **[Rule 1]** Event "Chat WebSocket Connected" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Error" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Abnormal Close" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Parse Error" uses an object prefix not in Standard Objects table
+- **[Rule 2]** Intent-Outcome table: "Account Created (new) or Auth Login Succeeded (returning)" (success for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Login Cancelled, Auth Login Failed" (failure for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switch Chevron Clicked" (intent for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switched" (success for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — accepted)*" (success for "Phone collection") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — on app load)*" (intent for "Session restore") not found in Event Catalog
+- **[Rule 4]** Hiring event "Create Job Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Published" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Share Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Shared" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Share Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Status Changed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Invite Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invited" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invite Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Joined" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Interest Reviewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Review Decision Made" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Step Completed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Ended" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Setup Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Requirement Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Question Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Record Video Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Deleted" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Script Updated" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Tab Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Recording Played" missing standard property `acting_as`
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 10]** `entry_point` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` lists "`identifyUser()`" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `current_persona` lists "persona switch" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `auth_method` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `first_referrer` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `first_landing_url` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `account_created_at` lists "Account Created (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 13]** "Login Cancelled": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Login Cancelled": property `error_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `verification_required` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `source` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Logout Completed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Started": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Sent": property `cooldown_seconds` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `attempts_remaining` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `phone_length` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `country_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `error_detail` has no entry in Property Dictionary
+
+### Warnings
+
+- **[Rule 3]** Catalog sets person property `entry_point` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_referrer` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_landing_url` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_persona` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `account_created_at` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `referred_by` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `activated_personas` via {'$set'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `signup_context` via {'$set_once'} but it is not in Schema Person Properties table
+
+*(1 known warning suppressed)*
+
+
+---
+
+## Run: 2026-04-17 11:22:15 UTC
+
+**Result: 85 errors, 8 warnings**
+
+### Errors
+
+- **[Rule 1]** Event "Chat WebSocket Connected" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Error" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Abnormal Close" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Parse Error" uses an object prefix not in Standard Objects table
+- **[Rule 2]** Intent-Outcome table: "Account Created (new) or Auth Login Succeeded (returning)" (success for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Login Cancelled, Auth Login Failed" (failure for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switch Chevron Clicked" (intent for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switched" (success for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — accepted)*" (success for "Phone collection") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — on app load)*" (intent for "Session restore") not found in Event Catalog
+- **[Rule 4]** Hiring event "Create Job Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Published" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Share Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Shared" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Share Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Status Changed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Invite Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invited" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invite Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Joined" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Interest Reviewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Review Decision Made" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Step Completed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Ended" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Setup Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Requirement Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Question Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Record Video Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Deleted" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Script Updated" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Tab Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Recording Played" missing standard property `acting_as`
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
+- **[Rule 10]** `entry_point` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` lists "`identifyUser()`" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `current_persona` lists "persona switch" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `auth_method` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `first_referrer` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `first_landing_url` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `account_created_at` lists "Account Created (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 13]** "Login Cancelled": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Login Cancelled": property `error_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `verification_required` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `source` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Logout Completed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Started": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Sent": property `cooldown_seconds` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `attempts_remaining` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `phone_length` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `country_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `error_detail` has no entry in Property Dictionary
+
+### Warnings
+
+- **[Rule 3]** Catalog sets person property `entry_point` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_referrer` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_landing_url` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_persona` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `account_created_at` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `referred_by` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `activated_personas` via {'$set'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `signup_context` via {'$set_once'} but it is not in Schema Person Properties table
+
+*(1 known warning suppressed)*
+
+
+---
+
+## Run: 2026-04-17 11:22:15 UTC
+
+**Result: 85 errors, 8 warnings**
+
+### Errors
+
+- **[Rule 1]** Event "Chat WebSocket Connected" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Error" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Abnormal Close" uses an object prefix not in Standard Objects table
+- **[Rule 1]** Event "Chat WebSocket Parse Error" uses an object prefix not in Standard Objects table
+- **[Rule 2]** Intent-Outcome table: "Account Created (new) or Auth Login Succeeded (returning)" (success for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Login Cancelled, Auth Login Failed" (failure for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switch Chevron Clicked" (intent for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switched" (success for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — accepted)*" (success for "Phone collection") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — on app load)*" (intent for "Session restore") not found in Event Catalog
+- **[Rule 4]** Hiring event "Create Job Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Published" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Share Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Shared" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Share Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Status Changed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Invite Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invited" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Invite Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Team Member Joined" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Interest Reviewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Review Decision Made" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Job Wizard Step Completed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Started" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Ended" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Voice Session Setup Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Requirement Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Question Modified" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Record Video Button Clicked" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Created" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Creation Failed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Video Deleted" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Intro Script Updated" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Tab Viewed" missing standard property `acting_as`
+- **[Rule 4]** Hiring event "Candidate Recording Played" missing standard property `acting_as`
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 10]** `entry_point` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` lists "`identifyUser()`" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `current_persona` lists "persona switch" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `auth_method` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `first_referrer` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `first_landing_url` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `account_created_at` lists "Account Created (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 13]** "Login Cancelled": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Login Cancelled": property `error_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `verification_required` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `source` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Logout Completed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Started": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Sent": property `cooldown_seconds` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `attempts_remaining` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `phone_length` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `country_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `error_detail` has no entry in Property Dictionary
+
+### Warnings
+
+- **[Rule 3]** Catalog sets person property `entry_point` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_referrer` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_landing_url` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_persona` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `account_created_at` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `referred_by` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `activated_personas` via {'$set'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `signup_context` via {'$set_once'} but it is not in Schema Person Properties table
+
+*(1 known warning suppressed)*
 

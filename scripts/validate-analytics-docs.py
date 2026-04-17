@@ -173,8 +173,9 @@ EVENT_SECTION_KEYS = [
     "phone collection",
     "account & persona",
     "anonymous user",
-    "prospect surface",
-    "hiring surface",
+    "prospect persona",
+    "hiring persona",
+    "chat websocket",
 ]
 
 
