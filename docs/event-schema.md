@@ -77,6 +77,7 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Requirement | AI-generated role requirement | Requirement Modified |
 | Question | AI-generated interview question | Question Modified |
 | Intro Script | Intro video script | Intro Script Updated |
+| Chat | Chat/WebSocket connection for messaging | Chat WebSocket Connected, Chat WebSocket Error |
 
 When introducing a new object, add it to this table before using it in events.
 
@@ -129,6 +130,7 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 | `first_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Account Created | First persona chosen during onboarding. Never changes even if user switches role later. |
 | `account_created_at` | ISO date | | Account Created | Account creation timestamp. |
 | `referred_by` | UUID | user ID | Account Created (backend) | User ID of referrer. |
+| `signup_context` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Team Member Joined | Signup context captured when an invited team member first joins a job. |
 
 #### `$set` — Updated on every login
 
@@ -396,7 +398,6 @@ For critical flows, track the UI interaction (intent) and the server-confirmed r
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
 | Creating a job | Create Job Button Clicked | Job Created | Job Creation Failed |
-| Switching persona | Persona Switch Chevron Clicked | Persona Switched | -- |
 | Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed |
 | Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed |
 | Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed |

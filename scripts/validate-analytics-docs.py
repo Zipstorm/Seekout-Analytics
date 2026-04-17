@@ -166,10 +166,16 @@ def parse_property_updates(cell):
 # ── Document Parsers ─────────────────────────────────────────────────────────
 
 EVENT_SECTION_KEYS = [
-    "account & surface",
+    "login & onboarding",
+    "auth lifecycle",
+    "auth dev",
+    "email verification",
+    "phone collection",
+    "account & persona",
     "anonymous user",
-    "prospect surface",
-    "hiring surface",
+    "prospect persona",
+    "hiring persona",
+    "chat websocket",
 ]
 
 
@@ -266,14 +272,20 @@ def parse_schema(path):
                 std_objects[obj] = dict(entity=r[1].strip(), example_events=exs)
 
     person_props = {}
-    _, pp_rows = _find_table(tables, "Person Properties")
-    if pp_rows:
-        for r in pp_rows:
+    # $set_once sub-table: Property | Type | Values | Set By | Description
+    _, pp_once_rows = _find_table(tables, "Immutable, set once")
+    if pp_once_rows:
+        for r in pp_once_rows:
             if len(r) >= 5:
                 prop = r[0].strip().strip("`")
-                person_props[prop] = dict(
-                    type=r[1].strip(), method=r[2].strip().strip("`")
-                )
+                person_props[prop] = dict(type=r[1].strip(), method="$set_once")
+    # $set sub-table: Property | Type | Set By | Description
+    _, pp_set_rows = _find_table(tables, "Updated on every login")
+    if pp_set_rows:
+        for r in pp_set_rows:
+            if len(r) >= 4:
+                prop = r[0].strip().strip("`")
+                person_props[prop] = dict(type=r[1].strip(), method="$set")
 
     std_event_props = {}
     _, sep_rows = _find_table(tables, "Standard Event Properties")
@@ -483,7 +495,12 @@ def _object_prefix(event_name, known_objects):
 
 def _is_general_usage(text):
     t = text.strip().lower()
-    return t.startswith("all ") or "(standard property)" in t
+    return (
+        t.startswith("all ")
+        or "(standard property)" in t
+        or "(person property)" in t
+        or t == "(person property)"
+    )
 
 
 def _parse_exceptions(when_text):
@@ -526,18 +543,35 @@ def rule_01(catalog_events, schema_objects):
 
 
 def rule_02(schema_io, catalog_events):
-    """Schema Intent vs Outcome events must exist in catalog."""
+    """Schema Intent vs Outcome events must exist in catalog.
+
+    Schema cells may be placeholders (`*(implicit — ...)*`) or compound values
+    (`A, B` / `A (new) or B (returning)`). Split on commas and " or ", strip
+    parenthetical qualifiers, and skip implicit placeholders.
+    """
     errors, warnings = [], []
     for flow in schema_io:
         for role in ("intent", "success", "failure"):
-            ev = flow[role]
-            if ev == "--":
+            cell = flow[role]
+            if cell == "--":
                 continue
-            if ev not in catalog_events:
-                errors.append(
-                    f'Intent-Outcome table: "{ev}" ({role} for '
-                    f'"{flow["flow"]}") not found in Event Catalog'
-                )
+            if "implicit" in cell.lower():
+                continue
+            # Split on commas and "or" to get individual event candidates.
+            parts = re.split(r",|\bor\b", cell)
+            for part in parts:
+                ev = part.strip()
+                # Strip trailing parenthetical qualifiers like "(new)" / "(returning)".
+                ev = re.sub(r"\s*\([^)]*\)\s*$", "", ev).strip()
+                # Strip markdown emphasis.
+                ev = ev.strip("*").strip()
+                if not ev or ev == "--":
+                    continue
+                if ev not in catalog_events:
+                    errors.append(
+                        f'Intent-Outcome table: "{ev}" ({role} for '
+                        f'"{flow["flow"]}") not found in Event Catalog'
+                    )
     return errors, warnings
 
 
@@ -570,15 +604,22 @@ def rule_03(schema_person, catalog_events):
 
 
 def rule_04(catalog_events, schema_evt_props):
-    """Hiring surface events must list acting_as; job-grouped events should list job_id."""
+    """Standard event properties (per Schema): enforce only what Schema still defines.
+
+    acting_as was removed from Schema in favor of the `current_persona` person
+    property ($set), so we skip the hiring acting_as check unless Schema
+    explicitly reinstates it.
+    """
     errors, warnings = [], []
+    acting_as_in_schema = "acting_as" in schema_evt_props
     acting_as_when = schema_evt_props.get("acting_as", {}).get("when", "")
     acting_as_exceptions = _parse_exceptions(acting_as_when)
     for name, ev in catalog_events.items():
         section = ev["section"].lower()
         props = ev["properties"]
         if (
-            "hiring" in section
+            acting_as_in_schema
+            and "hiring" in section
             and "acting_as" not in props
             and name not in acting_as_exceptions
         ):
