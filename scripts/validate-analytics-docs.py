@@ -166,7 +166,12 @@ def parse_property_updates(cell):
 # ── Document Parsers ─────────────────────────────────────────────────────────
 
 EVENT_SECTION_KEYS = [
-    "account & surface",
+    "login & onboarding",
+    "auth lifecycle",
+    "auth dev",
+    "email verification",
+    "phone collection",
+    "account & persona",
     "anonymous user",
     "prospect surface",
     "hiring surface",

@@ -14,22 +14,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-03-02 14:45:33 UTC
-
-**Result: 1 error, 2 warnings**
-
-### Errors
-
-- **[Rule 4]** Hiring event "Team Member Joined" missing standard property `acting_as`
-
-### Warnings
-
-- **[Rule 4]** Job-grouped intent event "Create Job Button Clicked" missing `job_id` (may be intentional for creation flow)
-- **[Rule 4]** Job-grouped failure event "Job Creation Failed" missing `job_id` (may be intentional for creation flow)
-
-
----
-
 ## Run: 2026-03-02 14:47:21 UTC
 
 **Result: 1 error, 2 warnings**
@@ -293,3 +277,157 @@ All 14 validation rules passed.
 All 14 validation rules passed.
 
 *(2 known warnings suppressed)*
+
+---
+
+## Run: 2026-04-17 10:48:52 UTC
+
+**Result: 119 errors, 22 warnings**
+
+### Errors
+
+- **[Rule 2]** Intent-Outcome table: "Account Created (new) or Auth Login Succeeded (returning)" (success for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Login Cancelled, Auth Login Failed" (failure for "Login / Signup") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Share Button Clicked" (intent for "Sharing a job") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Job Shared" (success for "Sharing a job") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Job Share Failed" (failure for "Sharing a job") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Express Interest Button Clicked" (intent for "Expressing interest") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Interest Expressed" (success for "Expressing interest") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Interest Expression Failed" (failure for "Expressing interest") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Invite Button Clicked" (intent for "Inviting team member") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Team Member Invited" (success for "Inviting team member") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Team Member Invite Failed" (failure for "Inviting team member") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Create Job Button Clicked" (intent for "Creating a job") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Job Created" (success for "Creating a job") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Job Creation Failed" (failure for "Creating a job") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switch Chevron Clicked" (intent for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Persona Switched" (success for "Switching persona") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — accepted)*" (success for "Phone collection") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "*(implicit — on app load)*" (intent for "Session restore") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Record Video Button Clicked" (intent for "Recording intro video") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Intro Video Created" (success for "Recording intro video") not found in Event Catalog
+- **[Rule 2]** Intent-Outcome table: "Intro Video Creation Failed" (failure for "Recording intro video") not found in Event Catalog
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Job Shared" (stage: Share) not found in Event Catalog
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Custom Link Shared" (stage: Share) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 10]** `entry_point` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `persona` is used in "Persona Activated" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `persona` lists "Account Created" in "Used In" but that event does not reference this property
+- **[Rule 10]** `signup_context` lists "Account Created" in "Used In" but that event does not reference this property
+- **[Rule 10]** `signup_context` lists "Team Member Joined" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `current_persona` lists "`identifyUser()`" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `current_persona` lists "persona switch" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `input_method` lists "Profile Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `section` lists "Profile Section Updated" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `share_channel` lists "Custom Link Shared" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `share_channel` lists "Job Shared" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `session_type` lists "Career Coach Session Started" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `input_mode` lists "Career Coach Session Started" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `message_type` lists "Career Coach Message Sent" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `topic` lists "Career Coach Message Sent" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `visibility` lists "Job Published" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `from_status` lists "Job Status Changed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `to_status` lists "Job Status Changed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `invited_role_label` lists "Team Member Invited" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `invite_method` lists "Team Member Invited" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `role_label` lists "Team Member Joined" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `decision` lists "Review Decision Made" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `step_name` lists "Job Wizard Step Completed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `ended_by` lists "Voice Session Ended" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `modification_type` lists "Question Modified" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `modification_type` lists "Requirement Modified" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `share_source` lists "Job Share Failed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `share_source` lists "Job Shared" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `share_source` lists "Share Button Clicked" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `tab_name` lists "Candidate Tab Viewed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `edit_method` lists "Intro Script Updated" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `ai_recommendation` lists "Candidate Viewed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `resume_requirement` lists "Job Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `auth_method` is used in "Intro Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `is_job_specific` lists "Custom Link Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `is_job_specific` lists "Custom Link Shared" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `has_custom_link` lists "Interest Expressed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `has_resume` lists "Interest Expressed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `voice_session_completed` lists "Job Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `time_to_review_seconds` lists "Interest Reviewed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `step_number` lists "Job Wizard Step Completed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `duration_seconds` lists "Intro Video Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `duration_seconds` lists "Voice Session Ended" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `takes_count` lists "Intro Video Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `requirements_count` lists "Job Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `questions_count` lists "Job Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `question_number` lists "Candidate Recording Played" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `link_name` lists "Custom Link Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `target_job_title` lists "Custom Link Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `target_company` lists "Custom Link Created" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `reason` lists "Interest Withdrawn" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `first_referrer` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `first_landing_url` lists "Login Started (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `account_created_at` lists "Account Created (person property)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `shared_by_user_id` lists "Job Shared" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `referrer_job_id` lists "Account Created" in "Used In" but that event does not reference this property
+- **[Rule 10]** `candidate_id` lists "Candidate Recording Played" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `candidate_id` lists "Candidate Tab Viewed" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `candidate_id` lists "Candidate Viewed" in "Used In" but that event does not exist in the catalog
+- **[Rule 13]** "Login Cancelled": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Login Cancelled": property `error_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Succeeded": property `verification_required` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Session Restore Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `source` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Refresh Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Logout Completed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Started": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Succeeded": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `auth_mode` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Dev Login Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Sent": property `cooldown_seconds` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Code Send Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `error_detail` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Email Verify Failed": property `attempts_remaining` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `phone_length` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submitted": property `country_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `status_code` has no entry in Property Dictionary
+- **[Rule 13]** "Auth Phone Submit Failed": property `error_detail` has no entry in Property Dictionary
+
+### Warnings
+
+- **[Rule 1]** Standard Object "Profile" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Job" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Interest" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Review" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Team Member" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Custom Link" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Career Coach" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Job Wizard" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Job Wizard Step" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Voice Session" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Intro Video" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Candidate" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Requirement" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Question" has no matching events in Event Catalog
+- **[Rule 1]** Standard Object "Intro Script" has no matching events in Event Catalog
+- **[Rule 3]** Catalog sets person property `entry_point` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_referrer` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_landing_url` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `first_persona` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `account_created_at` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `referred_by` via {'$set_once'} but it is not in Schema Person Properties table
+- **[Rule 3]** Catalog sets person property `activated_personas` via {'$set'} but it is not in Schema Person Properties table
+
