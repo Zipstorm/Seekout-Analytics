@@ -2,7 +2,7 @@
 
 | Feature | PRD Link | Status | Tracking Plan | Date Created |
 |---|---|---|---|---|
-| *(no active tracking plans)* | | | | |
+| Login & Onboarding Events | — | Draft | [helix-code-changes-login-onboarding.md](./helix-code-changes-login-onboarding.md) | 2026-04-17 |
 
 ### Status Legend
 
