@@ -14,16 +14,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-03-20 14:07:20 UTC
-
-**Result: All clear**
-
-All 14 validation rules passed.
-
-*(2 known warnings suppressed)*
-
----
-
 ## Run: 2026-03-20 14:17:35 UTC
 
 **Result: All clear**
@@ -1029,6 +1019,38 @@ All 14 validation rules passed.
 - **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
 - **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
 - **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+
+### Warnings
+
+- **[Rule 3]** Person property `email` ($set) defined in Schema but no catalog event sets it via Property Updates
+- **[Rule 3]** Person property `name` ($set) defined in Schema but no catalog event sets it via Property Updates
+- **[Rule 3]** Person property `org_id` ($set) defined in Schema but no catalog event sets it via Property Updates
+- **[Rule 3]** Person property `org_name` ($set) defined in Schema but no catalog event sets it via Property Updates
+- **[Rule 3]** Person property `org_domain` ($set) defined in Schema but no catalog event sets it via Property Updates
+
+*(1 known warning suppressed)*
+
+
+---
+
+## Run: 2026-05-11 09:29:46 UTC
+
+**Result: 12 errors, 5 warnings**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
 
 ### Warnings
 

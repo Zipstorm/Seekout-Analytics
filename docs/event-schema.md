@@ -141,10 +141,10 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 | `org_id` | string | `identifyUser()` | User's current organization ID |
 | `org_name` | string | `identifyUser()` | User's current organization name. Resolved from org_id on backend before identify call. |
 | `org_domain` | string | `identifyUser()` | User's organization domain (e.g., `seekout.com`). Resolved from org_id on backend before identify call. |
-| `current_persona` | enum | `identifyUser()` + persona switch | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Updated on every login and on persona switch via sidebar toggle. |
-| `activated_personas` | array | Persona Activated | All unique personas the user has tried. Grows over time as new personas are activated. |
+| `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
+| `activated_personas` | array | Persona Updated | All unique personas the user has tried. Grows over time as user switches personas. |
 
-**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) changes whenever the user switches roles. `activated_personas` (`$set`) accumulates every persona the user has tried over time — it only grows, never shrinks.
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) accumulates every persona the user has tried over time — it only grows, never shrinks.
 
 **Identifying a user (JS SDK — called after auth succeeds):**
 
@@ -179,7 +179,7 @@ posthog.capture('Login Started', {
 });
 ```
 
-**Setting first_persona (JS SDK — fires on Account Created, after role selection):**
+**Setting first_persona and current_persona (JS SDK — fires on Account Created, after role selection):**
 
 ```javascript
 // In pages/RoleSelection.tsx → handleContinue()
@@ -188,15 +188,18 @@ posthog.capture('Account Created', {
   action_value: 'continue_as_hiring_manager_button',  // or continue_as_recruiter_button, continue_as_job_seeker_button
   current_page_context: 'onboarding_role_selection',
   previous_page_context: previousPageContext,  // stored from last page view, transformed to snake_case
-  entry_point: entryPoint,
   entity_type: 'onboarding',
   component: 'onboarding_role_selection_footer_cta',
-  context_object_type: null,
-  context_object_id: null,
-  persona,
+  first_persona: persona,
+  auth_method: authMethod,
+  referred_by: referrerUserId || null,
+  $set: {
+    current_persona: persona,
+  },
   $set_once: {
     first_persona: persona,
     account_created_at: new Date().toISOString(),
+    referred_by: referrerUserId || null,
   },
 });
 ```
@@ -231,7 +234,11 @@ Include on every event where applicable.
 posthog.capture('Page Viewed', {
   current_page_context: 'auth_landing',
   previous_page_context: getPreviousPageContext(),
-  entry_point: entryPoint,
+  $set_once: {
+    entry_point: entryPoint,
+    first_referrer: document.referrer || null,
+    first_landing_url: window.location.href,
+  },
 });
 
 // Login Started — fires on CTA click, before auth
@@ -261,16 +268,18 @@ posthog.capture('Account Created', {
   action_value: 'continue_as_hiring_manager_button',  // or continue_as_recruiter_button, continue_as_job_seeker_button
   current_page_context: 'onboarding_role_selection',
   previous_page_context: getPreviousPageContext(),
-  entry_point: entryPoint,
   entity_type: 'onboarding',
   component: 'onboarding_role_selection_footer_cta',
-  context_object_type: null,
-  context_object_id: null,
-  persona: 'hiring_manager',
+  first_persona: 'hiring_manager',
   auth_method: 'google',
+  referred_by: referrerUserId || null,
+  $set: {
+    current_persona: 'hiring_manager',
+  },
   $set_once: {
     first_persona: 'hiring_manager',
     account_created_at: new Date().toISOString(),
+    referred_by: referrerUserId || null,
   },
 });
 
@@ -280,11 +289,38 @@ posthog.capture('Intro Completed', {
   action_value: 'lets_go_button',
   current_page_context: 'onboarding_intro',
   previous_page_context: getPreviousPageContext(),
-  entry_point: null,
   entity_type: 'onboarding',
   component: 'onboarding_intro_footer_cta',
-  context_object_type: null,
-  context_object_id: null,
+  auth_method: authMethod,
+});
+```
+
+### Persona switching events (JS SDK — frontend)
+
+```javascript
+// Persona Chevron Clicked — fires when user clicks the ⇄ chevron in sidebar
+posthog.capture('Persona Chevron Clicked', {
+  current_page_context: currentPageContext,  // e.g., 'hm_job_postings', 'recruiter_home'
+});
+
+// Persona Updated — fires when user selects a different persona from dropdown
+// previousPersona is captured BEFORE the switch; new persona goes into $set
+const previousPersona = currentPersona;  // e.g., 'hiring_manager'
+const newPersona = selectedPersona;      // e.g., 'recruiter'
+
+posthog.capture('Persona Updated', {
+  previous_persona: previousPersona,
+  $set: {
+    current_persona: newPersona,
+    activated_personas: [...activatedPersonas, newPersona],  // append new persona if not already present
+  },
+});
+
+// Page Viewed — fires automatically when the new persona's home page loads
+// current_persona person property is already updated from Persona Updated above
+posthog.capture('Page Viewed', {
+  current_page_context: 'recruiter_home',  // new persona's landing page
+  previous_page_context: 'hm_job_postings',
 });
 ```
 
