@@ -88,16 +88,23 @@ Server confirms persona switch succeeded.
 |-------|-------|
 | **Area** | Account |
 | **Type** | Success |
-| **Trigger** | Backend confirms persona switch after user selects a different persona |
+| **Trigger** | Backend confirms persona switch via `PATCH /api/users/me` with `{ role: "..." }` |
 | **Source** | Backend |
 | **Group** | -- |
 | **Status** | Not Started |
+
+**Helix code context:**
+- **API endpoint:** `PATCH /api/users/me` in `users/router.py` → `update_my_profile()`
+- **Service:** `users/service.py` → `update_user()` — validates `UserRole` enum, updates `user.role` + `user.org_id`
+- **User model:** `user.role` (enum: `HIRING_MANAGER`, `RECRUITER`, `PROFESSIONAL`, `ADMIN`) — no `current_persona` column; persona is derived via `ROLE_TO_PERSONA` mapping
+- **PostHog client:** `shared/posthog_client.py` → `capture(distinct_id, event, properties, groups)`
+- **Event constants:** `shared/posthog_events.py` — add new constants here
 
 **Properties:**
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on before switching |
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Derived from `user.role` BEFORE the update via `ROLE_TO_PERSONA` |
 
 **Property Updates:**
 
@@ -106,35 +113,86 @@ Server confirms persona switch succeeded.
 | `$set` | `current_persona` | Updated to the newly selected persona (`hiring_manager`, `recruiter`, `job_seeker`) |
 | `$set` | `activated_personas` | Array of all unique personas the user has tried; grows over time, deduplicated |
 
-**PostHog call (Python SDK — backend):**
+**PostHog call — add to `users/router.py` → `update_my_profile()`:**
 
 ```python
-previous_persona = user.current_persona  # e.g., 'hiring_manager'
-new_persona = request.new_persona        # e.g., 'recruiter'
+# In users/router.py — after service.update_user() succeeds and before return
+# Only fire when the role field was part of the update and actually changed
 
-# Only fire if persona actually changed
-if new_persona != previous_persona:
-    activated = list(set((user.activated_personas or []) + [new_persona]))
+from app.shared.posthog_events import (
+    PERSONA_UPDATED,
+    PERSONA_UPDATE_FAILED,
+    get_acting_as,  # maps UserRole → persona string
+)
 
-    posthog.capture(
-        event='Persona Updated',
-        distinct_id=str(user.id),
-        properties={
-            'previous_persona': previous_persona,
-            '$set': {
-                'current_persona': new_persona,
-                'activated_personas': activated,
-            },
-        },
-    )
+ROLE_TO_PERSONA = {
+    "HIRING_MANAGER": "hiring_manager",
+    "RECRUITER": "recruiter",
+    "PROFESSIONAL": "job_seeker",
+}
+
+@router.patch("/me", response_model=UserResponse)
+async def update_my_profile(
+    dto: UpdateUserDto,
+    current_user: AuthUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    previous_role = current_user.role  # role BEFORE update
+    previous_persona = ROLE_TO_PERSONA.get(previous_role, "unknown") if previous_role else "unknown"
+
+    try:
+        result = await service.update_user(db, current_user.id, dto)
+        await db.commit()
+
+        # Fire Persona Updated only when role actually changed
+        if dto.role is not None and dto.role != previous_role:
+            new_persona = ROLE_TO_PERSONA.get(dto.role, "unknown")
+            posthog_client.capture(
+                str(current_user.id),
+                PERSONA_UPDATED,
+                {
+                    "previous_persona": previous_persona,
+                    "$set": {
+                        "current_persona": new_persona,
+                        "activated_personas": list(set(
+                            (current_user.activated_personas or []) + [new_persona]
+                        )),
+                    },
+                },
+            )
+
+        return result
+
+    except Exception as e:
+        if dto.role is not None:
+            target_persona = ROLE_TO_PERSONA.get(dto.role, "unknown")
+            posthog_client.capture(
+                str(current_user.id),
+                PERSONA_UPDATE_FAILED,
+                {
+                    "previous_persona": previous_persona,
+                    "target_persona": target_persona,
+                    "error_reason": str(e),
+                    "error_category": "validation" if isinstance(e, (ValueError, BadRequestException)) else "server",
+                },
+            )
+        raise
+```
+
+**New constants for `shared/posthog_events.py`:**
+
+```python
+# Persona switching
+PERSONA_UPDATED = "Persona Updated"
+PERSONA_UPDATE_FAILED = "Persona Update Failed"
 ```
 
 **Notes:**
-- Fires from the backend after the API confirms the switch — not on the frontend card click
-- Does NOT fire if the persona didn't actually change
-- `previous_persona` is an event property; the new persona is captured via `$set: current_persona`
-- Switch patterns (e.g., hiring_manager → recruiter) can be analyzed by combining `previous_persona` with the updated `current_persona`
-- `activated_personas` is deduplicated server-side
+- Fires from `users/router.py` after `service.update_user()` + `db.commit()` succeeds
+- Only fires when `dto.role` is set AND differs from `current_user.role`
+- `user.role` is a `UserRole` enum (`HIRING_MANAGER`, `RECRUITER`, `PROFESSIONAL`) — mapped to persona strings via `ROLE_TO_PERSONA`
+- No `current_persona` or `activated_personas` columns in DB — these are purely PostHog person properties
+- `activated_personas` note: since this isn't stored in DB, on first switch the array may be `None`; the `or []` handles this. Consider seeding it on Account Created (see catalog changes below)
 
 ---
 
@@ -146,7 +204,7 @@ Server returns error when persona switch fails.
 |-------|-------|
 | **Area** | Account |
 | **Type** | Failure |
-| **Trigger** | Backend returns error on persona switch attempt |
+| **Trigger** | `service.update_user()` raises exception during persona switch |
 | **Source** | Backend |
 | **Group** | -- |
 | **Status** | Not Started |
@@ -155,30 +213,16 @@ Server returns error when persona switch fails.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on when the switch was attempted |
-| `target_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user tried to switch to |
-| `error_reason` | string | system error description | What went wrong |
-| `error_category` | enum | `network`, `permission`, `validation`, `server`, `timeout` | Error classification |
-
-**PostHog call (Python SDK — backend):**
-
-```python
-posthog.capture(
-    event='Persona Update Failed',
-    distinct_id=str(user.id),
-    properties={
-        'previous_persona': user.current_persona,
-        'target_persona': request.new_persona,
-        'error_reason': str(e),
-        'error_category': 'server',  # network, permission, validation, server, timeout
-    },
-)
-```
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Derived from `current_user.role` (unchanged — switch failed) |
+| `target_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Derived from `dto.role` — what the user tried to switch to |
+| `error_reason` | string | system error description | `str(e)` from the caught exception |
+| `error_category` | enum | `validation`, `server` | `validation` for `ValueError`/`BadRequestException`, `server` for others |
 
 **Notes:**
-- Fires from the backend when the persona switch API returns an error
+- Fires in the `except` block of `update_my_profile()` when `dto.role` is set
 - `previous_persona` stays unchanged (switch didn't happen)
-- `target_persona` captures what the user tried to switch to (distinct from `previous_persona` on Persona Updated which is the "from" persona)
+- Common failure: invalid role enum value → `ValueError` from `UserRole(dto.role)` in `service.update_user()`
+- Org resolution failure in `ensure_org_for_role()` would also trigger this
 
 ---
 
