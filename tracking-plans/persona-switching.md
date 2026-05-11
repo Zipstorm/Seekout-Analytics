@@ -165,7 +165,7 @@ posthog.capture('Page Viewed', {
 
 **Notes:**
 - No changes needed to this event — it already exists and is Live
-- No `$set_once` needed — first-touch attribution is handled by the first Page Viewed (login/landing page)
+- No `$set_once` needed — first-touch attribution is handled by the Page Viewed on the login page (`/signup` URL)
 - After Persona Updated fires, `current_persona` person property is already updated, so this Page Viewed is automatically associated with the new persona in PostHog queries
 
 ---
@@ -221,8 +221,8 @@ posthog.capture('Page Viewed', {
 
 **Page Viewed:**
 - Remove `entry_point` from event properties (keep only `current_page_context`, `previous_page_context`)
-- Add `entry_point` as event property on first landing only
-- Move `$set_once: entry_point, first_referrer, first_landing_url` here (from Login Started)
+- Add `entry_point` as event property **only on the login page** (detected via `window.location.pathname === '/signup'`)
+- Move `$set_once: entry_point, first_referrer, first_landing_url` here (from Login Started) — fires only on the `/signup` page
 
 **Login Started:**
 - Keep `entry_point` as event property
@@ -270,9 +270,9 @@ posthog.capture('Page Viewed', {
 #### 2. Person Properties `$set_once` table
 
 **Update Set By:**
-- `entry_point` → `Page Viewed (first landing)`
-- `first_referrer` → `Page Viewed (first landing)`
-- `first_landing_url` → `Page Viewed (first landing)`
+- `entry_point` → `Page Viewed (login page — `/signup` URL)`
+- `first_referrer` → `Page Viewed (login page — `/signup` URL)`
+- `first_landing_url` → `Page Viewed (login page — `/signup` URL)`
 
 #### 3. Person Properties `$set` table
 
@@ -292,7 +292,7 @@ Add production-ready PostHog calls for all 3 events (Persona Chevron Clicked, Pe
 
 #### 6. Sample code — update existing events
 
-- **Page Viewed:** Add `isFirstLanding` conditional for `entry_point` + `$set_once`
+- **Page Viewed:** Add `isLoginPage` check (`window.location.pathname === '/signup'`) for `entry_point` + `$set_once` — fires only on the login page, not on every page view
 - **Login Started:** Remove `$set_once` block, remove `context_object_type`, `context_object_id`
 - **Account Created:** Remove `entry_point`, add `$set: current_persona, activated_personas: [persona]`
 - **Intro Completed:** Remove `entry_point`
