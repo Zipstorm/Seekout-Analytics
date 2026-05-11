@@ -9,7 +9,7 @@ confluence:
 
 **Product:** Helix (SeekOut.ai)
 **Analytics Platform:** PostHog
-**Last Updated:** April 2026
+**Last Updated:** May 2026
 
 For naming conventions, PostHog setup, and sample code, see [Helix Analytics Events Schema](./event-schema.md).
 For dashboards and funnel mappings, see [Helix Analytics Dashboards & Funnels](./dashboards.md).
@@ -26,11 +26,11 @@ Events for the login and new user onboarding flow. Full specs in [event-definiti
 
 | Event             | Area       | Type        | Trigger                                                        | Source   | Properties                                                                                                                              | Group | Property Updates                                                              | Status |
 | ----------------- | ---------- | ----------- | -------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------- | ------ |
-| Page Viewed       | Navigation | page_view   | User lands on a meaningful page                                | Frontend | `current_page_context`, `previous_page_context`, `entry_point`                                                                          | --    | `$set_once: entry_point, first_referrer, first_landing_url`                   | Live   |
+| Page Viewed       | Navigation | page_view   | User lands on a meaningful page                                | Frontend | `current_page_context`, `previous_page_context`, `entry_point` (login page only)                                                        | --    | `$set_once: entry_point, first_referrer, first_landing_url` (login page only) | Live   |
 | Login Started     | Account    | user_action | User clicks "Continue with Google or Email" on auth landing    | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`                    | --    | --                                                                            | Live   |
 | Login Cancelled   | Account    | user_action | User closes MSAL popup without completing auth                 | Frontend | `auth_mode`, `error_code`                                                                                                               | --    | --                                                                            | Live   |
-| Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `first_persona`, `auth_method`, `referred_by` | --    | `$set_once: first_persona, account_created_at, referred_by`                   | Live   |
-| Intro Completed   | Account    | user_action | User clicks "Let's go" on onboarding intro page               | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `auth_method`     | --    | --                                                                            | Live   |
+| Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `first_persona`, `auth_method`, `referred_by` | --    | `$set: current_persona, activated_personas`; `$set_once: first_persona, account_created_at, referred_by` | Live   |
+| Intro Completed   | Account    | user_action | User clicks "Let's go" on onboarding intro page               | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `auth_method`                    | --    | --                                                                            | Live   |
 
 
 ### Auth Lifecycle Events (existing — to be replaced)
@@ -85,8 +85,10 @@ These events are still firing from `authStore.ts` and will be replaced when the 
 
 | Event             | Area    | Type    | Trigger                                                   | Source   | Properties                                                                                                    | Group | Property Updates                                                            | Status      |
 | ----------------- | ------- | ------- | --------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------- | ----------- |
-| Account Activated | Account | --      | First meaningful action completed                         | Backend  | `activation_action`, `days_since_signup`                                                           | --    | --                                                                          | Not Started |
-| Persona Activated | Account | --      | User activates a new persona (e.g., prospect adds hiring_manager) | Frontend | `persona`, `trigger`                                                                                          | --    | `$set: activated_personas`                                                  | Not Started |
+| Account Activated              | Account | --      | First meaningful action completed                                    | Backend  | `activation_action`, `days_since_signup`                                                           | --    | --                                                                          | Not Started |
+| Switch Persona Button Clicked  | Account | Intent  | User clicks the ⇄ chevron next to current persona in sidebar        | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | --                                                                          | Not Started |
+| Persona Updated                | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona`                                                          | --    | `$set: current_persona, activated_personas`                                 | Not Started |
+| Persona Update Failed          | Account | Failure | Backend returns error on persona switch attempt                       | Backend  | `previous_persona`, `target_persona`, `error_reason`, `error_category`      | --    | --                                                                          | Not Started |
 
 
 ### Anonymous User Events
@@ -183,6 +185,7 @@ Events that were previously defined but have been removed or replaced.
 | Auth Role Update Failed | _(removed)_ | Error handling moved to Account Created flow | April 2026 |
 | Persona Selected | Account Created | Combined into single event — role selection IS account creation | April 2026 |
 | Account Created (backend) | Account Created (frontend) | Moved from backend 5s heuristic to frontend role selection | April 2026 |
+| Persona Activated | Persona Updated | Renamed — "Activated" implied adding a new persona; "Updated" reflects switching between existing personas | May 2026 |
 
 ---
 
@@ -193,13 +196,13 @@ Events that were previously defined but have been removed or replaced.
 
 | Property                | Type | Scope                     | Allowed Values                                                                      | Used In                                                        |
 | ----------------------- | ---- | ------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `entry_point`           | enum | event, person ($set_once) | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct`             | Login Started, Account Created, Intro Completed, Page Viewed   |
-| `first_persona`         | enum | person ($set_once)        | `hiring_manager`, `recruiter`, `job_seeker`                                         | Account Created                                                |
-| `persona`               | enum | event                     | `hiring_manager`, `recruiter`, `job_seeker`                                         | Persona Activated                                              |
+| `entry_point`           | enum | event, person ($set_once) | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct`             | Page Viewed, Login Started                                     |
+| `first_persona`         | enum | event, person ($set_once) | `hiring_manager`, `recruiter`, `job_seeker`                                         | Account Created                                                |
 | `signup_context`        | enum | event, person ($set_once) | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct`             | Team Member Joined                                             |
-| `current_persona`       | enum | person ($set)             | `hiring_manager`, `recruiter`, `job_seeker`                                         | (person property)                                              |
+| `current_persona`       | enum | person ($set)             | `hiring_manager`, `recruiter`, `job_seeker`                                         | Account Created, Persona Updated (person property)             |
+| `previous_persona`      | enum | event                     | `hiring_manager`, `recruiter`, `job_seeker`                                         | Persona Updated, Persona Update Failed                         |
+| `target_persona`        | enum | event                     | `hiring_manager`, `recruiter`, `job_seeker`                                         | Persona Update Failed                                          |
 | `activation_action`     | enum | event                     | `profile_created`, `interest_expressed`, `job_created`                              | Account Activated                                              |
-| `trigger`               | enum | event                     | `cta_clicked`, `natural`                                                            | Persona Activated                                              |
 | `input_method`          | enum | event                     | `resume_upload`, `linkedin_import`                                                  | Profile Created                                                |
 | `section`               | enum | event                     | `summary`, `experience`, `skills`, `timeline`                                       | Profile Section Updated                                        |
 | `share_channel`         | enum | event                     | `copy`, `email`, `linkedin`, `other`                                                | Custom Link Shared, Job Shared                                 |
@@ -216,12 +219,12 @@ Events that were previously defined but have been removed or replaced.
 | `decision`              | enum | event                     | `shortlisted`, `declined`, `needs_discussion`                                       | Review Decision Made                                           |
 | `action` (job link)     | enum | event                     | `view_details`, `express_interest`                                                  | Job Link Engaged                                               |
 | `action` (profile link) | enum | event                     | `view_full_profile`, `download_resume`                                              | Profile Link Engaged                                           |
-| `action` (user_action)  | enum | event                     | `click`, `submit`, `toggle`                                                         | Login Started, Account Created, Intro Completed                |
+| `action` (user_action)  | enum | event                     | `click`, `submit`, `toggle`                                                         | Login Started, Account Created, Intro Completed, Switch Persona Button Clicked |
 | `step_name`             | enum | event                     | `job_details`, `understanding_the_role`, `role_requirements`, `interview_questions`  | Job Wizard Step Completed                                      |
 | `ended_by`              | enum | event                     | `user`, `sam`                                                                       | Voice Session Ended                                            |
 | `modification_type`     | enum | event                     | `added`, `edited`, `deleted`, `reordered`                                           | Requirement Modified, Question Modified                        |
 | `share_source`          | enum | event                     | `success_screen`, `dashboard`, `overflow_menu`                                      | Share Button Clicked, Job Shared, Job Share Failed             |
-| `error_category`        | enum | event                     | `network`, `permission`, `validation`, `server`, `timeout`                          | All failure events                                             |
+| `error_category`        | enum | event                     | `network`, `permission`, `validation`, `server`, `timeout`                          | All failure events (incl. Persona Update Failed)               |
 | `tab_name`              | enum | event                     | `summary`, `role_requirements`, `recordings`, `notes`                               | Candidate Tab Viewed                                           |
 | `edit_method`           | enum | event                     | `text`, `voice`                                                                     | Intro Script Updated                                           |
 | `ai_recommendation`     | enum | event                     | `shortlisted`, `declined`                                                           | Candidate Viewed                                               |
@@ -280,11 +283,11 @@ Events that were previously defined but have been removed or replaced.
 
 | Property              | Type     | Scope              | Description                                                                | Used In                                          |
 | --------------------- | -------- | ------------------ | -------------------------------------------------------------------------- | ------------------------------------------------ |
-| `action_value`        | string   | event              | Specific UI element interacted with (snake_case)                           | Login Started, Account Created, Intro Completed  |
-| `current_page_context`| string   | event              | Page where event occurred (snake_case, `/` hierarchy)                      | Page Viewed, Login Started, Account Created, Intro Completed |
-| `previous_page_context`| string  | event              | Previous page before current one                                           | Page Viewed, Login Started, Account Created, Intro Completed |
-| `component`           | string   | event              | UI container where action occurred                                         | Login Started, Account Created, Intro Completed  |
-| `entity_type`         | string   | event              | Business object being acted on                                             | Login Started, Account Created, Intro Completed  |
+| `action_value`        | string   | event              | Specific UI element interacted with (snake_case)                           | Login Started, Account Created, Intro Completed, Switch Persona Button Clicked |
+| `current_page_context`| string   | event              | Page where event occurred (snake_case, `/` hierarchy)                      | Page Viewed, Login Started, Account Created, Intro Completed, Switch Persona Button Clicked |
+| `previous_page_context`| string  | event              | Previous page before current one                                           | Page Viewed, Login Started, Account Created, Intro Completed, Switch Persona Button Clicked |
+| `component`           | string   | event              | UI container where action occurred                                         | Login Started, Account Created, Intro Completed, Switch Persona Button Clicked |
+| `entity_type`         | string   | event              | Business object being acted on                                             | Login Started, Account Created, Intro Completed, Switch Persona Button Clicked |
 | `link_name`           | string   | event              | User-provided name for the custom link                                     | Custom Link Created                              |
 | `target_job_title`    | string   | event              | Job title the link targets (optional, only when `is_job_specific` is true) | Custom Link Created                              |
 | `target_company`      | string   | event              | Company the link targets (optional, only when `is_job_specific` is true)   | Custom Link Created                              |
@@ -295,8 +298,8 @@ Events that were previously defined but have been removed or replaced.
 | `error_code`          | string   | event              | Error code (e.g., `user_cancelled`)                                        | Login Cancelled                                  |
 | `source`              | string   | event              | Source that triggered the refresh                                          | Auth Refresh Failed                              |
 | `country_code`        | string   | event              | Phone country code (e.g., `+1`)                                            | Auth Phone Submitted                             |
-| `first_referrer`      | string   | person ($set_once) | HTTP referrer at first visit                                               | Login Started (person property)                  |
-| `first_landing_url`   | string   | person ($set_once) | Full landing URL at first visit                                            | Login Started (person property)                  |
+| `first_referrer`      | string   | person ($set_once) | HTTP referrer at first visit                                               | Page Viewed (person property)                    |
+| `first_landing_url`   | string   | person ($set_once) | Full landing URL at first visit                                            | Page Viewed (person property)                    |
 | `account_created_at`  | ISO date | person ($set_once) | Account creation timestamp                                                 | Account Created (person property)                |
 | `job_title`           | string   | group (job)        | Job posting title                                                          | All events in job group (group property)         |
 | `created_at`          | ISO date | group (job)        | Job creation timestamp                                                     | All events in job group (group property)         |

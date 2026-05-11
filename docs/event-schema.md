@@ -66,7 +66,7 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Team Member | JobTeamMember | Team Member Invited, Team Member Joined |
 | Custom Link | Prospect's named shareable link (general or job-specific) | Custom Link Created, Custom Link Shared |
 | Career Coach | AI Career Coach agent | Career Coach Session Started |
-| Persona | User persona (hiring_manager, recruiter, job_seeker) | Persona Activated |
+| Persona | User persona (hiring_manager, recruiter, job_seeker) | Switch Persona Button Clicked, Persona Updated |
 | Job Link | Shared job posting link viewed by anonymous visitors | Job Link Viewed, Job Link Engaged |
 | Profile Link | Prospect's shareable profile link viewed by visitors | Profile Link Viewed, Profile Link Engaged |
 | Job Wizard | Job creation wizard session | Job Wizard Started |
@@ -124,9 +124,9 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 
 | Property | Type | Values | Set By | Description |
 |----------|------|--------|--------|-------------|
-| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Login Started | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. |
-| `first_referrer` | string | URL or null | Login Started | HTTP referrer at first visit (`document.referrer`). |
-| `first_landing_url` | string | URL | Login Started | Full landing URL including query params at first visit. |
+| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Page Viewed (login page — `/signup` URL) | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. Set on login page so even abandoners are attributed. |
+| `first_referrer` | string | URL or null | Page Viewed (login page — `/signup` URL) | HTTP referrer at first visit (`document.referrer`). |
+| `first_landing_url` | string | URL | Page Viewed (login page — `/signup` URL) | Full landing URL including query params at first visit. |
 | `first_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Account Created | First persona chosen during onboarding. Never changes even if user switches role later. |
 | `account_created_at` | ISO date | | Account Created | Account creation timestamp. |
 | `referred_by` | UUID | user ID | Account Created (backend) | User ID of referrer. |
@@ -141,10 +141,10 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 | `org_id` | string | `identifyUser()` | User's current organization ID |
 | `org_name` | string | `identifyUser()` | User's current organization name. Resolved from org_id on backend before identify call. |
 | `org_domain` | string | `identifyUser()` | User's organization domain (e.g., `seekout.com`). Resolved from org_id on backend before identify call. |
-| `current_persona` | enum | `identifyUser()` + persona switch | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Updated on every login and on persona switch via sidebar toggle. |
-| `activated_personas` | array | Persona Activated | All unique personas the user has tried. Grows over time as new personas are activated. |
+| `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
+| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has tried. Seeded with `[first_persona]` on account creation, grows as user switches personas. |
 
-**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) changes whenever the user switches roles. `activated_personas` (`$set`) accumulates every persona the user has tried over time — it only grows, never shrinks.
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) is seeded with the first persona on Account Created and accumulates every persona the user has tried over time — it only grows, never shrinks.
 
 **Identifying a user (JS SDK — called after auth succeeds):**
 
@@ -402,3 +402,4 @@ For critical flows, track the UI interaction (intent) and the server-confirmed r
 | Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed |
 | Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
+| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
