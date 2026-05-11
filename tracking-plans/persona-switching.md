@@ -15,16 +15,19 @@
 User is on any page (e.g., HM Job Postings)
   │
   ├─ Step 1: Clicks ⇄ chevron next to current persona in sidebar
-  │    → fires: Switch Persona Button Clicked
+  │    → fires: Switch Persona Button Clicked (Frontend)
   │    → "Choose a role" dropdown opens
   │
   ├─ Step 2: Clicks on a different persona (e.g., Recruiter)
-  │    → fires: Persona Updated
-  │    → $set: current_persona = "recruiter"
-  │    → $set: activated_personas (appends new persona, deduplicated)
+  │    → Frontend calls API to switch persona
+  │    ├─ Success → fires: Persona Updated (Backend)
+  │    │    → $set: current_persona = "recruiter"
+  │    │    → $set: activated_personas (deduplicated)
+  │    └─ Failure → fires: Persona Update Failed (Backend)
+  │         → current_persona unchanged
   │
-  └─ Step 3: New persona's home page loads
-       → fires: Page Viewed
+  └─ Step 3: New persona's home page loads (on success only)
+       → fires: Page Viewed (Frontend)
        → current_page_context reflects the new persona's landing page
        → current_persona person property is now queryable on this event
 ```
@@ -77,16 +80,16 @@ posthog.capture('Switch Persona Button Clicked', {
 
 ---
 
-### 2. Persona Updated (replaces Persona Activated)
+### 2. Persona Updated (replaces Persona Activated) — Success
 
-User selects a different persona from the "Choose a role" dropdown.
+Server confirms persona switch succeeded.
 
 | Field | Value |
 |-------|-------|
 | **Area** | Account |
-| **Type** | user_action |
-| **Trigger** | User selects a different persona from "Choose a role" dropdown |
-| **Source** | Frontend |
+| **Type** | Success |
+| **Trigger** | Backend confirms persona switch after user selects a different persona |
+| **Source** | Backend |
 | **Group** | -- |
 | **Status** | Not Started |
 
@@ -94,12 +97,6 @@ User selects a different persona from the "Choose a role" dropdown.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `action` | enum | `click` | Action type |
-| `action_value` | string | `hiring_manager_role_card`, `recruiter_role_card`, `job_seeker_role_card` | Exact card clicked in the dropdown, matches the persona selected |
-| `current_page_context` | string | e.g., `hiring_manager_job_postings` | Page BEFORE the switch (user hasn't navigated yet) |
-| `previous_page_context` | string | snake_case page identifier or null | Previous page before current one |
-| `entity_type` | string | `persona` | Business object being acted on |
-| `component` | string | `sidebar_persona_switcher_role_dropdown` | The "Choose a role" dropdown opened from the sidebar |
 | `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on before switching |
 
 **Property Updates:**
@@ -107,46 +104,85 @@ User selects a different persona from the "Choose a role" dropdown.
 | Operation | Property | Description |
 |---|---|---|
 | `$set` | `current_persona` | Updated to the newly selected persona (`hiring_manager`, `recruiter`, `job_seeker`) |
-| `$set` | `activated_personas` | Array of all unique personas the user has tried; grows over time |
+| `$set` | `activated_personas` | Array of all unique personas the user has tried; grows over time, deduplicated |
 
-**PostHog call:**
+**PostHog call (Python SDK — backend):**
 
-```javascript
-const previousPersona = currentPersona;               // e.g., 'hiring_manager'
-const newPersona = selectedPersona;                    // e.g., 'recruiter'
+```python
+previous_persona = user.current_persona  # e.g., 'hiring_manager'
+new_persona = request.new_persona        # e.g., 'recruiter'
 
-if (newPersona === previousPersona) {
-  return; // no actual switch — do not fire event
-}
+# Only fire if persona actually changed
+if new_persona != previous_persona:
+    activated = list(set((user.activated_personas or []) + [new_persona]))
 
-const nextActivatedPersonas = Array.from(
-  new Set([...(activatedPersonas ?? []), newPersona])
-);
-
-posthog.capture('Persona Updated', {
-  action: 'click',
-  action_value: `${newPersona}_role_card`,             // 'recruiter_role_card'
-  current_page_context: currentPageContext,             // page BEFORE switch
-  previous_page_context: getPreviousPageContext(),
-  entity_type: 'persona',
-  component: 'sidebar_persona_switcher_role_dropdown',
-  previous_persona: previousPersona,
-  $set: {
-    current_persona: newPersona,
-    activated_personas: nextActivatedPersonas,
-  },
-});
+    posthog.capture(
+        event='Persona Updated',
+        distinct_id=str(user.id),
+        properties={
+            'previous_persona': previous_persona,
+            '$set': {
+                'current_persona': new_persona,
+                'activated_personas': activated,
+            },
+        },
+    )
 ```
 
 **Notes:**
-- Does NOT fire if the user clicks on the persona they're already on (no change)
+- Fires from the backend after the API confirms the switch — not on the frontend card click
+- Does NOT fire if the persona didn't actually change
 - `previous_persona` is an event property; the new persona is captured via `$set: current_persona`
 - Switch patterns (e.g., hiring_manager → recruiter) can be analyzed by combining `previous_persona` with the updated `current_persona`
-- `activated_personas` uses `Array.from(new Set([...]))` for deduplication and null-safety
+- `activated_personas` is deduplicated server-side
 
 ---
 
-### 3. Page Viewed (existing — no changes needed)
+### 3. Persona Update Failed (new)
+
+Server returns error when persona switch fails.
+
+| Field | Value |
+|-------|-------|
+| **Area** | Account |
+| **Type** | Failure |
+| **Trigger** | Backend returns error on persona switch attempt |
+| **Source** | Backend |
+| **Group** | -- |
+| **Status** | Not Started |
+
+**Properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on when the switch was attempted |
+| `target_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user tried to switch to |
+| `error_reason` | string | system error description | What went wrong |
+| `error_category` | enum | `network`, `permission`, `validation`, `server`, `timeout` | Error classification |
+
+**PostHog call (Python SDK — backend):**
+
+```python
+posthog.capture(
+    event='Persona Update Failed',
+    distinct_id=str(user.id),
+    properties={
+        'previous_persona': user.current_persona,
+        'target_persona': request.new_persona,
+        'error_reason': str(e),
+        'error_category': 'server',  # network, permission, validation, server, timeout
+    },
+)
+```
+
+**Notes:**
+- Fires from the backend when the persona switch API returns an error
+- `previous_persona` stays unchanged (switch didn't happen)
+- `target_persona` captures what the user tried to switch to (distinct from `previous_persona` on Persona Updated which is the "from" persona)
+
+---
+
+### 4. Page Viewed (existing — no changes needed)
 
 The new persona's home page loads after the switch.
 
@@ -177,11 +213,12 @@ posthog.capture('Page Viewed', {
 
 ## Event Sequence
 
-| Order | Event | What happens | current_persona (person property) |
-|-------|-------|-------------|----------------------------------|
-| 1 | Switch Persona Button Clicked | Dropdown opens | Still the old persona |
-| 2 | Persona Updated | User picks new persona | Updated to new persona |
-| 3 | Page Viewed | New persona's home page loads | New persona (queryable) |
+| Order | Event | Source | What happens | current_persona (person property) |
+|-------|-------|--------|-------------|----------------------------------|
+| 1 | Switch Persona Button Clicked | Frontend | Dropdown opens | Still the old persona |
+| 2a | Persona Updated | Backend | Server confirms switch | Updated to new persona |
+| 2b | Persona Update Failed | Backend | Server returns error | Unchanged (switch failed) |
+| 3 | Page Viewed | Frontend | New persona's home page loads | New persona (queryable) |
 
 ---
 
@@ -198,7 +235,8 @@ posthog.capture('Page Viewed', {
 
 | Property | Type | Scope | Values | Description |
 |---|---|---|---|---|
-| `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on before switching. Used only in Persona Updated. |
+| `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on before switching. Used in Persona Updated and Persona Update Failed. |
+| `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user tried to switch to. Used only in Persona Update Failed. |
 
 ---
 
@@ -206,15 +244,16 @@ posthog.capture('Page Viewed', {
 
 ### Event Catalog (`docs/event-catalog.md`)
 
-#### 1. Account & Persona Events — add 2 new events, remove Persona Activated
+#### 1. Account & Persona Events — add 3 new events, remove Persona Activated
 
 **Remove:**
 - `Persona Activated` row
 
 **Add:**
 ```md
-| Switch Persona Button Clicked | Account | user_action | User clicks the ⇄ chevron next to current persona in sidebar | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Not Started |
-| Persona Updated | Account | user_action | User selects a different persona from "Choose a role" dropdown | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `previous_persona` | -- | `$set: current_persona, activated_personas` | Not Started |
+| Switch Persona Button Clicked | Account | Intent  | User clicks the ⇄ chevron next to current persona in sidebar        | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Not Started |
+| Persona Updated               | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona` | -- | `$set: current_persona, activated_personas` | Not Started |
+| Persona Update Failed          | Account | Failure | Backend returns error on persona switch attempt                       | Backend  | `previous_persona`, `target_persona`, `error_reason`, `error_category` | -- | -- | Not Started |
 ```
 
 #### 2. Account Created — add `$set: current_persona, activated_personas`
@@ -258,12 +297,17 @@ posthog.capture('Page Viewed', {
 - `first_persona` Scope → `event, person ($set_once)` (currently says `person ($set_once)` only — missing event scope)
 - `current_persona` Used In → `Account Created, Persona Updated (person property)`
 - `entry_point` Used In → `Page Viewed, Login Started`
-- `action (user_action)` Used In → add `Switch Persona Button Clicked, Persona Updated`
-- `action_value` Used In → add `Switch Persona Button Clicked, Persona Updated`
-- `current_page_context` Used In → add `Switch Persona Button Clicked, Persona Updated`
-- `previous_page_context` Used In → add `Switch Persona Button Clicked, Persona Updated`
-- `component` Used In → add `Switch Persona Button Clicked, Persona Updated`
-- `entity_type` Used In → add `Switch Persona Button Clicked, Persona Updated`
+- `action (user_action)` Used In → add `Switch Persona Button Clicked`
+- `action_value` Used In → add `Switch Persona Button Clicked`
+- `current_page_context` Used In → add `Switch Persona Button Clicked`
+- `previous_page_context` Used In → add `Switch Persona Button Clicked`
+- `component` Used In → add `Switch Persona Button Clicked`
+- `entity_type` Used In → add `Switch Persona Button Clicked`
+- `error_reason` Used In → add `Persona Update Failed`
+- `error_category` Used In → add `Persona Update Failed`
+
+**Add:**
+- `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Update Failed
 
 ### Event Schema (`docs/event-schema.md`)
 
@@ -291,11 +335,17 @@ Update to mention:
 - `activated_personas` is seeded with `[first_persona]` on Account Created
 - `current_persona` is set on Account Created and updated via Persona Updated
 
-#### 5. Sample code — add persona switching section
+#### 5. Intent vs Outcome table — add persona switching row
 
-Add production-ready PostHog calls for all 3 events (Switch Persona Button Clicked, Persona Updated, Page Viewed after switch).
+```md
+| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
+```
 
-#### 6. Sample code — update existing events
+#### 6. Sample code — add persona switching section
+
+Add production-ready PostHog calls for all 4 events (Switch Persona Button Clicked, Persona Updated, Persona Update Failed, Page Viewed after switch).
+
+#### 7. Sample code — update existing events
 
 - **Page Viewed:** Add `isLoginPage` check (`window.location.pathname === '/signup'`) for `entry_point` + `$set_once` — fires only on the login page, not on every page view
 - **Login Started:** Remove `$set_once` block, remove `context_object_type`, `context_object_id`
