@@ -114,6 +114,11 @@ User selects a different persona from the "Choose a role" dropdown.
 ```javascript
 const previousPersona = currentPersona;               // e.g., 'hiring_manager'
 const newPersona = selectedPersona;                    // e.g., 'recruiter'
+
+if (newPersona === previousPersona) {
+  return; // no actual switch — do not fire event
+}
+
 const nextActivatedPersonas = Array.from(
   new Set([...(activatedPersonas ?? []), newPersona])
 );
@@ -207,7 +212,7 @@ posthog.capture('Page Viewed', {
 - `Persona Activated` row
 
 **Add:**
-```
+```md
 | Persona Chevron Clicked | Account | user_action | User clicks the ⇄ chevron next to current persona in sidebar | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Not Started |
 | Persona Updated | Account | user_action | User selects a different persona from "Choose a role" dropdown | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `previous_persona` | -- | `$set: current_persona, activated_personas` | Not Started |
 ```
@@ -236,7 +241,7 @@ posthog.capture('Page Viewed', {
 
 #### 4. Removed Events table — add entry
 
-```
+```md
 | Persona Activated | Persona Updated | Renamed — "Activated" implied adding a new persona; "Updated" reflects switching between existing personas | May 2026 |
 ```
 
