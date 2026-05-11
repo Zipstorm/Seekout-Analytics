@@ -66,7 +66,7 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Team Member | JobTeamMember | Team Member Invited, Team Member Joined |
 | Custom Link | Prospect's named shareable link (general or job-specific) | Custom Link Created, Custom Link Shared |
 | Career Coach | AI Career Coach agent | Career Coach Session Started |
-| Persona | User persona (hiring_manager, recruiter, job_seeker) | Persona Activated |
+| Persona | User persona (hiring_manager, recruiter, job_seeker) | Persona Chevron Clicked, Persona Updated |
 | Job Link | Shared job posting link viewed by anonymous visitors | Job Link Viewed, Job Link Engaged |
 | Profile Link | Prospect's shareable profile link viewed by visitors | Profile Link Viewed, Profile Link Engaged |
 | Job Wizard | Job creation wizard session | Job Wizard Started |
