@@ -314,6 +314,9 @@ posthog.capture('Persona Chevron Clicked', {
 
 const previousPersona = currentPersona;               // e.g., 'hiring_manager'
 const newPersona = selectedPersona;                    // e.g., 'recruiter'
+const nextActivatedPersonas = Array.from(
+  new Set([...(activatedPersonas ?? []), newPersona])
+);
 
 posthog.capture('Persona Updated', {
   action: 'click',
@@ -325,7 +328,7 @@ posthog.capture('Persona Updated', {
   previous_persona: previousPersona,                   // 'hiring_manager', 'recruiter', 'job_seeker'
   $set: {
     current_persona: newPersona,
-    activated_personas: [...activatedPersonas, newPersona],  // append if not already present
+    activated_personas: nextActivatedPersonas,
   },
 });
 
@@ -404,7 +407,6 @@ posthog.capture('Share Button Clicked', {
   action_value: 'share_job_button',
   current_page_context: 'hiring_manager_job_postings',
   previous_page_context: null,
-  entry_point: null,
   entity_type: 'job',
   component: 'job_card',
   context_object_type: 'job',

@@ -11,7 +11,7 @@
 
 ## User Flow
 
-```
+```text
 User is on any page (e.g., HM Job Postings)
   │
   ├─ Step 1: Clicks ⇄ chevron next to current persona in sidebar
@@ -114,6 +114,9 @@ User selects a different persona from the "Choose a role" dropdown.
 ```javascript
 const previousPersona = currentPersona;               // e.g., 'hiring_manager'
 const newPersona = selectedPersona;                    // e.g., 'recruiter'
+const nextActivatedPersonas = Array.from(
+  new Set([...(activatedPersonas ?? []), newPersona])
+);
 
 posthog.capture('Persona Updated', {
   action: 'click',
@@ -125,7 +128,7 @@ posthog.capture('Persona Updated', {
   previous_persona: previousPersona,
   $set: {
     current_persona: newPersona,
-    activated_personas: [...activatedPersonas, newPersona],  // append if not already present
+    activated_personas: nextActivatedPersonas,
   },
 });
 ```
