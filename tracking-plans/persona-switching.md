@@ -171,7 +171,7 @@ posthog.capture('Page Viewed', {
 
 **Notes:**
 - No changes needed to this event — it already exists and is Live
-- No `$set_once` needed — first-touch attribution (`entry_point`, `first_referrer`, `first_landing_url`) is handled by Login Started
+- No `$set_once` needed — first-touch attribution (`entry_point`, `first_referrer`, `first_landing_url`) is handled by the first Page Viewed (login/landing page)
 - After Persona Updated fires, `current_persona` person property is already updated, so this Page Viewed is automatically associated with the new persona in PostHog queries
 
 ---

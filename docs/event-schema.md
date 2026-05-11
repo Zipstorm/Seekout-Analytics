@@ -124,9 +124,9 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 
 | Property | Type | Values | Set By | Description |
 |----------|------|--------|--------|-------------|
-| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Login Started | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. |
-| `first_referrer` | string | URL or null | Login Started | HTTP referrer at first visit (`document.referrer`). |
-| `first_landing_url` | string | URL | Login Started | Full landing URL including query params at first visit. |
+| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Page Viewed (first landing) | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. Set on the first Page Viewed so even abandoners are attributed. |
+| `first_referrer` | string | URL or null | Page Viewed (first landing) | HTTP referrer at first visit (`document.referrer`). |
+| `first_landing_url` | string | URL | Page Viewed (first landing) | Full landing URL including query params at first visit. |
 | `first_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Account Created | First persona chosen during onboarding. Never changes even if user switches role later. |
 | `account_created_at` | ISO date | | Account Created | Account creation timestamp. |
 | `referred_by` | UUID | user ID | Account Created (backend) | User ID of referrer. |
@@ -142,9 +142,9 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 | `org_name` | string | `identifyUser()` | User's current organization name. Resolved from org_id on backend before identify call. |
 | `org_domain` | string | `identifyUser()` | User's organization domain (e.g., `seekout.com`). Resolved from org_id on backend before identify call. |
 | `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
-| `activated_personas` | array | Persona Updated | All unique personas the user has tried. Grows over time as user switches personas. |
+| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has tried. Seeded with `first_persona` on account creation, grows as user switches personas. |
 
-**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) accumulates every persona the user has tried over time — it only grows, never shrinks.
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) is seeded with the first persona on Account Created and accumulates every persona the user has tried over time — it only grows, never shrinks.
 
 **Identifying a user (JS SDK — called after auth succeeds):**
 
@@ -157,25 +157,26 @@ posthog.identify(user.id,
 );
 ```
 
-**Setting first-touch attribution (JS SDK — fires on Login Started, before auth):**
+**Setting first-touch attribution (JS SDK — fires on first Page Viewed, before any user action):**
 
 ```javascript
-// In pages/SignUp.tsx → handleLogin()
-posthog.capture('Login Started', {
-  action: 'click',
-  action_value: 'continue_with_google_or_email_button',
+// In lib/analytics.ts → trackPageView() or equivalent page mount hook
+// Only the FIRST page view (login/landing page) captures entry_point and $set_once.
+const searchParams = new URLSearchParams(window.location.search);
+const entryPoint = searchParams.get('context') || 'direct';
+const isFirstLanding = !getPreviousPageContext();
+
+posthog.capture('Page Viewed', {
   current_page_context: 'auth_landing',
   previous_page_context: null,
-  entry_point: entryPoint,
-  entity_type: 'account',
-  component: 'auth_landing_hero_card_cta',
-  context_object_type: null,
-  context_object_id: null,
-  $set_once: {
-    entry_point: entryPoint,
-    first_referrer: document.referrer || null,
-    first_landing_url: window.location.href,
-  },
+  ...(isFirstLanding && { entry_point: entryPoint }),
+  ...(isFirstLanding && {
+    $set_once: {
+      entry_point: entryPoint,
+      first_referrer: document.referrer || null,
+      first_landing_url: window.location.href,
+    },
+  }),
 });
 ```
 
@@ -195,6 +196,7 @@ posthog.capture('Account Created', {
   referred_by: referrerUserId || null,
   $set: {
     current_persona: persona,
+    activated_personas: [persona],
   },
   $set_once: {
     first_persona: persona,
@@ -231,15 +233,26 @@ Include on every event where applicable.
 // On first page load (no previous page), it returns null.
 
 // Page Viewed — fires on page mount
+// On the FIRST landing page only, capture entry_point and set person properties.
+// Subsequent page views do not include entry_point or $set_once.
+const searchParams = new URLSearchParams(window.location.search);
+const entryPoint = searchParams.get('context') || 'direct';
+const isFirstLanding = !getPreviousPageContext();  // null means no previous page — first visit
+
 posthog.capture('Page Viewed', {
   current_page_context: 'auth_landing',
   previous_page_context: getPreviousPageContext(),
+  ...(isFirstLanding && { entry_point: entryPoint }),
+  ...(isFirstLanding && {
+    $set_once: {
+      entry_point: entryPoint,
+      first_referrer: document.referrer || null,
+      first_landing_url: window.location.href,
+    },
+  }),
 });
 
 // Login Started — fires on CTA click, before auth
-const searchParams = new URLSearchParams(window.location.search);
-const entryPoint = searchParams.get('context') || 'direct';
-
 posthog.capture('Login Started', {
   action: 'click',
   action_value: 'continue_with_google_or_email_button',
@@ -248,13 +261,6 @@ posthog.capture('Login Started', {
   entry_point: entryPoint,
   entity_type: 'account',
   component: 'auth_landing_hero_card_cta',
-  context_object_type: null,
-  context_object_id: null,
-  $set_once: {
-    entry_point: entryPoint,
-    first_referrer: document.referrer || null,
-    first_landing_url: window.location.href,
-  },
 });
 
 // Account Created — fires after role selection + server confirms
@@ -270,6 +276,7 @@ posthog.capture('Account Created', {
   referred_by: referrerUserId || null,
   $set: {
     current_persona: 'hiring_manager',
+    activated_personas: ['hiring_manager'],
   },
   $set_once: {
     first_persona: 'hiring_manager',
