@@ -15,7 +15,7 @@
 User is on any page (e.g., HM Job Postings)
   │
   ├─ Step 1: Clicks ⇄ chevron next to current persona in sidebar
-  │    → fires: Persona Chevron Clicked
+  │    → fires: Switch Persona Button Clicked
   │    → "Choose a role" dropdown opens
   │
   ├─ Step 2: Clicks on a different persona (e.g., Recruiter)
@@ -33,7 +33,7 @@ User is on any page (e.g., HM Job Postings)
 
 ## New Events
 
-### 1. Persona Chevron Clicked
+### 1. Switch Persona Button Clicked
 
 User explores the persona switching option by clicking the ⇄ chevron.
 
@@ -60,7 +60,7 @@ User explores the persona switching option by clicking the ⇄ chevron.
 **PostHog call:**
 
 ```javascript
-posthog.capture('Persona Chevron Clicked', {
+posthog.capture('Switch Persona Button Clicked', {
   action: 'click',
   action_value: 'persona_switch_chevron',
   current_page_context: currentPageContext,           // e.g., 'hiring_manager_job_postings'
@@ -179,7 +179,7 @@ posthog.capture('Page Viewed', {
 
 | Order | Event | What happens | current_persona (person property) |
 |-------|-------|-------------|----------------------------------|
-| 1 | Persona Chevron Clicked | Dropdown opens | Still the old persona |
+| 1 | Switch Persona Button Clicked | Dropdown opens | Still the old persona |
 | 2 | Persona Updated | User picks new persona | Updated to new persona |
 | 3 | Page Viewed | New persona's home page loads | New persona (queryable) |
 
@@ -189,8 +189,8 @@ posthog.capture('Page Viewed', {
 
 | Funnel Name | Steps | Purpose |
 |---|---|---|
-| Persona Switch Completion | Persona Chevron Clicked → Persona Updated | Measures conversion from exploring the switch to actually switching |
-| Persona Switch Full Flow | Persona Chevron Clicked → Persona Updated → Page Viewed | Full switch flow including page load |
+| Persona Switch Completion | Switch Persona Button Clicked → Persona Updated | Measures conversion from exploring the switch to actually switching |
+| Persona Switch Full Flow | Switch Persona Button Clicked → Persona Updated → Page Viewed | Full switch flow including page load |
 
 ---
 
@@ -213,7 +213,7 @@ posthog.capture('Page Viewed', {
 
 **Add:**
 ```md
-| Persona Chevron Clicked | Account | user_action | User clicks the ⇄ chevron next to current persona in sidebar | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Not Started |
+| Switch Persona Button Clicked | Account | user_action | User clicks the ⇄ chevron next to current persona in sidebar | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Not Started |
 | Persona Updated | Account | user_action | User selects a different persona from "Choose a role" dropdown | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `previous_persona` | -- | `$set: current_persona, activated_personas` | Not Started |
 ```
 
@@ -258,19 +258,19 @@ posthog.capture('Page Viewed', {
 - `first_persona` Scope → `event, person ($set_once)` (currently says `person ($set_once)` only — missing event scope)
 - `current_persona` Used In → `Account Created, Persona Updated (person property)`
 - `entry_point` Used In → `Page Viewed, Login Started`
-- `action (user_action)` Used In → add `Persona Chevron Clicked, Persona Updated`
-- `action_value` Used In → add `Persona Chevron Clicked, Persona Updated`
-- `current_page_context` Used In → add `Persona Chevron Clicked, Persona Updated`
-- `previous_page_context` Used In → add `Persona Chevron Clicked, Persona Updated`
-- `component` Used In → add `Persona Chevron Clicked, Persona Updated`
-- `entity_type` Used In → add `Persona Chevron Clicked, Persona Updated`
+- `action (user_action)` Used In → add `Switch Persona Button Clicked, Persona Updated`
+- `action_value` Used In → add `Switch Persona Button Clicked, Persona Updated`
+- `current_page_context` Used In → add `Switch Persona Button Clicked, Persona Updated`
+- `previous_page_context` Used In → add `Switch Persona Button Clicked, Persona Updated`
+- `component` Used In → add `Switch Persona Button Clicked, Persona Updated`
+- `entity_type` Used In → add `Switch Persona Button Clicked, Persona Updated`
 
 ### Event Schema (`docs/event-schema.md`)
 
 #### 1. Standard Objects table — update Persona
 
 **Current:** `Persona Activated`
-**New:** `Persona Chevron Clicked, Persona Updated`
+**New:** `Switch Persona Button Clicked, Persona Updated`
 
 #### 2. Person Properties `$set_once` table
 
@@ -293,7 +293,7 @@ Update to mention:
 
 #### 5. Sample code — add persona switching section
 
-Add production-ready PostHog calls for all 3 events (Persona Chevron Clicked, Persona Updated, Page Viewed after switch).
+Add production-ready PostHog calls for all 3 events (Switch Persona Button Clicked, Persona Updated, Page Viewed after switch).
 
 #### 6. Sample code — update existing events
 
