@@ -50,7 +50,25 @@ User explores the persona switching option by clicking the ⇄ chevron.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `current_page_context` | string | e.g., `hm_job_postings`, `recruiter_home`, `job_seeker_home` | Page the user was on when they clicked the chevron |
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `persona_switch_chevron` | The ⇄ icon has no visible text — this identifies the chevron toggle |
+| `current_page_context` | string | e.g., `hiring_manager_job_postings`, `recruiter_home`, `job_seeker_home` | Page the user was on when they clicked the chevron |
+| `previous_page_context` | string | snake_case page identifier or null | Previous page before current one |
+| `entity_type` | string | `persona` | Business object being acted on |
+| `component` | string | `sidebar_persona_switcher` | The persona label + chevron area in the left sidebar |
+
+**PostHog call:**
+
+```javascript
+posthog.capture('Persona Chevron Clicked', {
+  action: 'click',
+  action_value: 'persona_switch_chevron',
+  current_page_context: currentPageContext,           // e.g., 'hiring_manager_job_postings'
+  previous_page_context: getPreviousPageContext(),
+  entity_type: 'persona',
+  component: 'sidebar_persona_switcher',
+});
+```
 
 **Notes:**
 - Fires regardless of whether the user actually switches personas
@@ -76,6 +94,12 @@ User selects a different persona from the "Choose a role" dropdown.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `hiring_manager_role_card`, `recruiter_role_card`, `job_seeker_role_card` | Exact card clicked in the dropdown, matches the persona selected |
+| `current_page_context` | string | e.g., `hiring_manager_job_postings` | Page BEFORE the switch (user hasn't navigated yet) |
+| `previous_page_context` | string | snake_case page identifier or null | Previous page before current one |
+| `entity_type` | string | `persona` | Business object being acted on |
+| `component` | string | `sidebar_persona_switcher_role_dropdown` | The "Choose a role" dropdown opened from the sidebar |
 | `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on before switching |
 
 **Property Updates:**
@@ -85,6 +109,27 @@ User selects a different persona from the "Choose a role" dropdown.
 | `$set` | `current_persona` | Updated to the newly selected persona (`hiring_manager`, `recruiter`, `job_seeker`) |
 | `$set` | `activated_personas` | Array of all unique personas the user has tried; grows over time |
 
+**PostHog call:**
+
+```javascript
+const previousPersona = currentPersona;               // e.g., 'hiring_manager'
+const newPersona = selectedPersona;                    // e.g., 'recruiter'
+
+posthog.capture('Persona Updated', {
+  action: 'click',
+  action_value: `${newPersona}_role_card`,             // 'recruiter_role_card'
+  current_page_context: currentPageContext,             // page BEFORE switch
+  previous_page_context: getPreviousPageContext(),
+  entity_type: 'persona',
+  component: 'sidebar_persona_switcher_role_dropdown',
+  previous_persona: previousPersona,
+  $set: {
+    current_persona: newPersona,
+    activated_personas: [...activatedPersonas, newPersona],  // append if not already present
+  },
+});
+```
+
 **Notes:**
 - Does NOT fire if the user clicks on the persona they're already on (no change)
 - `previous_persona` is an event property; the new persona is captured via `$set: current_persona`
@@ -92,7 +137,7 @@ User selects a different persona from the "Choose a role" dropdown.
 
 ---
 
-### 3. Page Viewed (existing — no changes)
+### 3. Page Viewed (existing — no changes needed)
 
 The new persona's home page loads after the switch.
 
@@ -109,12 +154,22 @@ The new persona's home page loads after the switch.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `current_page_context` | string | e.g., `hm_job_postings`, `recruiter_home`, `job_seeker_home` | The new persona's landing page |
-| `previous_page_context` | string | e.g., `hm_job_postings` | The page before the switch |
+| `current_page_context` | string | e.g., `recruiter_home`, `hiring_manager_job_postings`, `job_seeker_home` | The new persona's landing page |
+| `previous_page_context` | string | e.g., `hiring_manager_job_postings` | The page before the switch |
+
+**PostHog call:**
+
+```javascript
+posthog.capture('Page Viewed', {
+  current_page_context: newPersonaPageContext,          // e.g., 'recruiter_home'
+  previous_page_context: previousPageContext,           // page before the switch
+});
+```
 
 **Notes:**
 - No changes needed to this event — it already exists and is Live
-- After Persona Updated fires, `current_persona` person property is updated, so this Page Viewed will be associated with the new persona in PostHog queries
+- No `$set_once` needed — first-touch attribution (`entry_point`, `first_referrer`, `first_landing_url`) is handled by Login Started
+- After Persona Updated fires, `current_persona` person property is already updated, so this Page Viewed is automatically associated with the new persona in PostHog queries
 
 ---
 

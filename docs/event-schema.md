@@ -234,11 +234,6 @@ Include on every event where applicable.
 posthog.capture('Page Viewed', {
   current_page_context: 'auth_landing',
   previous_page_context: getPreviousPageContext(),
-  $set_once: {
-    entry_point: entryPoint,
-    first_referrer: document.referrer || null,
-    first_landing_url: window.location.href,
-  },
 });
 
 // Login Started — fires on CTA click, before auth
@@ -298,29 +293,51 @@ posthog.capture('Intro Completed', {
 ### Persona switching events (JS SDK — frontend)
 
 ```javascript
-// Persona Chevron Clicked — fires when user clicks the ⇄ chevron in sidebar
+// ── Step 1: Persona Chevron Clicked ──────────────────────────────────
+// Fires when user clicks the ⇄ chevron next to current persona in sidebar.
+// Tracks exploration intent — fires regardless of whether the user actually switches.
+
 posthog.capture('Persona Chevron Clicked', {
-  current_page_context: currentPageContext,  // e.g., 'hm_job_postings', 'recruiter_home'
+  action: 'click',
+  action_value: 'persona_switch_chevron',
+  current_page_context: currentPageContext,           // e.g., 'hiring_manager_job_postings'
+  previous_page_context: getPreviousPageContext(),
+  entity_type: 'persona',
+  component: 'sidebar_persona_switcher',
 });
 
-// Persona Updated — fires when user selects a different persona from dropdown
-// previousPersona is captured BEFORE the switch; new persona goes into $set
-const previousPersona = currentPersona;  // e.g., 'hiring_manager'
-const newPersona = selectedPersona;      // e.g., 'recruiter'
+
+// ── Step 2: Persona Updated ──────────────────────────────────────────
+// Fires when user selects a DIFFERENT persona from "Choose a role" dropdown.
+// Does NOT fire if user clicks the persona they're already on.
+// previousPersona is captured BEFORE the switch; new persona goes into $set.
+
+const previousPersona = currentPersona;               // e.g., 'hiring_manager'
+const newPersona = selectedPersona;                    // e.g., 'recruiter'
 
 posthog.capture('Persona Updated', {
-  previous_persona: previousPersona,
+  action: 'click',
+  action_value: `${newPersona}_role_card`,             // 'recruiter_role_card', 'hiring_manager_role_card', 'job_seeker_role_card'
+  current_page_context: currentPageContext,             // page BEFORE switch, e.g., 'hiring_manager_job_postings'
+  previous_page_context: getPreviousPageContext(),
+  entity_type: 'persona',
+  component: 'sidebar_persona_switcher_role_dropdown',
+  previous_persona: previousPersona,                   // 'hiring_manager', 'recruiter', 'job_seeker'
   $set: {
     current_persona: newPersona,
-    activated_personas: [...activatedPersonas, newPersona],  // append new persona if not already present
+    activated_personas: [...activatedPersonas, newPersona],  // append if not already present
   },
 });
 
-// Page Viewed — fires automatically when the new persona's home page loads
-// current_persona person property is already updated from Persona Updated above
+
+// ── Step 3: Page Viewed (after persona switch) ───────────────────────
+// Fires when the new persona's home page loads.
+// current_persona person property is already updated from Persona Updated above,
+// so this event is automatically associated with the new persona in PostHog queries.
+
 posthog.capture('Page Viewed', {
-  current_page_context: 'recruiter_home',  // new persona's landing page
-  previous_page_context: 'hm_job_postings',
+  current_page_context: newPersonaPageContext,          // 'recruiter_home', 'hiring_manager_job_postings', 'job_seeker_home'
+  previous_page_context: previousPageContext,           // page before the switch
 });
 ```
 
