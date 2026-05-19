@@ -1,7 +1,7 @@
-# Tracking Plan: Hiring Manager Job Creation Wizard
+# Tracking Plan: Hiring Manager Job Post Wizard
 
 **Product:** Helix (SeekOut.ai)
-**Feature:** Job creation wizard flow (hiring manager persona)
+**Feature:** Job post wizard flow (hiring manager persona)
 **Date:** 2026-05-11
 **Related PRD:** —
 
@@ -17,30 +17,32 @@ HM Job Postings page (home)
   ├─ Step 0: Clicks "+ Create job" (header or empty state)
   │    → fires: Create Job Button Clicked
   │
+  ├─ Wizard Init: Page loads (with router state isNewWizard=true)
+  │    → fires: Job Post Wizard Started (once per fresh wizard entry)
+  │
   ├─ Step 1: Job Details — paste JD, AI evaluates, click Next
   │    → fires: Page Viewed (hm_job_creation_wizard_job_details)
-  │    → fires: Job Creation Wizard (step 1: job_details) — on Next click
+  │    → fires: Job Post Wizard Job Details Completed — on Next click
   │    → fires: Job Posting Draft Created (backend — draft saved with job_id)
   │
   ├─ Step 2: Understanding the Role — choose Voice / Text / Skip
   │    → fires: Page Viewed (hm_job_creation_wizard_understanding_the_role)
-  │    → fires: Job Creation Wizard (step 2: understanding_the_role)
+  │    → fires: Job Post Wizard Role Understanding Completed
   │
   ├─ Step 3: Role Requirements — review AI-drafted requirements
   │    → fires: Page Viewed (hm_job_creation_wizard_role_requirements)
-  │    → fires: Job Creation Wizard (step 3: role_requirements)
+  │    → fires: Job Post Wizard Role Requirements Completed
   │
   ├─ Step 4: Interview Questions — review AI-generated questions
   │    → fires: Page Viewed (hm_job_creation_wizard_interview_questions)
-  │    → fires: Job Creation Wizard (step 4: interview_questions)
+  │    → fires: Job Post Wizard Interview Questions Completed
   │
   ├─ Step 5: Verify — email verification
   │    → fires: Page Viewed (hm_job_creation_wizard_verify)
-  │    → fires: Job Creation Wizard (step 5: verify)
+  │    → fires: Job Post Wizard Verification Completed
   │
   └─ Success: Job posting is live
-       → fires: Job Created (backend — final)
-       → fires: Job Published (backend)
+       → fires: Job Posting Published (backend — final)
 ```
 
 ---
@@ -91,6 +93,180 @@ posthog.capture('Create Job Button Clicked', {
 
 ---
 
+### 1b. Job Post Wizard Started
+
+Fires once when the user opens the wizard for a brand new job. This is the **outcome** event for `Create Job Button Clicked` (intent) — confirms the wizard successfully loaded.
+
+| Field | Value |
+|-------|-------|
+| **Area** | Hiring |
+| **Type** | Success |
+| **Trigger** | Wizard page mounts with `location.state.isNewWizard === true` and no existing `jobId` |
+| **Source** | Frontend |
+| **Group** | — (no job_id yet) |
+| **Status** | Not Started |
+
+**Properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `start_source` | string | `create_job_button` | Entry point that initiated the wizard |
+| `current_page_context` | string | `hm_job_creation_wizard_job_details` | Step 1 page |
+
+**How dedup works — router state approach (no backend table needed):**
+
+The "+ Create job" button navigates with `{ state: { isNewWizard: true } }`. The wizard checks this on mount. Browser router state is ephemeral — it exists on fresh navigation and is lost on refresh. This naturally prevents double-firing.
+
+After firing the event, the wizard replaces the history entry to clear the state (prevents back/forward re-firing):
+
+```javascript
+// In the "+ Create job" button handler (JobList.tsx ~line 310)
+// Currently: navigate(routes.create);
+// Change to:
+navigate(routes.create, { state: { isNewWizard: true } });
+```
+
+```javascript
+// In the wizard page component (JobInput.tsx) on mount
+const location = useLocation();
+const [searchParams] = useSearchParams();
+const isNewWizard = location.state?.isNewWizard === true;
+const editJobId = searchParams.get('jobId');
+const isEditMode = !!editJobId;
+
+if (isNewWizard && !isEditMode) {
+  capture('Job Post Wizard Started', {
+    start_source: 'create_job_button',
+    current_page_context: 'hm_job_creation_wizard_job_details',
+  });
+
+  // Clear router state so back/forward doesn't re-fire
+  navigate(location.pathname, { replace: true, state: {} });
+}
+```
+
+**Guardrails — when the event fires and doesn't fire:**
+
+| Scenario | `isNewWizard` (router state) | `editJobId` (URL param) | Fires? |
+|---|---|---|---|
+| Fresh "+ Create job" | `true` | absent | **Yes** |
+| Page refresh on step 1 | `undefined` (state lost on refresh) | absent | No |
+| "Continue setup" (resume draft) | `undefined` (different navigation) | present (`?jobId=abc`) | No |
+| Edit published job | `undefined` (navigates to detail page) | present | No |
+| Direct URL to wizard | `undefined` | absent | No |
+| Browser back then forward | `undefined` (cleared by `replace: true`) | absent | No |
+| New wizard after completing previous job | `true` (fresh button click) | absent | **Yes** |
+
+**How to distinguish entry context on wizard step events:**
+
+The wizard can determine why the user is here using existing `jobs` table fields — no new table needed:
+
+```
+No jobId in URL          → Brand new wizard (first time)
+jobId + status=draft     → Resuming incomplete wizard ("Continue setup")
+jobId + status=published → Editing existing live job
+```
+
+Use this on step events for richer analytics:
+
+```javascript
+posthog.capture('Job Post Wizard Job Details Completed', {
+  job_id: jobId,
+  step_number: 1,
+  step_name: 'job_details',
+  entry_context: 'new',  // 'new' | 'resume_draft' | 'edit_published'
+});
+```
+
+**Abandonment analysis (without a backend table):**
+
+Build a PostHog funnel:
+```
+Step 1: Job Post Wizard Started
+Step 2: Job Post Wizard Job Details Completed
+```
+Users who completed step 1 but NOT step 2 = wizard abandonment at step 1. PostHog funnels handle this natively — no DB query needed.
+
+**Linking to job_id (without a custom session ID):**
+
+PostHog auto-captures `$session_id` on every event. Both `Job Post Wizard Started` and `Job Post Wizard Job Details Completed` (which carries `job_id`) fire in the same browser session. Query by `$session_id` to link them.
+
+**Notes:**
+- No `job_id` on this event — the job doesn't exist yet (created on step 1 "Next" click)
+- No backend changes required — uses React Router state (already an established pattern in the Helix codebase)
+- `navigate(location.pathname, { replace: true, state: {} })` is critical — without it, browser back/forward can re-fire the event
+
+---
+
+#### Helix Implementation
+
+**No backend changes.** No new table, endpoint, or migration. Frontend-only: 2 files.
+
+##### Codebase Change 1: Add PostHog event constant
+
+**Edit** `frontend/src/lib/posthogEvents.ts` — add:
+
+```typescript
+export const JOB_POST_WIZARD_STARTED = 'Job Post Wizard Started';
+```
+
+##### Codebase Change 2: Pass router state on navigation
+
+**Edit** `frontend/src/pages/recruiter/JobList.tsx` — in the "+ Create job" click handler (~line 310), add router state:
+
+```typescript
+// Currently:
+navigate(routes.create);
+
+// Change to:
+navigate(routes.create, { state: { isNewWizard: true } });
+```
+
+> This follows the existing codebase pattern — `JobList.tsx` already uses router state for `createInterview()` navigation with `{ state: { isInbound: true } }`.
+
+##### Codebase Change 3: Fire event on wizard mount
+
+**Edit** `frontend/src/components/common/JobInput.tsx` — add to the component mount logic:
+
+```typescript
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import { capture } from '@/lib/posthog';
+import { JOB_POST_WIZARD_STARTED } from '@/lib/posthogEvents';
+
+// Inside the component:
+const location = useLocation();
+const navigateTo = useNavigate();
+const [searchParams] = useSearchParams();
+
+const isNewWizard = location.state?.isNewWizard === true;
+const editJobId = searchParams.get('jobId');  // already exists at line 137
+const isEditMode = !!editJobId;               // already exists at line 139
+
+useEffect(() => {
+  if (isNewWizard && !isEditMode) {
+    capture(JOB_POST_WIZARD_STARTED, {
+      start_source: 'create_job_button',
+      current_page_context: 'hm_job_creation_wizard_job_details',
+    });
+
+    // Clear router state — prevents back/forward re-firing
+    navigateTo(location.pathname, { replace: true, state: {} });
+  }
+}, []);  // Run once on mount
+```
+
+> `JobInput.tsx` already imports `useSearchParams` and checks `editJobId` at line 137-139. The `isEditMode` check is already there — we're just adding the `isNewWizard` check alongside it.
+
+**Files to modify:**
+
+| File | Change | Lines affected |
+|---|---|---|
+| `frontend/src/lib/posthogEvents.ts` | Add constant | 1 line |
+| `frontend/src/pages/recruiter/JobList.tsx` | Add `{ state: { isNewWizard: true } }` to navigate | ~line 310 |
+| `frontend/src/components/common/JobInput.tsx` | Add useEffect with capture + state clear | ~10 lines |
+
+---
+
 ### Step 1: Job Details
 
 #### 2a. Page Viewed (page load)
@@ -107,7 +283,7 @@ posthog.capture('Page Viewed', {
 
 ---
 
-#### 2b. Job Creation Wizard (user action — Next click)
+#### 2b. Job Post Wizard Job Details Completed (user action — Next click)
 
 User clicks "Next →" after pasting JD and AI evaluation completes.
 
@@ -137,7 +313,7 @@ User clicks "Next →" after pasting JD and AI evaluation completes.
 **PostHog call:**
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Job Details Completed', {
   action: 'click',
   action_value: 'next_button',
   current_page_context: 'hm_job_creation_wizard_job_details',
@@ -151,7 +327,7 @@ posthog.capture('Job Creation Wizard', {
 ```
 
 **Notes:**
-- Same event name (`Job Creation Wizard`) for all wizard steps — `step_number` and `step_name` differentiate
+- Each wizard step has its own event name (`Job Post Wizard Job Details Completed`, `Role Understanding Completed`, `Role Requirements Completed`, `Interview Questions Completed`, `Verification Completed`) — `step_number` and `step_name` properties are also included for programmatic filtering
 - `step_name` values across wizard: `job_details`, `understanding_the_role`, `role_requirements`, `interview_questions`, `verify`
 - `job_id` is included from step 1 onwards — the draft is created on this Next click and the ID is available in the response. All subsequent steps carry the same `job_id`.
 
@@ -271,21 +447,21 @@ Understanding the Role page loads
   ├─ Page Viewed (hm_job_creation_wizard_understanding_the_role)
   │
   ├─ Path A: User selects Voice + clicks Next
-  │    → Job Creation Wizard (step 2, intake_mode: 'voice')
+  │    → Job Post Wizard Role Understanding Completed (intake_mode: 'voice')
   │    → Page Viewed (hm_job_creation_wizard_sam_voice_session)
-  │    → Sam Session Started (intake_mode: 'voice')
+  │    → Sam Session Started (input_mode: 'voice')
   │    → ... user talks with Sam ...
-  │    → Sam Session Ended (intake_mode: 'voice', duration_seconds)
+  │    → Sam Session Ended (input_mode: 'voice', duration_seconds, ended_by)
   │
   ├─ Path B: User selects Text + clicks Next
-  │    → Job Creation Wizard (step 2, intake_mode: 'text')
+  │    → Job Post Wizard Role Understanding Completed (intake_mode: 'text')
   │    → Page Viewed (hm_job_creation_wizard_sam_text_session)
-  │    → Sam Session Started (intake_mode: 'text')
+  │    → Sam Session Started (input_mode: 'text')
   │    → ... user chats with Sam ...
-  │    → Sam Session Ended (intake_mode: 'text', duration_seconds)
+  │    → Sam Session Ended (input_mode: 'text', duration_seconds, ended_by)
   │
   └─ Path C: User clicks "Skip and go to role requirements"
-       → Job Creation Wizard (step 2, intake_mode: 'skipped')
+       → Job Post Wizard Role Understanding Completed (intake_mode: 'skipped')
 ```
 
 #### 3a. Page Viewed (page load)
@@ -303,7 +479,7 @@ posthog.capture('Page Viewed', {
 
 ---
 
-#### 3b. Job Creation Wizard (user action — mode selection)
+#### 3b. Job Post Wizard Role Understanding Completed (user action — mode selection)
 
 User selects Voice/Text and clicks Next, or clicks Skip.
 
@@ -334,7 +510,7 @@ User selects Voice/Text and clicks Next, or clicks Skip.
 **PostHog call:**
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Role Understanding Completed', {
   action: 'click',
   action_value: 'next_button',  // or 'skip_and_go_to_role_requirements_link'
   current_page_context: 'hm_job_creation_wizard_understanding_the_role',
@@ -380,7 +556,7 @@ posthog.capture('Page Viewed', {
 
 #### 3d. Sam Session Started
 
-Sam session begins (voice or text).
+Sam session begins (voice or text). Replaces `Voice Session Started` from the event catalog.
 
 | Field | Value |
 |-------|-------|
@@ -396,32 +572,33 @@ Sam session begins (voice or text).
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `job_id` | UUID | job ID | Job identifier |
-| `intake_mode` | enum | `voice`, `text` | Session type |
+| `input_mode` | enum | `voice`, `text` | Session type — reuses existing `input_mode` property from catalog |
 
 **PostHog call:**
 
 ```javascript
 posthog.capture('Sam Session Started', {
   job_id: jobId,
-  intake_mode: 'voice',  // or 'text'
+  input_mode: 'voice',  // or 'text'
 });
 ```
 
 **Notes:**
-- Covers both voice and text sessions under one event name — `intake_mode` differentiates
+- Covers both voice and text sessions under one event name — `input_mode` differentiates
 - Fires when the session actually initializes, not on page load
+- Replaces `Voice Session Started` from `docs/event-catalog.md` — see Catalog Cleanup section
 
 ---
 
 #### 3e. Sam Session Ended
 
-User confirms "End Session" in the confirmation modal.
+User confirms "End Session" in the confirmation modal, or Sam auto-ends the session. Replaces `Voice Session Ended` from the event catalog.
 
 | Field | Value |
 |-------|-------|
 | **Area** | Hiring |
 | **Type** | -- |
-| **Trigger** | User clicks "End Session" in the confirmation modal |
+| **Trigger** | User clicks "End Session" in the confirmation modal, or Sam auto-ends |
 | **Source** | Frontend |
 | **Group** | `job` |
 | **Status** | Not Started |
@@ -431,23 +608,150 @@ User confirms "End Session" in the confirmation modal.
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `job_id` | UUID | job ID | Job identifier |
-| `intake_mode` | enum | `voice`, `text` | Session type |
+| `input_mode` | enum | `voice`, `text` | Session type — reuses existing `input_mode` property from catalog |
 | `duration_seconds` | number | e.g., 180 | Time from session start to end confirmation |
+| `ended_by` | enum | `user`, `sam` | Who ended the session — carried over from `Voice Session Ended` |
 
 **PostHog call:**
 
 ```javascript
 posthog.capture('Sam Session Ended', {
   job_id: jobId,
-  intake_mode: 'voice',  // or 'text'
+  input_mode: 'voice',  // or 'text'
   duration_seconds: sessionDuration,
+  ended_by: 'user',  // or 'sam'
 });
 ```
 
 **Notes:**
 - Fires on the confirmation modal "End Session" button, NOT on the first "End Session" / "End chat" click
-- Covers both voice and text sessions under one event name — `intake_mode` differentiates
+- Covers both voice and text sessions under one event name — `input_mode` differentiates
+- `ended_by` tracks whether the user ended the session or Sam auto-ended it
 - After this fires, user moves to the Role Requirements page
+- Replaces `Voice Session Ended` from `docs/event-catalog.md` — see Catalog Cleanup section
+
+---
+
+#### 3f. Sam Voice Session Setup Failed
+
+Voice session fails to initialize due to mic permission denied or device unavailable. Replaces `Voice Session Setup Failed` from the event catalog.
+
+| Field | Value |
+|-------|-------|
+| **Area** | Hiring |
+| **Type** | Failure |
+| **Trigger** | Mic permission denied or device unavailable when starting voice session |
+| **Source** | Frontend |
+| **Group** | `job` |
+| **Status** | Not Started |
+
+**Properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `job_id` | UUID | job ID | Job identifier |
+| `error_reason` | string | e.g., `mic_permission_denied`, `device_unavailable` | Specific error |
+| `error_category` | string | e.g., `permissions`, `hardware` | Error category |
+
+**PostHog call:**
+
+```javascript
+posthog.capture('Sam Voice Session Setup Failed', {
+  job_id: jobId,
+  error_reason: 'mic_permission_denied',
+  error_category: 'permissions',
+});
+```
+
+**Notes:**
+- Voice-only event — text sessions have no hardware setup that can fail
+- Replaces `Voice Session Setup Failed` from `docs/event-catalog.md` — see Catalog Cleanup section
+
+**Helix codebase changes:**
+
+There is NO existing PostHog event for voice setup failures. The error handling infrastructure exists but isn't wired to PostHog. The app already tracks `voice_connected` and `voice_disconnected` — this adds the missing failure counterpart.
+
+**Change 1: Add event constant**
+
+**Edit** `frontend/src/lib/posthogEvents.ts` — add:
+
+```typescript
+export const SAM_VOICE_SESSION_SETUP_FAILED = 'Sam Voice Session Setup Failed';
+```
+
+**Change 2: Instrument voice connection error catch block**
+
+**Edit** `frontend/src/stores/voiceStore.ts` — in the `startVoice()` method, inside the existing catch block (around line 211), add the PostHog capture after the existing error handling:
+
+```typescript
+// EXISTING code in startVoice() catch block:
+} catch (e) {
+  if (backendStarted) {
+    try { await api.stopVoice(sessionId); } catch { }
+  }
+  client?.destroy();
+  client = null;
+
+  const msg = e instanceof Error
+    ? e.message.includes('timeout')
+      ? 'Connection timed out. Please try again.'
+      : e.message
+    : 'Voice connection failed. Please try again.';
+
+  set({ connectionState: 'error', error: msg });
+  logger.error(TAG, 'Voice connection failed', e);
+
+  // ADD — track voice setup failure in PostHog
+  posthog.capture('Sam Voice Session Setup Failed', {
+    job_id: jobId,
+    error_reason: e instanceof Error ? e.message : 'unknown',
+    error_category: e instanceof Error && e.message.includes('timeout')
+      ? 'timeout'
+      : 'connection',
+  });
+}
+```
+
+> This catch block handles ALL voice connection failures — backend call failures, room join failures, and timeouts. The `error_reason` captures the raw error message; `error_category` classifies it.
+
+**Change 3: Instrument MediaDevicesError handler**
+
+**Edit** `frontend/src/lib/livekitClient.ts` — in the `RoomEvent.MediaDevicesError` handler (around line 163-166), add PostHog capture:
+
+```typescript
+// EXISTING handler:
+room.on(RoomEvent.MediaDevicesError, (error) => {
+  this.connectionState = 'error';
+
+  // ADD — track mic/device failure in PostHog
+  posthog.capture('Sam Voice Session Setup Failed', {
+    job_id: this.jobId,
+    error_reason: error?.message || 'device_unavailable',
+    error_category: 'hardware',
+  });
+});
+```
+
+> This handler fires specifically for mic permission denied or device unavailable errors — distinct from the general connection failures in `voiceStore.ts`.
+
+**Change 4 (optional): Add backend constant**
+
+**Edit** `backend/app/shared/posthog_events.py` — add:
+
+```python
+SAM_VOICE_SESSION_SETUP_FAILED = "Sam Voice Session Setup Failed"
+```
+
+> Optional — this event is frontend-only, but adding the constant keeps the backend event registry complete.
+
+**Files to modify:**
+
+| File | Change |
+|---|---|
+| `frontend/src/lib/posthogEvents.ts` | Add constant |
+| `frontend/src/stores/voiceStore.ts` (~line 211) | Add capture in catch block |
+| `frontend/src/lib/livekitClient.ts` (~line 165) | Add capture in MediaDevicesError handler |
+| `backend/app/shared/posthog_events.py` | Add constant (optional) |
 
 ---
 
@@ -468,14 +772,14 @@ posthog.capture('Page Viewed', {
 
 ---
 
-#### 4b. Job Creation Wizard (user action — Next click)
+#### 4b. Job Post Wizard Role Requirements Completed (user action — Next click)
 
 User clicks "Next →" to proceed to Interview Questions.
 
 **PostHog call:**
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Role Requirements Completed', {
   action: 'click',
   action_value: 'next_button',
   current_page_context: 'hm_job_creation_wizard_role_requirements',
@@ -490,14 +794,14 @@ posthog.capture('Job Creation Wizard', {
 
 ---
 
-#### 4c. Job Creation Wizard (user action — Add question click)
+#### 4c. Job Post Wizard Role Requirements Completed (user action — Add question click)
 
 User clicks "+ Add question" to add a new role requirement.
 
 **PostHog call:**
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Role Requirements Completed', {
   action: 'click',
   action_value: 'add_question_button',
   current_page_context: 'hm_job_creation_wizard_role_requirements',
@@ -511,7 +815,7 @@ posthog.capture('Job Creation Wizard', {
 ```
 
 **Notes:**
-- Same `Job Creation Wizard` event name — differentiated by `action_value`
+- Same `Job Post Wizard Role Requirements Completed` event name for both actions — differentiated by `action_value`
 - `next_button` = moving to next step, `add_question_button` = adding a requirement within the step
 
 ---
@@ -533,12 +837,12 @@ posthog.capture('Page Viewed', {
 
 ---
 
-#### 5b. Job Creation Wizard (user action — Next click)
+#### 5b. Job Post Wizard Interview Questions Completed (user action — Next click)
 
 User clicks "Next →" to proceed to Verify.
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Interview Questions Completed', {
   action: 'click',
   action_value: 'next_button',
   current_page_context: 'hm_job_creation_wizard_interview_questions',
@@ -553,12 +857,12 @@ posthog.capture('Job Creation Wizard', {
 
 ---
 
-#### 5c. Job Creation Wizard (user action — Add question click)
+#### 5c. Job Post Wizard Interview Questions Completed (user action — Add question click)
 
 User clicks "+ Add question" to add a new screening question.
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Interview Questions Completed', {
   action: 'click',
   action_value: 'add_question_button',
   current_page_context: 'hm_job_creation_wizard_interview_questions',
@@ -573,12 +877,12 @@ posthog.capture('Job Creation Wizard', {
 
 ---
 
-#### 5d. Job Creation Wizard (user action — Back click)
+#### 5d. Job Post Wizard Interview Questions Completed (user action — Back click)
 
 User clicks "← Back" to go back to Role Requirements.
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Interview Questions Completed', {
   action: 'click',
   action_value: 'back_button',
   current_page_context: 'hm_job_creation_wizard_interview_questions',
@@ -732,12 +1036,12 @@ posthog.capture('Page Viewed', {
 
 ---
 
-#### 6b. Job Creation Wizard (user action — Send code)
+#### 6b. Job Post Wizard Verification Completed (user action — Send code)
 
 User clicks "Send code" to receive a 6-digit verification code.
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Verification Completed', {
   action: 'click',
   action_value: 'send_code_button',
   current_page_context: 'hm_job_creation_wizard_verify',
@@ -752,12 +1056,12 @@ posthog.capture('Job Creation Wizard', {
 
 ---
 
-#### 6c. Job Creation Wizard (user action — Maybe later)
+#### 6c. Job Post Wizard Verification Completed (user action — Maybe later)
 
 User clicks "Maybe later" to skip verification and publish without verifying.
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Verification Completed', {
   action: 'click',
   action_value: 'maybe_later_link',
   current_page_context: 'hm_job_creation_wizard_verify',
@@ -772,12 +1076,12 @@ posthog.capture('Job Creation Wizard', {
 
 ---
 
-#### 6d. Job Creation Wizard (user action — Back)
+#### 6d. Job Post Wizard Verification Completed (user action — Back)
 
 User clicks "← Back" to go back to Interview Questions.
 
 ```javascript
-posthog.capture('Job Creation Wizard', {
+posthog.capture('Job Post Wizard Verification Completed', {
   action: 'click',
   action_value: 'back_button',
   current_page_context: 'hm_job_creation_wizard_verify',
@@ -993,6 +1297,135 @@ JOB_POSTING_PUBLISHED = "Job Posting Published"
 - `is_verified` tells you whether the user completed email verification or skipped via "Maybe later"
 - `intake_mode` tells you how the user went through Understanding the Role (voice/text/skipped)
 - This is the END of the wizard — distinct from `Job Posting Draft Created` (step 1)
+
+---
+
+## New Events
+
+Events introduced by this feature. All follow Object-Action, Proper Case.
+
+| Event | Area | Trigger | Key Properties | Group | Property Updates |
+|---|---|---|---|---|---|
+| Create Job Button Clicked | Hiring | User clicks "+ Create job" button on HM job postings page | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
+| Job Post Wizard Started | Hiring | Wizard page mounts with router state isNewWizard=true | `start_source`, `current_page_context` | -- | -- |
+| Job Post Wizard Job Details Completed | Hiring | User clicks "Next →" on Job Details step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | -- | -- |
+| Job Posting Draft Created | Hiring | Server creates job draft via POST /api/v1/job | `job_id`, `job_title`, `company_name`, `location`, `job_status` | `job` | `group(job): job_title, job_status, created_by_user_id, created_at` |
+| Job Post Wizard Role Understanding Completed | Hiring | User clicks "Next →" or "Skip" on Understanding the Role step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode` | `job` | -- |
+| Sam Session Started | Hiring | Sam session initializes after user selects voice or text | `job_id`, `input_mode` | `job` | -- |
+| Sam Session Ended | Hiring | User clicks "End Session" in confirmation modal or Sam auto-ends | `job_id`, `input_mode`, `duration_seconds`, `ended_by` | `job` | -- |
+| Sam Voice Session Setup Failed | Hiring | Mic permission denied or device unavailable | `job_id`, `error_reason`, `error_category` | `job` | -- |
+| Job Post Wizard Role Requirements Completed | Hiring | User clicks "Next →" or "+ Add question" on Role Requirements step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
+| Job Post Wizard Interview Questions Completed | Hiring | User clicks "Next →", "+ Add question", or "← Back" on Interview Questions step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
+| Screening Configuration Saved | Hiring | Backend saves screening config via POST /flow/{job_id}/screening | `job_id`, `job_title`, `company_name`, `location`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): questions_count, identity_verification_mode` |
+| Job Post Wizard Verification Completed | Hiring | User clicks "Send code", "Maybe later", or "← Back" on Verify step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
+| Job Posting Verified | Hiring | Backend verifies 6-digit code successfully | `job_id`, `job_title`, `is_verified` | `job` | `group(job): is_verified` |
+| Job Posting Published | Hiring | Backend publishes the job via POST /flow/{job_id}/verify | `job_id`, `job_title`, `company_name`, `location`, `job_status`, `is_verified`, `visibility`, `questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): job_status, is_verified, job_visibility` |
+
+> **Note:** `Create Job Button Clicked` exists in the catalog but with no properties (`--`). This plan replaces it with 6 enriched properties. On merge, update the catalog entry to match.
+>
+> **Standard property `acting_as`:** Intentionally omitted from all events — replaced by `current_persona` person property. See "Decision: `acting_as` replaced by `current_persona`" section below. Validator TP5 errors for `acting_as` will resolve when the validator is updated on merge.
+>
+> **Standard property `surface`:** Intentionally omitted — the existing `current_page_context` property provides more granular surface identification. Validator TP5 errors for `surface` are expected.
+>
+> **Standard Objects:** `Sam` and `Screening Configuration` are new objects introduced by this plan. To be added to `docs/event-schema.md` Standard Objects table on merge.
+
+---
+
+## Intent vs Outcome
+
+| Flow | Intent Event | Success Event | Failure Event |
+|---|---|---|---|
+| Job Creation | Create Job Button Clicked | Job Post Wizard Started | -- |
+| Job Draft Save | Job Post Wizard Job Details Completed | Job Posting Draft Created | -- |
+| Job Publish | Job Post Wizard Verification Completed | Job Posting Published | -- |
+| Email Verification | Job Post Wizard Verification Completed | Job Posting Verified | -- |
+
+---
+
+## Funnels
+
+| Funnel Name | Steps | Purpose |
+|---|---|---|
+| Job Post Wizard Completion | Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Post Wizard Role Understanding Completed → Job Post Wizard Role Requirements Completed → Job Post Wizard Interview Questions Completed → Job Post Wizard Verification Completed → Job Posting Published | End-to-end wizard conversion rate |
+| Job Post Wizard Abandonment | Job Post Wizard Started → Job Post Wizard Job Details Completed | Step 1 drop-off rate |
+| Sam Session Adoption | Job Post Wizard Role Understanding Completed → Sam Session Started → Sam Session Ended | Voice/text session completion rate |
+
+---
+
+## Property Details
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `start_source` | string | `create_job_button` | Entry point that initiated the wizard |
+| `step_number` | number | `1`, `2`, `3`, `4`, `5` | Wizard step number |
+| `step_name` | enum | `job_details`, `understanding_the_role`, `role_requirements`, `interview_questions`, `verify` | Wizard step name |
+| `intake_mode` | enum | `voice`, `text`, `skipped` | How user chose to interact with Sam on step 2 |
+| `input_mode` | enum | `voice`, `text` | Session modality for Sam sessions |
+| `ended_by` | enum | `user`, `sam` | Who ended the Sam session |
+| `error_reason` | string | `mic_permission_denied`, `device_unavailable`, etc. | Specific error for setup failures |
+| `error_category` | string | `permissions`, `hardware`, `timeout`, `connection` | Error classification |
+| `questions_count` | number | e.g., `5` | Total screening questions |
+| `ai_generated_questions_count` | number | e.g., `3` | AI-generated screening questions |
+| `manual_questions_count` | number | e.g., `2` | Manually added screening questions |
+| `identity_verification_mode` | enum | `require`, `off` | Whether ID verification is enabled |
+| `entry_context` | enum | `new`, `resume_draft`, `edit_published` | Why the user entered the wizard |
+| `company_name` | string | e.g., `Acme Corp` | Company name extracted from JD (can be null) |
+| `location` | string | e.g., `San Francisco, CA` | Job location extracted from JD (can be null) |
+| `is_verified` | boolean | `true`, `false` | Whether hiring manager verified their email |
+| `job_title` | string | e.g., `Senior Engineer` | Job posting title |
+| `job_status` | enum | `draft`, `published` | Current job status |
+| `visibility` | enum | `private`, `public` | Job posting visibility |
+| `job_id` | UUID | e.g., `abc-123` | Job identifier |
+
+---
+
+## Catalog Cleanup: Replace Existing Events
+
+The following events in `docs/event-catalog.md` must be **removed** on merge — they are replaced by events in this tracking plan:
+
+### Wizard Events (lines 145-146)
+
+| Remove from catalog | Replaced by | Reason |
+|---|---|---|
+| `Job Wizard Started` | `Job Post Wizard Started` | Renamed for clarity — "Job Post Wizard" is more explicit than "Job Wizard" |
+| `Job Wizard Step Completed` | Per-step events (see below) | Umbrella event replaced by distinct per-step events for easier PostHog filtering |
+
+**Replacement mapping:**
+
+| Old (remove) | New (add) |
+|---|---|
+| `Job Wizard Started` | `Job Post Wizard Started` |
+| `Job Wizard Step Completed` (step_name: job_details) | `Job Post Wizard Job Details Completed` |
+| `Job Wizard Step Completed` (step_name: understanding_the_role) | `Job Post Wizard Role Understanding Completed` |
+| `Job Wizard Step Completed` (step_name: role_requirements) | `Job Post Wizard Role Requirements Completed` |
+| `Job Wizard Step Completed` (step_name: interview_questions) | `Job Post Wizard Interview Questions Completed` |
+| `Job Wizard Step Completed` (step_name: verify) | `Job Post Wizard Verification Completed` |
+
+> All new event names follow the Object-Action past-tense convention per `docs/event-schema.md`. `step_number` and `step_name` properties are retained on all per-step events for programmatic filtering.
+
+### Hiring Job Events (lines 131-133)
+
+| Remove from catalog | Replaced by | Reason |
+|---|---|---|
+| `Create Job Button Clicked` (no properties) | `Create Job Button Clicked` (6 properties) | Same event name, enriched with `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` |
+| `Job Created` | `Job Posting Draft Created` | Renamed — draft is created on step 1 "Next", not on final publish. Properties updated. |
+| `Job Creation Failed` | -- (not yet covered) | Existing failure event kept until a replacement is defined |
+| `Job Published` | `Job Posting Published` | Renamed + enriched with full job snapshot properties |
+
+### Voice Session Events (lines 147-149)
+
+| Remove from catalog | Replaced by | Reason |
+|---|---|---|
+| `Voice Session Started` | `Sam Session Started` | Now covers both voice AND text sessions via `input_mode` property |
+| `Voice Session Ended` | `Sam Session Ended` | Now covers both modalities; carries over `duration_seconds` and `ended_by` |
+| `Voice Session Setup Failed` | `Sam Voice Session Setup Failed` | Renamed to Sam namespace; voice-only (text has no hardware setup) |
+
+**Property changes:**
+
+| Old property | New property | Reason |
+|---|---|---|
+| — (not on Voice Session) | `input_mode` (`voice`/`text`) | Reuses existing catalog property `input_mode`; differentiates voice vs text |
+| `ended_by` (`user`/`sam`) | `ended_by` (`user`/`sam`) | Carried over unchanged from `Voice Session Ended` |
 
 ---
 
