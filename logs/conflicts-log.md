@@ -14,16 +14,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-03-20 14:07:20 UTC
-
-**Result: All clear**
-
-All 14 validation rules passed.
-
-*(2 known warnings suppressed)*
-
----
-
 ## Run: 2026-03-20 14:17:35 UTC
 
 **Result: All clear**
@@ -1030,6 +1020,49 @@ All 14 validation rules passed.
 ---
 
 ## Run: 2026-05-18 12:06:59 UTC — Tracking Plan: hm-job-creation-wizard
+
+**Result: 33 errors**
+
+### Errors
+
+- **[Rule TP3]** Event "Create Job Button Clicked" already exists in the catalog (section: Hiring Persona Events)
+- **[Rule TP5]** Event "Create Job Button Clicked" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Create Job Button Clicked" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Post Wizard Started" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Post Wizard Started" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Post Wizard Job Details Completed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Post Wizard Job Details Completed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Posting Draft Created" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Posting Draft Created" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Post Wizard Role Understanding Completed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Post Wizard Role Understanding Completed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Sam Session Started" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Sam Session Started" missing standard property `acting_as`
+- **[Rule TP5]** Event "Sam Session Ended" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Sam Session Ended" missing standard property `acting_as`
+- **[Rule TP5]** Event "Sam Voice Session Setup Failed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Sam Voice Session Setup Failed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Post Wizard Role Requirements Completed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Post Wizard Role Requirements Completed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Post Wizard Interview Questions Completed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Post Wizard Interview Questions Completed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Screening Configuration Saved" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Screening Configuration Saved" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Post Wizard Verification Completed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Post Wizard Verification Completed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Posting Verified" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Posting Verified" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Posting Published" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Posting Published" missing standard property `acting_as`
+- **[Rule TP7]** Event "Sam Session Started" uses an object prefix not in Standard Objects table
+- **[Rule TP7]** Event "Sam Session Ended" uses an object prefix not in Standard Objects table
+- **[Rule TP7]** Event "Sam Voice Session Setup Failed" uses an object prefix not in Standard Objects table
+- **[Rule TP7]** Event "Screening Configuration Saved" uses an object prefix not in Standard Objects table
+
+
+---
+
+## Run: 2026-05-19 19:22:23 UTC — Tracking Plan: hm-job-creation-wizard
 
 **Result: 33 errors**
 
