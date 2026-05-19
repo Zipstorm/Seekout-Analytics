@@ -120,7 +120,7 @@ The "+ Create job" button navigates with `{ state: { isNewWizard: true } }`. The
 After firing the event, the wizard replaces the history entry to clear the state (prevents back/forward re-firing):
 
 ```javascript
-// In the "+ Create job" button handler (JobList.tsx ~line 310)
+// In the "+ Create job" button handler (JobList.tsx → onClick of the header create button)
 // Currently: navigate(routes.create);
 // Change to:
 navigate(routes.create, { state: { isNewWizard: true } });
@@ -212,7 +212,7 @@ export const JOB_POST_WIZARD_STARTED = 'Job Post Wizard Started';
 
 ##### Codebase Change 2: Pass router state on navigation
 
-**Edit** `frontend/src/pages/recruiter/JobList.tsx` — in the "+ Create job" click handler (~line 310), add router state:
+**Edit** `frontend/src/pages/recruiter/JobList.tsx` — in all three "+ Create job" button click handlers (header button, empty state hero, and empty job list button), wherever `navigate(routes.create)` is called, add router state:
 
 ```typescript
 // Currently:
@@ -222,26 +222,25 @@ navigate(routes.create);
 navigate(routes.create, { state: { isNewWizard: true } });
 ```
 
-> This follows the existing codebase pattern — `JobList.tsx` already uses router state for `createInterview()` navigation with `{ state: { isInbound: true } }`.
+> This follows the existing codebase pattern — `JobList.tsx` already uses router state for the share/interview flow (`navigate(setupRoutes.createInterview(shareJob.id), { state: { isInbound: shareJob.isInbound } })` inside the `handleShareContinue` callback). The "+ Create job" button currently uses plain `navigate(routes.create)` with no state — this change adds `{ state: { isNewWizard: true } }` using the same router state mechanism. There are three places where `navigate(routes.create)` is called (header button, empty state hero, and empty job list button) — all three must be updated.
 
 ##### Codebase Change 3: Fire event on wizard mount
 
 **Edit** `frontend/src/components/common/JobInput.tsx` — add to the component mount logic:
 
 ```typescript
-import { useLocation, useNavigate, useSearchParams } from 'react-router';
-import { capture } from '@/lib/posthog';
+// NEW import — add to existing imports:
 import { JOB_POST_WIZARD_STARTED } from '@/lib/posthogEvents';
 
-// Inside the component:
-const location = useLocation();
-const navigateTo = useNavigate();
-const [searchParams] = useSearchParams();
+// EXISTING: const routerLocation = useLocation();
+// EXISTING: const navigate = useNavigate();
+// EXISTING: const launchedFromAgents = isAgentsLauncherState(routerLocation.state);
+// EXISTING: const editJobId = ...; const isEditMode = !!editJobId;
 
-const isNewWizard = location.state?.isNewWizard === true;
-const editJobId = searchParams.get('jobId');  // already exists at line 137
-const isEditMode = !!editJobId;               // already exists at line 139
+// ADD — new check alongside the existing agents launcher check:
+const isNewWizard = routerLocation.state?.isNewWizard === true;
 
+// ADD — fire event on mount:
 useEffect(() => {
   if (isNewWizard && !isEditMode) {
     capture(JOB_POST_WIZARD_STARTED, {
@@ -249,21 +248,23 @@ useEffect(() => {
       current_page_context: 'hm_job_creation_wizard_job_details',
     });
 
-    // Clear router state — prevents back/forward re-firing
-    navigateTo(location.pathname, { replace: true, state: {} });
+    // Clear only the isNewWizard key from router state — preserves other
+    // state keys (e.g., agents launcher state) that may also be present
+    const { isNewWizard: _, ...remainingState } = (routerLocation.state || {});
+    navigate(routerLocation.pathname, { replace: true, state: remainingState });
   }
 }, []);  // Run once on mount
 ```
 
-> `JobInput.tsx` already imports `useSearchParams` and checks `editJobId` at line 137-139. The `isEditMode` check is already there — we're just adding the `isNewWizard` check alongside it.
+> **Important context for engineers:** `JobInput.tsx` already reads `routerLocation.state` for the agents launcher check (`isAgentsLauncherState`). The `isNewWizard` check is a separate key on the same state object — they don't conflict. When clearing state after firing the event, we only remove `isNewWizard` and preserve any other state keys (like the agents launcher state) so existing functionality is not broken.
 
 **Files to modify:**
 
 | File | Change | Lines affected |
 |---|---|---|
 | `frontend/src/lib/posthogEvents.ts` | Add constant | 1 line |
-| `frontend/src/pages/recruiter/JobList.tsx` | Add `{ state: { isNewWizard: true } }` to navigate | ~line 310 |
-| `frontend/src/components/common/JobInput.tsx` | Add useEffect with capture + state clear | ~10 lines |
+| `frontend/src/pages/recruiter/JobList.tsx` | Add `{ state: { isNewWizard: true } }` to all three `navigate(routes.create)` calls | 3 call sites |
+| `frontend/src/components/common/JobInput.tsx` | Add `isNewWizard` check + useEffect with capture + selective state clear | ~15 lines |
 
 ---
 
@@ -341,7 +342,7 @@ Server creates the job draft after JD evaluation on step 1. The job is persisted
 |-------|-------|
 | **Area** | Hiring |
 | **Type** | Success |
-| **Trigger** | Server creates job draft via `POST /api/v1/job` → `create_job()` in `core/router.py` |
+| **Trigger** | Server creates job draft via `POST /api/v1/core/job` → `create_job()` in `core/router.py` |
 | **Source** | Backend |
 | **Group** | `job` |
 | **Status** | Not Started |
@@ -656,20 +657,24 @@ Voice session fails to initialize due to mic permission denied or device unavail
 **PostHog call:**
 
 ```javascript
-posthog.capture('Sam Voice Session Setup Failed', {
+capture('Sam Voice Session Setup Failed', {
   job_id: jobId,
-  error_reason: 'mic_permission_denied',
-  error_category: 'permissions',
+  error_reason: 'Permission denied',  // dynamic — from browser/device
+  error_category: 'hardware',         // determined by which code path caught the error
 });
 ```
 
 **Notes:**
 - Voice-only event — text sessions have no hardware setup that can fail
 - Replaces `Voice Session Setup Failed` from `docs/event-catalog.md` — see Catalog Cleanup section
+- `error_reason` is never hardcoded — it comes from the browser/device error message (e.g., `"Permission denied"`, `"Requested device not found"`, `"Connection timed out"`)
+- `error_category` is determined by where in the code the error was caught: `hardware` (mic/device), `timeout`, or `connection`
 
 **Helix codebase changes:**
 
 There is NO existing PostHog event for voice setup failures. The error handling infrastructure exists but isn't wired to PostHog. The app already tracks `voice_connected` and `voice_disconnected` — this adds the missing failure counterpart.
+
+**Architecture note:** LiveKitClient (the audio specialist) detects mic/device errors but has no knowledge of `job_id` or PostHog. voiceStore (the coordinator) has `job_id` and PostHog access. So the approach is: LiveKitClient passes the error details up to voiceStore via the existing `onConnectionChange` callback, and voiceStore fires the PostHog event.
 
 **Change 1: Add event constant**
 
@@ -679,12 +684,60 @@ There is NO existing PostHog event for voice setup failures. The error handling 
 export const SAM_VOICE_SESSION_SETUP_FAILED = 'Sam Voice Session Setup Failed';
 ```
 
-**Change 2: Instrument voice connection error catch block**
+**Change 2: Expand LiveKitClient callback to include error details**
 
-**Edit** `frontend/src/stores/voiceStore.ts` — in the `startVoice()` method, inside the existing catch block (around line 211), add the PostHog capture after the existing error handling:
+**Edit** `frontend/src/lib/livekitClient.ts` — in the `RoomEvent.MediaDevicesError` handler (inside the `join()` method, where the room event listeners are set up), pass the error reason and category through the existing `onConnectionChange` callback:
 
 ```typescript
-// EXISTING code in startVoice() catch block:
+// BEFORE (current code):
+room.on(RoomEvent.MediaDevicesError, () => {
+  logger.error(TAG, 'Media devices error');
+  this.handlers?.onConnectionChange('error');
+});
+
+// AFTER:
+room.on(RoomEvent.MediaDevicesError, (error) => {
+  logger.error(TAG, 'Media devices error', error);
+  this.handlers?.onConnectionChange('error', {
+    reason: error?.message || 'device_unavailable',
+    category: 'hardware',
+  });
+});
+```
+
+> LiveKitClient doesn't fire PostHog itself — it just passes the error details to voiceStore via the callback. The `error` object comes from the browser (e.g., `"Permission denied"` when mic is blocked). `category: 'hardware'` is not hardcoded guesswork — this handler ONLY fires for mic/device issues, so the category is always `hardware`.
+
+**Change 3: voiceStore fires PostHog event for all voice failures**
+
+**Edit** `frontend/src/stores/voiceStore.ts` — two changes in this file:
+
+**(a)** Update the `onConnectionChange` callback (inside the `startVoice()` method, where `LiveKitClient` handlers are configured) to handle error details from LiveKitClient:
+
+```typescript
+// BEFORE (current code):
+onConnectionChange: (connState) => {
+  set({ connectionState: connState });
+},
+
+// AFTER:
+onConnectionChange: (connState, errorInfo) => {
+  set({ connectionState: connState });
+  if (connState === 'error' && errorInfo) {
+    capture(SAM_VOICE_SESSION_SETUP_FAILED, {
+      job_id: jobId,
+      error_reason: errorInfo.reason,
+      error_category: errorInfo.category,
+    });
+  }
+},
+```
+
+> This handles mic/device errors that LiveKitClient detects after the connection is established.
+
+**(b)** In the `startVoice()` catch block (the `} catch (e) {` at the end of the method, after the `createdClient.join()` call), add PostHog capture after the existing error handling:
+
+```typescript
+// EXISTING code — no changes to lines 192-212:
 } catch (e) {
   if (backendStarted) {
     try { await api.stopVoice(sessionId); } catch { }
@@ -702,7 +755,7 @@ export const SAM_VOICE_SESSION_SETUP_FAILED = 'Sam Voice Session Setup Failed';
   logger.error(TAG, 'Voice connection failed', e);
 
   // ADD — track voice setup failure in PostHog
-  posthog.capture('Sam Voice Session Setup Failed', {
+  capture(SAM_VOICE_SESSION_SETUP_FAILED, {
     job_id: jobId,
     error_reason: e instanceof Error ? e.message : 'unknown',
     error_category: e instanceof Error && e.message.includes('timeout')
@@ -712,27 +765,7 @@ export const SAM_VOICE_SESSION_SETUP_FAILED = 'Sam Voice Session Setup Failed';
 }
 ```
 
-> This catch block handles ALL voice connection failures — backend call failures, room join failures, and timeouts. The `error_reason` captures the raw error message; `error_category` classifies it.
-
-**Change 3: Instrument MediaDevicesError handler**
-
-**Edit** `frontend/src/lib/livekitClient.ts` — in the `RoomEvent.MediaDevicesError` handler (around line 163-166), add PostHog capture:
-
-```typescript
-// EXISTING handler:
-room.on(RoomEvent.MediaDevicesError, (error) => {
-  this.connectionState = 'error';
-
-  // ADD — track mic/device failure in PostHog
-  posthog.capture('Sam Voice Session Setup Failed', {
-    job_id: this.jobId,
-    error_reason: error?.message || 'device_unavailable',
-    error_category: 'hardware',
-  });
-});
-```
-
-> This handler fires specifically for mic permission denied or device unavailable errors — distinct from the general connection failures in `voiceStore.ts`.
+> This catch block handles connection-level failures (backend call failures, room join failures, timeouts). The `error_reason` is the raw error message from the system; `error_category` is determined by which type of failure occurred.
 
 **Change 4 (optional): Add backend constant**
 
@@ -744,13 +777,32 @@ SAM_VOICE_SESSION_SETUP_FAILED = "Sam Voice Session Setup Failed"
 
 > Optional — this event is frontend-only, but adding the constant keeps the backend event registry complete.
 
+**How it all flows together:**
+
+```
+Scenario A: Mic permission denied
+  Browser → LiveKitClient (MediaDevicesError handler)
+    → passes { reason: "Permission denied", category: "hardware" } to voiceStore
+    → voiceStore fires PostHog event with job_id + error details
+
+Scenario B: Network timeout during connection
+  Browser → voiceStore (startVoice catch block)
+    → voiceStore fires PostHog event directly with job_id + error details
+
+Scenario C: Backend call fails
+  Backend → voiceStore (startVoice catch block)
+    → voiceStore fires PostHog event directly with job_id + error details
+```
+
+All three scenarios are captured. All PostHog events fire from voiceStore (the coordinator that has `job_id`). LiveKitClient never calls PostHog directly.
+
 **Files to modify:**
 
 | File | Change |
 |---|---|
 | `frontend/src/lib/posthogEvents.ts` | Add constant |
-| `frontend/src/stores/voiceStore.ts` (~line 211) | Add capture in catch block |
-| `frontend/src/lib/livekitClient.ts` (~line 165) | Add capture in MediaDevicesError handler |
+| `frontend/src/lib/livekitClient.ts` (`RoomEvent.MediaDevicesError` handler in `join()`) | Pass error details through `onConnectionChange` callback |
+| `frontend/src/stores/voiceStore.ts` (`onConnectionChange` callback + `startVoice()` catch block) | Receive error details and fire PostHog event |
 | `backend/app/shared/posthog_events.py` | Add constant (optional) |
 
 ---
@@ -905,7 +957,7 @@ Backend saves the screening config when user clicks Next on step 4. Captures the
 |-------|-------|
 | **Area** | Hiring |
 | **Type** | -- |
-| **Trigger** | Backend saves screening config via `POST /flow/{job_id}/screening` → `configure_screening()` |
+| **Trigger** | Backend saves screening config via `POST /api/v1/jobs/flow/{job_id}/screening` → `configure_screening()` |
 | **Source** | Backend |
 | **Group** | `job` |
 | **Status** | Not Started |
@@ -924,7 +976,7 @@ Backend saves the screening config when user clicks Next on step 4. Captures the
 | `identity_verification_mode` | enum | `interview.interview_options.integrity.identity_verification_mode` | `'require'` or `'off'` — the "Require ID verification" checkbox |
 | `intake_mode` | string | `intake_meeting.mode` | `'ai_copilot'`, `'hm_solo'`, `'manual'`, or null if skipped |
 
-**Helix codebase change — add to `jobflow/router.py` → `configure_screening()` (after line 415):**
+**Helix codebase change — add to `jobflow/router.py` → `configure_screening()` (after the `service.configure_screening()` call, before the return statement):**
 
 ```python
 # In jobflow/router.py → configure_screening()
@@ -1004,7 +1056,7 @@ User on Interview Questions page
   │    → InterviewAssessmentQuestion rows with source: "ai_generated" or "manual"
   │
   └─ Screening config saved SECOND (when user clicks "Next →")
-       → POST /flow/{job_id}/screening → configure_screening()
+       → POST /api/v1/jobs/flow/{job_id}/screening → configure_screening()
        → Saves interview_options (resume settings, ID verification) to Job.screening_config
        → At this point questions already exist in DB → we query them for the event
        → "Screening Configuration Saved" fires HERE with both question counts AND config
@@ -1117,7 +1169,7 @@ Backend confirms the 6-digit code is correct and the hiring manager's email is v
 | `job_title` | string | `job.title` | Job posting title |
 | `is_verified` | boolean | `true` | Email verified — always true on this event |
 
-**Helix codebase change — add to `core/router.py` → `confirm_job_verification()` (POST /api/v1/job/{job_id}/verify/confirm):**
+**Helix codebase change — add to `core/router.py` → `confirm_job_verification()` (POST /api/v1/core/job/{job_id}/verify/confirm):**
 
 ```python
 # Add after successful verification (after job.is_verified = True is set)
@@ -1177,7 +1229,7 @@ Backend publishes the job — it's now live and visible to candidates. This is t
 |-------|-------|
 | **Area** | Hiring |
 | **Type** | Success |
-| **Trigger** | Backend publishes the job via `POST /flow/{job_id}/verify` → `verify_and_publish()` in `jobflow/router.py` |
+| **Trigger** | Backend publishes the job via `POST /api/v1/jobs/flow/{job_id}/verify` → `verify_and_publish()` in `jobflow/router.py` |
 | **Source** | Backend |
 | **Group** | `job` |
 | **Status** | Not Started |
@@ -1309,17 +1361,17 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 | Create Job Button Clicked | Hiring | User clicks "+ Create job" button on HM job postings page | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
 | Job Post Wizard Started | Hiring | Wizard page mounts with router state isNewWizard=true | `start_source`, `current_page_context` | -- | -- |
 | Job Post Wizard Job Details Completed | Hiring | User clicks "Next →" on Job Details step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | -- | -- |
-| Job Posting Draft Created | Hiring | Server creates job draft via POST /api/v1/job | `job_id`, `job_title`, `company_name`, `location`, `job_status` | `job` | `group(job): job_title, job_status, created_by_user_id, created_at` |
+| Job Posting Draft Created | Hiring | Server creates job draft via POST /api/v1/core/job | `job_id`, `job_title`, `company_name`, `location`, `job_status` | `job` | `group(job): job_title, job_status, created_by_user_id, created_at` |
 | Job Post Wizard Role Understanding Completed | Hiring | User clicks "Next →" or "Skip" on Understanding the Role step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode` | `job` | -- |
 | Sam Session Started | Hiring | Sam session initializes after user selects voice or text | `job_id`, `input_mode` | `job` | -- |
 | Sam Session Ended | Hiring | User clicks "End Session" in confirmation modal or Sam auto-ends | `job_id`, `input_mode`, `duration_seconds`, `ended_by` | `job` | -- |
 | Sam Voice Session Setup Failed | Hiring | Mic permission denied or device unavailable | `job_id`, `error_reason`, `error_category` | `job` | -- |
 | Job Post Wizard Role Requirements Completed | Hiring | User clicks "Next →" or "+ Add question" on Role Requirements step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
 | Job Post Wizard Interview Questions Completed | Hiring | User clicks "Next →", "+ Add question", or "← Back" on Interview Questions step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
-| Screening Configuration Saved | Hiring | Backend saves screening config via POST /flow/{job_id}/screening | `job_id`, `job_title`, `company_name`, `location`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): questions_count, identity_verification_mode` |
+| Screening Configuration Saved | Hiring | Backend saves screening config via POST /api/v1/jobs/flow/{job_id}/screening | `job_id`, `job_title`, `company_name`, `location`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): questions_count, identity_verification_mode` |
 | Job Post Wizard Verification Completed | Hiring | User clicks "Send code", "Maybe later", or "← Back" on Verify step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
 | Job Posting Verified | Hiring | Backend verifies 6-digit code successfully | `job_id`, `job_title`, `is_verified` | `job` | `group(job): is_verified` |
-| Job Posting Published | Hiring | Backend publishes the job via POST /flow/{job_id}/verify | `job_id`, `job_title`, `company_name`, `location`, `job_status`, `is_verified`, `visibility`, `questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): job_status, is_verified, job_visibility` |
+| Job Posting Published | Hiring | Backend publishes the job via POST /api/v1/jobs/flow/{job_id}/verify | `job_id`, `job_title`, `company_name`, `location`, `job_status`, `is_verified`, `visibility`, `questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): job_status, is_verified, job_visibility` |
 
 > **Note:** `Create Job Button Clicked` exists in the catalog but with no properties (`--`). This plan replaces it with 6 enriched properties. On merge, update the catalog entry to match.
 >
