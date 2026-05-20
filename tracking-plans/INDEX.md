@@ -4,6 +4,7 @@
 |---|---|---|---|---|
 | Login & Onboarding Events | — | Draft | [helix-code-changes-login-onboarding.md](./helix-code-changes-login-onboarding.md) | 2026-04-17 |
 | Persona Switching | — | Merged | [archived/persona-switching.md](./archived/persona-switching.md) | 2026-05-11 |
+| Persona Switching v2 (codebase verification) | [Helix PR #494](https://github.com/Zipstorm/helix/pull/494) | Review | [archived/persona-switching.md](./archived/persona-switching.md) (updated in-place) | 2026-05-20 |
 | HM Job Post Wizard | — | Merged | [archived/hm-job-creation-wizard.md](./archived/hm-job-creation-wizard.md) | 2026-05-11 |
 
 ### Status Legend
