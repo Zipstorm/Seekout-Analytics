@@ -40,9 +40,9 @@ These events are still firing from `authStore.ts` and will be replaced when the 
 
 | Event                          | Area    | Type | Trigger                                        | Source   | Properties                                     | Group | Property Updates | Status       |
 | ------------------------------ | ------- | ---- | ---------------------------------------------- | -------- | ---------------------------------------------- | ----- | ---------------- | ------------ |
-| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | --               | Live (legacy) |
+| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | `$set: email, name, org_id, org_name, org_domain` (via `identifyUser()`) | Live (legacy) |
 | Auth Login Failed              | Account | --   | Backend returns auth error                     | Frontend | `auth_mode`, `status_code`, `error_detail`     | --    | --               | Live (legacy) |
-| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | --               | Live (legacy) |
+| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | `$set: email, name, org_id, org_name, org_domain` (via `identifyUser()`) | Live (legacy) |
 | Auth Session Restore Failed    | Account | --   | Session restore failed                         | Frontend | `status_code`                                  | --    | --               | Live (legacy) |
 | Auth Refresh Failed            | Account | --   | Token refresh failed                           | Frontend | `source`, `status_code`                        | --    | --               | Live (legacy) |
 | Auth Logout Completed          | Account | --   | User logs out                                  | Frontend | `auth_mode`                                    | --    | --               | Live (legacy) |
