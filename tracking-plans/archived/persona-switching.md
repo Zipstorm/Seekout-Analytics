@@ -764,3 +764,153 @@ Every change below must be implemented. Nothing has been done yet.
 | `test_duplicate_switch_does_not_duplicate` | HM → Recruiter → HM → Recruiter has no duplicates in array |
 | `test_onboarding_then_switch_fires_only_on_switch` | null → HM = no event; HM → Recruiter = event |
 | `test_get_me_includes_activated_personas` | GET /me response includes `activatedPersonas` field |
+
+---
+
+## Implementation Delta (2026-05-26)
+
+> **What this section is:** During implementation on the Helix codebase (`soumabrata/persona-switching-v2` branch), several changes were made relative to the original tracking plan spec above. This section documents every difference so the tracking plan stays in sync with what's actually firing in production.
+>
+> **How to read this:** Each delta entry references the original section, states what changed, and explains why. The original sections above remain as-is for historical context — this delta is the authoritative override.
+
+---
+
+### Delta 1: `activated_personas` added as top-level event property on Persona Updated
+
+**Original (Section 2 — Persona Updated):**
+
+The PostHog call only included `activated_personas` inside the `$set` operator (person property update). The top-level event properties were `previous_persona` and `current_persona` only.
+
+```python
+posthog_client.capture(
+    str(current_user.id),
+    PERSONA_UPDATED,
+    {
+        "previous_persona": previous_persona,
+        "current_persona": new_persona,
+        "$set": {
+            "current_persona": new_persona,
+            "activated_personas": result.activated_personas or [],
+        },
+    },
+)
+```
+
+**Implemented as:**
+
+`activated_personas` is also sent as a regular top-level event property alongside the `$set`:
+
+```python
+posthog_client.capture(
+    str(current_user.id),
+    PERSONA_UPDATED,
+    {
+        "previous_persona": previous_persona,
+        "current_persona": new_persona,
+        "activated_personas": result.activated_personas or [],
+        "$set": {
+            "current_persona": new_persona,
+            "activated_personas": result.activated_personas or [],
+        },
+    },
+)
+```
+
+**Why:** Sending `activated_personas` as a top-level event property means historical queries on `Persona Updated` events can see the full persona list at the exact moment of the switch, without relying on the person property (which only reflects the latest state via `$set`). This is the same intent-vs-snapshot pattern used for `current_persona`, which is already both a top-level event property and a `$set` person property.
+
+**Updated properties table for Persona Updated:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Persona before the switch |
+| `current_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Persona after the switch (event property + `$set`) |
+| `activated_personas` | array | e.g., `["recruiter", "job_seeker"]` | All personas tried so far, frozen at event time (event property + `$set`) |
+
+---
+
+### Delta 2: `identifyUser()` fix not implemented
+
+**Original (Section — Helix Implementation: `identifyUser()` Fix):**
+
+The spec called for updating `identifyUser()` in `frontend/src/lib/posthog.ts` to include `current_persona` in the `$set` properties via `ROLE_TO_PERSONA`, so that every user — including those who never switch — would have `current_persona` as a person property in PostHog.
+
+```typescript
+// Spec called for this change:
+const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
+identify(
+  user.id,
+  {
+    email: user.email, name: user.name, role: user.role, org_id: user.orgId,
+    current_persona: currentPersona,
+  },
+  setOnce,
+);
+```
+
+**Implemented as:**
+
+`identifyUser()` was **left unchanged**. No `current_persona` in the frontend `identify()` call:
+
+```typescript
+identify(
+  user.id,
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId },
+  setOnce,
+);
+```
+
+**Why:** The `current_persona` person property is set exclusively via the backend `$set` in the `Persona Updated` event. This means users who have **never switched personas** will not have `current_persona` as a person property in PostHog. This was an intentional scoping decision for the v2 branch — the `identifyUser()` fix can be picked up in a follow-up if cohort analysis by persona for non-switchers becomes a priority.
+
+**Impact:**
+
+| User segment | `current_persona` person property? | How to query |
+|---|---|---|
+| Has switched at least once | Yes (set by backend `$set`) | Filter by `current_persona` person property |
+| Never switched | **No** — person property not set | Must derive from `role` person property or use `role` → persona mapping in PostHog |
+
+---
+
+### Delta 3: `activated_personas` accumulates on onboarding role pick
+
+**Original (Section — `activated_personas` Database Column, Key design decisions):**
+
+The spec stated:
+- "The array only grows via the persona switch flow, NOT during initial onboarding"
+- "`null` means 'never switched via the chevron' — distinct from `[]`"
+- "The `previous_role is not None` guard in the router ensures onboarding (null → first role) doesn't fire events **or accumulate personas**"
+
+**Implemented as:**
+
+The `activated_personas` accumulation logic lives in `service.py` inside the `if dto.role is not None:` block, which runs for **all** role updates — including the initial onboarding role pick:
+
+```python
+# In service.py → update_user(), inside `if dto.role is not None:`
+new_persona = ROLE_TO_PERSONA.get(dto.role, "unknown")
+existing = user.activated_personas or []
+if new_persona not in existing:
+    user.activated_personas = existing + [new_persona]
+```
+
+The router guard (`previous_role is not None`) only prevents the **PostHog event** from firing on onboarding — it does NOT prevent the DB column from accumulating. So a user who picks Hiring Manager during onboarding will have `activated_personas = ["hiring_manager"]` in the DB even though no `Persona Updated` event fired.
+
+**Why:** Accumulating from onboarding provides a complete history of every persona a user has ever been in, not just personas reached via switching. This is more useful for analytics — a user with `activated_personas = ["hiring_manager", "recruiter"]` means they've been in both personas regardless of whether the first one was set during onboarding or via switching. The PostHog person property (`$set`) only gets updated on switches (since the event guard still applies), so the DB column is the authoritative source.
+
+**Updated semantics:**
+
+| DB value | Meaning (spec) | Meaning (implemented) |
+|---|---|---|
+| `null` | Never switched | Never had any role set (brand new user, pre-onboarding) |
+| `["hiring_manager"]` | N/A (wouldn't happen without a switch) | Picked HM during onboarding, never switched |
+| `["hiring_manager", "recruiter"]` | Switched from HM to Recruiter | Has been in both personas (onboarding + switch, or two switches) |
+
+**Test confirmation:** `test_onboarding_then_switch_fires_only_on_switch` verifies this behavior — null → HM populates `["hiring_manager"]` in the DB without firing a PostHog event.
+
+---
+
+## Delta Summary Table
+
+| # | Change Type | Original | Implemented | Why |
+|---|---|---|---|---|
+| 1 | Property added | `activated_personas` only inside `$set` on Persona Updated | Also sent as top-level event property | Historical queries can see the full persona list at event time without relying on person property |
+| 2 | Not implemented | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` unchanged — `current_persona` only set via backend `$set` on switch | Scoping decision; non-switchers can be identified by `role` property instead |
+| 3 | Behavior change | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
