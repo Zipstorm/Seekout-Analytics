@@ -129,7 +129,9 @@ User explores the persona switching option by clicking the ⇄ icon (ArrowLeftRi
 | `previous_page_context` | string | snake_case page identifier or null | Previous page before current one |
 | `entity_type` | string | `persona` | Business object being acted on |
 | `component` | string | `sidebar_persona_switcher` | The persona label + icon area in the left sidebar |
-| `current_persona` | string | `hiring_manager`, `recruiter`, `job_seeker` | The user's persona at the time of the click. Derived from `ROLE_TO_PERSONA[user.role]`. Passed as event property (not person property) so historical queries show the persona at event time, not the latest value. |
+| `current_persona` | string | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | The user's persona at the time of the click. Derived from `ROLE_TO_PERSONA[user.role]`. Passed as event property (not person property) so historical queries show the persona at event time, not the latest value. |
+
+*\* `unknown` is a fallback from `ROLE_TO_PERSONA.get(role, "unknown")` — should only appear if a new role is added without updating the mapping.*
 
 **PostHog call:**
 
@@ -248,8 +250,10 @@ Server confirms persona switch succeeded.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Derived from `user.role` BEFORE the update via `ROLE_TO_PERSONA` |
-| `current_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | The NEW persona after the switch. Must be sent as a regular event property (not just inside `$set`) so PostHog queries on historical events reflect the persona at the time of the event, not the latest value. |
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | Derived from `user.role` BEFORE the update via `ROLE_TO_PERSONA` |
+| `current_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | The NEW persona after the switch. Must be sent as a regular event property (not just inside `$set`) so PostHog queries on historical events reflect the persona at the time of the event, not the latest value. |
+
+*\* `unknown` is a fallback from `ROLE_TO_PERSONA.get(role, "unknown")` — should only appear if a new role is added without updating the mapping.*
 
 **Property Updates:**
 
@@ -329,10 +333,12 @@ Server returns error when persona switch fails.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Derived from `current_user.role` (unchanged — switch failed) |
-| `target_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Derived from `dto.role` — what the user tried to switch to |
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | Derived from `current_user.role` (unchanged — switch failed) |
+| `target_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | Derived from `dto.role` — what the user tried to switch to |
 | `error_reason` | string | system error description | `str(e)[:256]` from the caught exception — truncated to 256 chars for safety |
 | `error_category` | enum | `validation`, `server` | `validation` for `ValueError`/`BadRequestException`, `server` for others |
+
+*\* `unknown` is a fallback from `ROLE_TO_PERSONA.get(role, "unknown")` — should only appear if a new role is added without updating the mapping.*
 
 **PostHog call:**
 
@@ -919,15 +925,21 @@ posthog.identify(user.id,
 
 This matches the Intent vs Outcome row added to the schema (Schema §2 above). Without it, Rule 9 (Platform Health alignment) will flag this as an error.
 
-#### 6. `error_reason` truncation — add schema-level note
+#### 6. `error_reason` truncation — add footnote on Persona Update Failed catalog row
 
-`Persona Update Failed` truncates `error_reason` to 256 chars via `str(e)[:256]`. Other failure events (e.g., `Job Creation Failed`, `Interest Expression Failed`) do not truncate. Add a note to the `error_reason` entry in `docs/event-schema.md` (Standard Event Properties → Error Properties section, if one exists) or as an inline comment on the Persona Update Failed row:
+`Persona Update Failed` truncates `error_reason` to 256 chars via `str(e)[:256]`. Other failure events do not truncate. On merge, add a footnote to the `Persona Update Failed` row in `docs/event-catalog.md` (line 91):
 
+**Current:**
+```md
+| Persona Update Failed | Account | Failure | Backend returns error on persona switch attempt | Backend | `previous_persona`, `target_persona`, `error_reason`, `error_category` | -- | -- | Not Started |
 ```
-Note: `error_reason` on Persona Update Failed is truncated to 256 chars server-side. Other failure events send the full error string.
+
+**Target:**
+```md
+| Persona Update Failed | Account | Failure | Backend returns error on persona switch attempt | Backend | `previous_persona`, `target_persona`, `error_reason`†, `error_category` | -- | -- | Not Started |
 ```
 
-This ensures the divergence is documented at the schema level, not buried in the tracking plan.
+Add footnote below the table: `† error_reason on Persona Update Failed is truncated to 256 chars server-side (str(e)[:256]). Other failure events send the full error string.`
 
 #### 7. Account Created event properties column (line 32) — reconcile property list
 
@@ -1274,3 +1286,4 @@ identify(
 | 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
 | 4 | Must implement | Done | `Account Created` only uses `$set_once: { first_persona }` | Added `$set: { current_persona, activated_personas: [persona] }` alongside existing `$set_once` | Sets both person properties from onboarding — eliminates DB ↔ PostHog divergence for `activated_personas` |
 | 5 | Catalog + schema fix | **On merge** | Catalog auth rows have `--` for Person Properties; schema doc lists phantom `org_name`/`org_domain` and is missing `role` | Catalog: `--` → `$set: email, name, role, org_id, current_persona`; Schema: remove phantoms, add `role`, fix code snippets | Aligns both docs with what `identifyUser()` actually sets (verified against Helix `develop`) |
+| 6 | Catalog fix (pre-existing) | **On merge** | Account Created Properties column lists `first_persona, auth_method, referred_by` | Update to `action, action_value, current_page_context, previous_page_context, entry_point, entity_type, component, persona, signup_context` | Pre-existing drift — fixing on merge since we're already touching this row for Delta 4 |
