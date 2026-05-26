@@ -941,28 +941,9 @@ This matches the Intent vs Outcome row added to the schema (Schema §2 above). W
 
 Add footnote below the table: `† error_reason on Persona Update Failed is truncated to 256 chars server-side (str(e)[:256]). Other failure events send the full error string.`
 
-#### 7. Account Created event properties column (line 32) — reconcile property list
+#### 7. Account Created event properties column (line 32) — pre-existing drift, tracked separately
 
-**Current (on main):**
-```md
-| Account Created | ... | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `first_persona`, `auth_method`, `referred_by` | ...
-```
-
-**Actual event properties fired (per Delta 4 code snippet):**
-`action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `persona`, `signup_context`
-
-**Discrepancy:**
-- `first_persona` → should be `persona` (event property name; `first_persona` is in `$set_once`)
-- `auth_method` → not present in the code
-- `referred_by` → not present in the code
-- `entry_point`, `signup_context` → present in code but missing from catalog
-
-**Target (after merge):**
-```md
-| Account Created | ... | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `persona`, `signup_context` | ...
-```
-
-This is pre-existing drift, not introduced by this PR — but worth fixing on merge since we're already touching this row.
+The catalog lists `first_persona, auth_method, referred_by` as event properties but the actual code sends `persona, entry_point, signup_context`. This is pre-existing drift not introduced by this PR — **will be tracked and fixed in a separate tracking plan** to keep this PR's merge scope clean.
 
 ---
 
@@ -1286,4 +1267,3 @@ identify(
 | 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
 | 4 | Must implement | Done | `Account Created` only uses `$set_once: { first_persona }` | Added `$set: { current_persona, activated_personas: [persona] }` alongside existing `$set_once` | Sets both person properties from onboarding — eliminates DB ↔ PostHog divergence for `activated_personas` |
 | 5 | Catalog + schema fix | **On merge** | Catalog auth rows have `--` for Person Properties; schema doc lists phantom `org_name`/`org_domain` and is missing `role` | Catalog: `--` → `$set: email, name, role, org_id, current_persona`; Schema: remove phantoms, add `role`, fix code snippets | Aligns both docs with what `identifyUser()` actually sets (verified against Helix `develop`) |
-| 6 | Catalog fix (pre-existing) | **On merge** | Account Created Properties column lists `first_persona, auth_method, referred_by` | Update to `action, action_value, current_page_context, previous_page_context, entry_point, entity_type, component, persona, signup_context` | Pre-existing drift — fixing on merge since we're already touching this row for Delta 4 |
