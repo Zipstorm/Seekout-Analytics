@@ -43,8 +43,8 @@
 | Event | Change | Person Properties (after change) | Status |
 |---|---|---|---|
 | Account Created | Add `$set: { current_persona: persona }` alongside existing `$set_once: { first_persona }` | `$set: current_persona` · `$set_once: first_persona, entry_point, account_created_at` | **Not yet done** (Delta 4) |
-| Auth Login Succeeded | Fix `identifyUser()` — add `current_persona`, add missing `role`, remove non-existent `org_name`/`org_domain` | `$set: email, name, role, org_id, current_persona` | **Not yet done** (Delta 2 + 5) |
-| Auth Session Restore Succeeded | Same `identifyUser()` fix as above | `$set: email, name, role, org_id, current_persona` | **Not yet done** (Delta 2 + 5) |
+| Auth Login Succeeded | Fix `identifyUser()` — add `current_persona`, add missing `role`, remove non-existent `org_name`/`org_domain` | `$set: email, name, role, org_id, current_persona` | Done (Delta 2 + 5) |
+| Auth Session Restore Succeeded | Same `identifyUser()` fix as above | `$set: email, name, role, org_id, current_persona` | Done (Delta 2 + 5) |
 
 ### Removed Events
 
@@ -877,13 +877,13 @@ posthog_client.capture(
 
 ---
 
-### Delta 2: `identifyUser()` must set `current_persona` as person property — NOT YET IMPLEMENTED
+### Delta 2: `identifyUser()` sets `current_persona` as person property — IMPLEMENTED
 
 **Original (Section — Helix Implementation: `identifyUser()` Fix):**
 
-The spec correctly called for updating `identifyUser()` in `frontend/src/lib/posthog.ts` to include `current_persona` in the `$set` properties. This was not picked up during initial implementation but is **required**.
+The spec correctly called for updating `identifyUser()` in `frontend/src/lib/posthog.ts` to include `current_persona` in the `$set` properties. This has been implemented on the Helix `soumabrata/persona-switching-v2` branch.
 
-**Current state (what exists today):**
+**Previous state (before the fix):**
 
 ```typescript
 // frontend/src/lib/posthog.ts → identifyUser()
@@ -894,13 +894,13 @@ identify(
 );
 ```
 
-No `current_persona` in `$set`. The person property is only set via `Persona Updated` (backend `$set` on switch), meaning users who never switch personas have no `current_persona` person property in PostHog.
+Without this fix, `current_persona` as a person property only existed for users who had switched personas at least once.
 
-**Must be implemented as:**
+**Implemented as:**
 
 ```typescript
 // frontend/src/lib/posthog.ts → identifyUser()
-import { ROLE_TO_PERSONA } from '@/lib/posthogEvents';
+import { SURFACE_PROSPECT, SURFACE_HIRING, ROLE_TO_PERSONA } from '@/lib/posthogEvents';
 
 export function identifyUser(user: User): void {
   const setOnce: Record<string, unknown> = {
@@ -918,14 +918,14 @@ export function identifyUser(user: User): void {
       name: user.name,
       role: user.role,
       org_id: user.orgId,
-      ...(currentPersona && { current_persona: currentPersona }),
+      current_persona: currentPersona,
     },
     setOnce,
   );
 }
 ```
 
-**Why this is required:** Without this, `current_persona` as a person property only exists for users who have switched personas at least once. That's a tiny minority. Any PostHog query that filters by `current_persona` (funnels, cohorts, retention, dashboards) would silently exclude the vast majority of users. This makes the person property useless for segmentation until the fix is in place.
+**Why this is required:** Without this, `current_persona` as a person property only exists for users who have switched personas at least once. That's a tiny minority. Any PostHog query that filters by `current_persona` (funnels, cohorts, retention, dashboards) would silently exclude the vast majority of users.
 
 **What this achieves:**
 - Every user gets `current_persona` set as a person property on every login/session restore
@@ -1099,7 +1099,7 @@ identify(
 | # | Change Type | Status | Original | Implemented / Required | Why |
 |---|---|---|---|---|---|
 | 1 | Property added | Done | `activated_personas` only inside `$set` on Persona Updated | Also sent as top-level event property | Historical queries can see the full persona list at event time without relying on person property |
-| 2 | Must implement | **Not yet done** | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` unchanged — must add `current_persona` to `$set` via `ROLE_TO_PERSONA` | Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering |
+| 2 | Must implement | Done | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` updated — `current_persona` added to `$set` via `ROLE_TO_PERSONA` | Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering |
 | 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
 | 4 | Must implement | **Not yet done** | `Account Created` only uses `$set_once: { first_persona }` | Must add `$set: { current_persona: persona }` alongside existing `$set_once` | Closes the gap between account creation and first re-login — user has `current_persona` from the very first moment |
 | 5 | Catalog fix | **On merge** | Auth Login Succeeded / Auth Session Restore Succeeded list `$set: email, name, org_id, org_name, org_domain` | Must be `$set: email, name, role, org_id, current_persona` — `org_name`/`org_domain` don't exist, `role` was missing | Aligns catalog with what `identifyUser()` actually sets (verified against Helix `develop`) |
