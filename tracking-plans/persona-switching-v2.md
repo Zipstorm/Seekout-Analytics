@@ -48,7 +48,7 @@
 
 | Event | Change | Person Properties (after change) | Status |
 |---|---|---|---|
-| Account Created | Add `$set: { current_persona: persona }` alongside existing `$set_once: { first_persona }` | `$set: current_persona` · `$set_once: first_persona, entry_point, account_created_at` | Done (Delta 4) |
+| Account Created | Add `$set: { current_persona, activated_personas }` alongside existing `$set_once: { first_persona }` | `$set: current_persona, activated_personas` · `$set_once: first_persona, entry_point, account_created_at` | Done (Delta 4) |
 | Auth Login Succeeded | Fix `identifyUser()` — add `current_persona`, add missing `role`, remove non-existent `org_name`/`org_domain` | `$set: email, name, role, org_id, current_persona` | Done (Delta 2 + 5) |
 | Auth Session Restore Succeeded | Same `identifyUser()` fix as above | `$set: email, name, role, org_id, current_persona` | Done (Delta 2 + 5) |
 
@@ -64,10 +64,10 @@
 
 | Property | Type | Scope | Values | Used In |
 |---|---|---|---|---|
-| `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Updated, Persona Update Failed |
-| `current_persona` | enum | event + person (`$set`) | `hiring_manager`, `recruiter`, `job_seeker` | Switch Persona Button Clicked (event), Persona Updated (event + `$set`), Account Created (`$set`), Auth Login Succeeded (`$set` via `identifyUser()`), Auth Session Restore Succeeded (`$set` via `identifyUser()`) |
-| `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Update Failed |
-| `activated_personas` | array | event + person (`$set`) + DB column | e.g., `["recruiter", "job_seeker"]` | Persona Updated (event + `$set`) |
+| `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker`, `unknown` | Persona Updated, Persona Update Failed |
+| `current_persona` | enum | event + person (`$set`) | `hiring_manager`, `recruiter`, `job_seeker`, `unknown` | Switch Persona Button Clicked (event), Persona Updated (event + `$set`), Account Created (`$set`), Auth Login Succeeded (`$set` via `identifyUser()`), Auth Session Restore Succeeded (`$set` via `identifyUser()`) |
+| `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker`, `unknown` | Persona Update Failed |
+| `activated_personas` | array | event + person (`$set`) + DB column | e.g., `["recruiter", "job_seeker"]` | Persona Updated (event + `$set`), Account Created (`$set`) |
 | `error_reason` | string | event | system error description (truncated to 256 chars via `str(e)[:256]` — note: other failure events do not truncate, this is a parity difference) | Persona Update Failed |
 | `error_category` | enum | event | `validation`, `server` | Persona Update Failed |
 
@@ -815,26 +815,19 @@ Already correct on main:
 
 **Target (after merge):**
 ```md
-| `activated_personas` | array | event, person ($set) | All unique personas the user has tried via switching. Sent as top-level event property on Persona Updated and as person property via `$set`. DB column accumulates from onboarding but PostHog `$set` is switch-only. | Persona Updated (event property + person property via `$set`) |
+| `activated_personas` | array | event, person ($set) | All unique personas the user has ever been in. Seeded with `[persona]` on Account Created, accumulates via Persona Updated. Sent as top-level event property on Persona Updated. DB column and PostHog person property stay in sync. | Account Created (`$set`), Persona Updated (event property + `$set`) |
 ```
 
-**What changed:** Scope updated from `person ($set)` to `event, person ($set)` per Delta 1. Used In narrowed from "All events (person property)" to "Persona Updated" — that's the only event that fires the `$set`. Description updated to clarify DB vs PostHog behavior per Delta 3.
+**What changed:** Scope updated from `person ($set)` to `event, person ($set)` per Delta 1. Used In updated from "All events (person property)" to "Account Created (`$set`), Persona Updated (event + `$set`)" — the specific events that set it.
 
-#### 5. Account Created row (line 32) — fix Property Updates column
+#### 5. Account Created row (line 32) — Property Updates column is now correct
 
 **Current (on main):**
 ```md
 | Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | ... | --    | `$set: current_persona, activated_personas`; `$set_once: first_persona, account_created_at, referred_by` | Live   |
 ```
 
-**Target (after merge):**
-```md
-| Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | ... | --    | `$set: current_persona`; `$set_once: first_persona, account_created_at, referred_by` | Live   |
-```
-
-**What changed:** Removed `activated_personas` from `$set`. Per Delta 4, the `Account Created` PostHog call only adds `$set: { current_persona }`. The DB column accumulates `activated_personas` during onboarding (Delta 3), but the PostHog `$set` for `activated_personas` only happens in `Persona Updated` (backend, on switch). The catalog row must reflect what the PostHog event actually fires, not what the DB does.
-
-**Downstream impact:** If any existing PostHog cohort or dashboard filters on `activated_personas` being populated "since signup", those queries will now only see `activated_personas` populated after the user's first persona switch (not at account creation). This is the correct behavior — the DB column (authoritative) still accumulates from onboarding, but the PostHog person property is only `$set` on switch. Users who never switch will not have `activated_personas` as a PostHog person property. To query total persona history including onboarding, use the backend API (`GET /me` → `activatedPersonas`) rather than PostHog person properties.
+**No change needed** — the catalog already lists `$set: current_persona, activated_personas` which matches what Delta 4 now implements. The `Account Created` PostHog call sets both `$set: { current_persona: persona, activated_personas: [persona] }` to ensure both person properties are populated from the first session. This eliminates the DB ↔ PostHog divergence: analysts querying `activated_personas` in PostHog will see onboarding-only users too.
 
 ### Event Schema (`docs/event-schema.md`)
 
@@ -868,14 +861,14 @@ Update Example Events to: `Switch Persona Button Clicked, Persona Updated`
 | `role` | string | `identifyUser()` | User's current role enum (e.g., `HIRING_MANAGER`, `RECRUITER`, `PROFESSIONAL`) |
 | `org_id` | string | `identifyUser()` | User's current organization ID |
 | `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
-| `activated_personas` | array | Persona Updated | All unique personas the user has tried via switching. Only set as PostHog person property on persona switch — not on Account Created. DB column accumulates from onboarding but the `$set` is switch-only. |
+| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has ever been in. Seeded with `[persona]` on Account Created, grows as user switches personas via Persona Updated. DB column and PostHog person property are now in sync. |
 ```
 
 **What changed:**
 - **Removed `org_name`:** `identifyUser()` does not set this — phantom property (Delta 5)
 - **Removed `org_domain`:** `identifyUser()` does not set this — phantom property (Delta 5)
 - **Added `role`:** `identifyUser()` sets `role: user.role` — was missing from schema (Delta 5)
-- **Updated `activated_personas` Set By:** Changed from "Account Created, Persona Updated" to "Persona Updated" only — Account Created does not `$set` `activated_personas`, only `current_persona` (Delta 3/4)
+- **`activated_personas` Set By:** Stays as "Account Created, Persona Updated" (no change from current schema) — Delta 4 now `$set`s `activated_personas: [persona]` on Account Created
 
 #### 4. Persona properties explanation text (line 147) — update
 
@@ -886,7 +879,7 @@ Update Example Events to: `Switch Persona Button Clicked, Persona Updated`
 
 **Target (after merge):**
 ```
-**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and `identifyUser()` (every login), and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) is set only by Persona Updated on persona switch — the DB column accumulates from onboarding, but the PostHog person property is only `$set` on switch events.
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and `identifyUser()` (every login), and updated on persona switch via Persona Updated. `activated_personas` (`$set`) is seeded with `[persona]` on Account Created and accumulates every persona the user has tried via Persona Updated — it only grows, never shrinks. Both DB column and PostHog person property stay in sync.
 ```
 
 #### 5. Example `posthog.identify()` snippet (lines 152–155, repeated at 294–298) — update
@@ -925,6 +918,39 @@ posthog.identify(user.id,
 ```
 
 This matches the Intent vs Outcome row added to the schema (Schema §2 above). Without it, Rule 9 (Platform Health alignment) will flag this as an error.
+
+#### 6. `error_reason` truncation — add schema-level note
+
+`Persona Update Failed` truncates `error_reason` to 256 chars via `str(e)[:256]`. Other failure events (e.g., `Job Creation Failed`, `Interest Expression Failed`) do not truncate. Add a note to the `error_reason` entry in `docs/event-schema.md` (Standard Event Properties → Error Properties section, if one exists) or as an inline comment on the Persona Update Failed row:
+
+```
+Note: `error_reason` on Persona Update Failed is truncated to 256 chars server-side. Other failure events send the full error string.
+```
+
+This ensures the divergence is documented at the schema level, not buried in the tracking plan.
+
+#### 7. Account Created event properties column (line 32) — reconcile property list
+
+**Current (on main):**
+```md
+| Account Created | ... | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `first_persona`, `auth_method`, `referred_by` | ...
+```
+
+**Actual event properties fired (per Delta 4 code snippet):**
+`action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `persona`, `signup_context`
+
+**Discrepancy:**
+- `first_persona` → should be `persona` (event property name; `first_persona` is in `$set_once`)
+- `auth_method` → not present in the code
+- `referred_by` → not present in the code
+- `entry_point`, `signup_context` → present in code but missing from catalog
+
+**Target (after merge):**
+```md
+| Account Created | ... | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `persona`, `signup_context` | ...
+```
+
+This is pre-existing drift, not introduced by this PR — but worth fixing on merge since we're already touching this row.
 
 ---
 
@@ -1130,11 +1156,11 @@ The router guard (`previous_role is not None`) only prevents the **PostHog event
 
 ---
 
-### Delta 4: `Account Created` now `$set`s `current_persona` during onboarding — IMPLEMENTED
+### Delta 4: `Account Created` now `$set`s `current_persona` and `activated_personas` during onboarding — IMPLEMENTED
 
 **Original (not in tracking plan spec):**
 
-The original persona switching tracking plan did not address `Account Created` because onboarding was considered out of scope. However, `Account Created` is the first moment a user has a persona, and it must set `current_persona` as a person property so PostHog has it from the very first session.
+The original persona switching tracking plan did not address `Account Created` because onboarding was considered out of scope. However, `Account Created` is the first moment a user has a persona, and it must set both `current_persona` and `activated_personas` as person properties so PostHog has them from the very first session.
 
 **Previous state (before the fix):**
 
@@ -1152,11 +1178,11 @@ capture(ACCOUNT_CREATED, {
 });
 ```
 
-The event sent `persona` as an event property and `first_persona` via `$set_once`, but did not `$set` `current_persona`.
+The event sent `persona` as an event property and `first_persona` via `$set_once`, but did not `$set` any person properties.
 
 **Implemented as:**
 
-Added `$set: { current_persona: persona }` alongside the existing `$set_once`:
+Added `$set: { current_persona, activated_personas }` alongside the existing `$set_once`:
 
 ```typescript
 // frontend/src/pages/RoleSelection.tsx → handleContinue()
@@ -1174,6 +1200,7 @@ capture(ACCOUNT_CREATED, {
   signup_context: entryPoint,
   $set: {
     current_persona: persona,
+    activated_personas: [persona],
   },
   $set_once: {
     first_persona: persona,
@@ -1183,17 +1210,19 @@ capture(ACCOUNT_CREATED, {
 });
 ```
 
-**Why this is required:** `Account Created` fires once during onboarding when the user picks their role. Without `$set: { current_persona }` here, users start their lifecycle with no `current_persona` person property. Setting it at the point of creation ensures PostHog has the persona from the very first moment.
+**Why both are required:**
+- `current_persona`: Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering.
+- `activated_personas`: Without this, the PostHog person property is only set on switch (via `Persona Updated`). Users who sign up but never switch would be excluded from any cohort or query filtering on `activated_personas`. The DB column accumulates from onboarding (Delta 3), and the PostHog person property must match so analysts get consistent results.
 
-**Relationship between the two fixes:**
+**Relationship between all the fixes:**
 
-| Fix | When it fires | Purpose |
-|---|---|---|
-| Delta 2: `identifyUser()` | Every login / session restore | Ensures `current_persona` is always up-to-date for returning users |
-| Delta 4: `Account Created` | Once, during onboarding | Ensures `current_persona` is set from the very first moment the user has a role |
-| Existing: `Persona Updated` `$set` | On persona switch | Updates `current_persona` when the user switches |
+| Fix | When it fires | Sets `current_persona` | Sets `activated_personas` |
+|---|---|---|---|
+| Delta 2: `identifyUser()` | Every login / session restore | Yes (keeps up-to-date) | No (DB is source of truth, only set on events) |
+| Delta 4: `Account Created` | Once, during onboarding | Yes (first value) | Yes (seeded with `[persona]`) |
+| Existing: `Persona Updated` | On persona switch | Yes (updated) | Yes (full array from DB) |
 
-All three are needed for complete coverage.
+All three are needed for complete `current_persona` coverage. `activated_personas` is set by Account Created (seed) and Persona Updated (accumulates).
 
 ---
 
@@ -1243,5 +1272,5 @@ identify(
 | 1 | Property added | Done | `activated_personas` only inside `$set` on Persona Updated | Also sent as top-level event property | Historical queries can see the full persona list at event time without relying on person property |
 | 2 | Must implement | Done | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` updated — `current_persona` added to `$set` via `ROLE_TO_PERSONA` | Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering |
 | 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
-| 4 | Must implement | Done | `Account Created` only uses `$set_once: { first_persona }` | Added `$set: { current_persona: persona }` alongside existing `$set_once` | Closes the gap between account creation and first re-login — user has `current_persona` from the very first moment |
+| 4 | Must implement | Done | `Account Created` only uses `$set_once: { first_persona }` | Added `$set: { current_persona, activated_personas: [persona] }` alongside existing `$set_once` | Sets both person properties from onboarding — eliminates DB ↔ PostHog divergence for `activated_personas` |
 | 5 | Catalog + schema fix | **On merge** | Catalog auth rows have `--` for Person Properties; schema doc lists phantom `org_name`/`org_domain` and is missing `role` | Catalog: `--` → `$set: email, name, role, org_id, current_persona`; Schema: remove phantoms, add `role`, fix code snippets | Aligns both docs with what `identifyUser()` actually sets (verified against Helix `develop`) |
