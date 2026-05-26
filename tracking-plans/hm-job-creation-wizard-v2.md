@@ -1377,7 +1377,8 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | Job Post Wizard Back Button Clicked | Hiring | User clicks "Back" on any wizard step (2–5) | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Job Posting Verified | Hiring | Backend verifies 6-digit code successfully | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `identity_verification_mode`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `intake_mode` | `job` | `group(job): is_verified` |
 | Job Posting Published | Hiring | Backend publishes the job (2 endpoints — see Delta 12) | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): job_status, is_verified, job_visibility` |
-| Job Status Changed | Hiring | Job archived or unarchived | Backend | `current_persona`, `job_id`, `from_status`, `to_status` | `job` | `group(job): job_status` |
+| Archive Job Button Clicked | Hiring | User clicks "Archive" in job card overflow menu | Frontend | `action`, `action_value: 'archive_job_menu_item'`, `current_page_context`, `previous_page_context`, `entity_type`, `component: 'job_card_overflow_menu'`, `job_id`, `current_persona` | -- | -- |
+| Job Status Changed | Hiring | Job archived or unarchived (core + jobflow endpoints) | Backend | `current_persona`, `job_id`, `from_status`, `to_status` | `job` | `group(job): job_status` |
 | Share Button Clicked | Hiring | User clicks share button on job card | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `component`, `context_object_type`, `context_object_id`, `current_persona` | -- | -- |
 | Job Shared | Hiring | Backend grants job access successfully | Backend | `current_persona`, `job_id`, `shared_by_user_id`, `share_channel` | `job` | -- |
 | Job Share Failed | Hiring | Backend grant access fails | Backend | `current_persona`, `job_id`, `error_reason` | `job` | -- |
@@ -1776,11 +1777,22 @@ The following events were added during implementation. They're part of the broad
 
 | Field | Value |
 |---|---|
-| **Trigger** | Job archived or unarchived via `POST /api/v1/jobs/flow/{job_id}/archive` or `/unarchive` |
+| **Trigger** | Job archived or unarchived |
 | **Source** | Backend |
+| **Endpoints** | `POST /api/v1/jobs/flow/{job_id}/archive` or `/unarchive` (jobflow) AND `POST /api/v1/core/job/{job_id}/archive` (core) — see Delta 17 |
 | **Properties** | `current_persona`, `job_id`, `from_status`, `to_status` |
 | **Group** | `job` |
 | **Note** | Post-publish lifecycle event — not part of wizard but part of job management |
+
+#### Archive Job Button Clicked
+
+| Field | Value |
+|---|---|
+| **Trigger** | User clicks "Archive" in the job card overflow menu (intent signal — fires before confirmation dialog) |
+| **Source** | Frontend |
+| **Properties** | `action: 'click'`, `action_value: 'archive_job_menu_item'`, `current_page_context`, `previous_page_context`, `entity_type: 'job'`, `component: 'job_card_overflow_menu'`, `job_id`, `current_persona` |
+| **Group** | -- |
+| **Note** | Intent event for `Job Status Changed` (archive). Added in Helix commit `7b6a751d` |
 
 #### Share Button Clicked
 
@@ -1831,6 +1843,86 @@ The following events were added during implementation. They're part of the broad
 
 ---
 
+### Delta 16: `Archive Job Button Clicked` — new frontend intent event
+
+**Original:** Not in plan
+**Implemented as:** New event `Archive Job Button Clicked`
+
+**Why:** The archive flow has two steps: (1) user clicks "Archive" in the job card menu, (2) confirmation dialog appears, (3) backend archives the job and fires `Job Status Changed`. The frontend intent event captures step 1 — useful for measuring how often users consider archiving vs actually confirming.
+
+**Properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `archive_job_menu_item` | Menu item clicked |
+| `current_page_context` | string | `hiring_manager_job_postings` or `recruiter_ai_job_flows` | Page context |
+| `previous_page_context` | string | snake_case page identifier | Previous page |
+| `entity_type` | string | `job` | Business object |
+| `component` | string | `job_card_overflow_menu` | Overflow menu on job card |
+| `job_id` | UUID | job ID | Job being archived |
+| `current_persona` | string | `hiring_manager`, `recruiter` | User's active persona |
+
+**Helix commit:** `7b6a751d` — "fix(analytics): add archive job analytics and fix missing core archive event"
+
+---
+
+### Delta 17: `Job Status Changed` — fires from core archive endpoint too
+
+**Original (Delta 13):** `Job Status Changed` fires from jobflow endpoints only (`/api/v1/jobs/flow/{job_id}/archive` and `/unarchive`)
+**Implemented as:** Now ALSO fires from `POST /api/v1/core/job/{job_id}/archive` (core/router.py)
+
+**Why:** The frontend uses the core route for archiving, not the legacy jobflow route. Without this fix, archive events from the UI were not being captured.
+
+**Properties (identical to jobflow version):**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `current_persona` | string | `hiring_manager`, `recruiter` | User's active persona |
+| `job_id` | UUID | job ID | Job being archived |
+| `from_status` | string | previous status | Status before archive |
+| `to_status` | string | `archived` | Always "archived" for archive action |
+
+**Helix commit:** `7b6a751d`
+
+---
+
+### Delta 18: `is_verified` renamed to `job_verified` in backend snapshot
+
+**Original (Section 6e, 7b):** Property name `is_verified`
+**Implemented as:** `job_verified` in `base_job_setup_properties()` and all events using the snapshot
+
+**Why:** Consistency with other job-prefixed properties (`job_title`, `job_status`, `job_location`, `job_visibility`). All job entity properties now follow the `job_*` naming pattern.
+
+**Applies to:** `Job Posting Draft Created`, `Screening Configuration Saved`, `Job Posting Verified`, `Job Posting Published`
+
+**Helix commit:** `7e271e18` (initial rename) + `7b6a751d` (missed test assertion fix)
+
+---
+
+### Delta 19: Noisy legacy events removed from Helix codebase
+
+**Not in tracking plan** — these are existing Helix events that were cleaned up during implementation to reduce noise in PostHog.
+
+**Removed events:**
+
+| Event | Why removed |
+|---|---|
+| `widget_displayed` | A2UI renderer noise — fired on every widget render, not a meaningful user action |
+| `widget_interacted` | A2UI renderer noise — too granular, replaced by specific wizard step events |
+| `voice_connected` | LiveKit internal state — replaced by `Sam Session Started` |
+| `voice_disconnected` | LiveKit internal state — replaced by `Sam Session Ended` |
+| `session_started` (HM flow) | Session store noise — duplicate of wizard started |
+| `session_ended` (coaching store) | Coaching store cleanup — not relevant to HM flow |
+| `intake_completed` | Replaced by `Job Post Wizard Intake Mode Selected` + backend events |
+| `Chat WebSocket Connected` | WebSocket lifecycle noise — not a user action |
+
+**Additionally:** `Career Coach Message Sent` now skips `HM_INTERVIEWER` agent type so Sam text sessions in the job wizard don't pollute career coaching metrics.
+
+**Helix commit:** `7e271e18` — "fix(analytics): clean up noisy events and consolidate Sam session tracking"
+
+---
+
 ### Delta Summary Table
 
 | # | Change Type | Original | Implemented | Why |
@@ -1850,6 +1942,10 @@ The following events were added during implementation. They're part of the broad
 | 13 | New events | Not in plan | `Job Creation Failed`, `Job Status Changed`, `Share Button Clicked`, `Job Shared/Failed`, `Team Member Invited/Failed` | Broader job lifecycle coverage |
 | 14 | Consistency | `$groups` inconsistent | `$groups` on all frontend events with jobId | Required for PostHog group analytics |
 | 15 | Bug fix | Leading slash issue | `pathnameToPageContext()` fixed | Correct page context values |
+| 16 | New event | Not in plan | `Archive Job Button Clicked` | Intent signal before archive confirmation |
+| 17 | Trigger expanded | `Job Status Changed`: jobflow only | Also fires from core archive endpoint | Frontend uses core route, not legacy jobflow |
+| 18 | Property renamed | `is_verified` | `job_verified` | Consistency with `job_*` naming pattern |
+| 19 | Cleanup | Legacy noisy events in Helix | 8 events removed, 1 gated | Reduce PostHog noise, replaced by wizard events |
 
 ---
 
