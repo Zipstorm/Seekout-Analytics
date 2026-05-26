@@ -742,38 +742,82 @@ export function identifyUser(user: User): void {
 
 ---
 
-## Catalog Changes (applied on merge)
+## Catalog Changes (to be applied on merge via `/merge-tracking-plan`)
+
+> **These changes have NOT been applied yet.** The catalog on `main` still has the old values. Each change below shows the current state → target state so the merge is unambiguous.
 
 ### Event Catalog (`docs/event-catalog.md`)
 
-#### 1. Account & Persona Events — 3 events (already applied)
+#### 1. Account & Persona Events (line 89–91) — update 2 rows
 
+**Current (on main):**
 ```md
-| Switch Persona Button Clicked | Account | Intent  | User clicks the ⇄ chevron next to current persona in sidebar        | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | -- | Not Started |
-| Persona Updated               | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona`, `current_persona`, `activated_personas` | -- | `$set: current_persona, activated_personas` | Not Started |
-| Persona Update Failed          | Account | Failure | Backend returns error on persona switch attempt                       | Backend  | `previous_persona`, `target_persona`, `error_reason`, `error_category` | -- | -- | Not Started |
+| Switch Persona Button Clicked  | Account | Intent  | User clicks the ⇄ chevron next to current persona in sidebar        | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | --                                                                          | Not Started |
+| Persona Updated                | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona`                                                          | --    | `$set: current_persona, activated_personas`                                 | Not Started |
+| Persona Update Failed          | Account | Failure | Backend returns error on persona switch attempt                       | Backend  | `previous_persona`, `target_persona`, `error_reason`, `error_category`      | --    | --                                                                          | Not Started |
 ```
 
-#### 2. Removed Events table entry (already applied)
+**Target (after merge):**
+```md
+| Switch Persona Button Clicked  | Account | Intent  | User clicks the ⇄ chevron next to current persona in sidebar        | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | --                                                                          | Not Started |
+| Persona Updated                | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona`, `current_persona`, `activated_personas`                 | --    | `$set: current_persona, activated_personas`                                 | Not Started |
+| Persona Update Failed          | Account | Failure | Backend returns error on persona switch attempt                       | Backend  | `previous_persona`, `target_persona`, `error_reason`, `error_category`      | --    | --                                                                          | Not Started |
+```
 
+**What changed:**
+- `Switch Persona Button Clicked`: added `current_persona` to Properties column
+- `Persona Updated`: added `current_persona`, `activated_personas` to Properties column (Delta 1)
+- `Persona Update Failed`: no change
+
+#### 2. Auth Events (lines 43, 45) — update 2 rows (Delta 5)
+
+**Current (on main):**
+```md
+| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | --               | Live (legacy) |
+| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | --               | Live (legacy) |
+```
+
+**Target (after merge):**
+```md
+| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
+| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
+```
+
+**What changed:** Person Properties column updated from `--` to reflect what `identifyUser()` actually sets (Delta 2 + 5). Removes phantom `org_name`/`org_domain`, adds missing `role` and new `current_persona`.
+
+#### 3. Removed Events table (line 188) — no change needed
+
+Already correct on main:
 ```md
 | Persona Activated | Persona Updated | Renamed — "Activated" implied adding a new persona; "Updated" reflects switching between existing personas | May 2026 |
 ```
 
-#### 3. Property Dictionary updates (already applied)
+#### 4. Property Dictionary (line 202) — update 1 row
 
-- `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Updated, Persona Update Failed
-- `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Update Failed
-- `current_persona` Used In → `Account Created, Persona Updated, Switch Persona Button Clicked (person property + event property)`
-- `activated_personas` | array | event, person ($set) | e.g., `["recruiter", "job_seeker"]` | Persona Updated (event property + person property via `$set`), Account Created (person property via `$set`)
+**Current (on main):**
+```md
+| `current_persona`       | enum | person ($set)             | `hiring_manager`, `recruiter`, `job_seeker`                                         | Account Created, Persona Updated (person property)             |
+```
+
+**Target (after merge):**
+```md
+| `current_persona`       | enum | event, person ($set)      | `hiring_manager`, `recruiter`, `job_seeker`                                         | Switch Persona Button Clicked, Persona Updated, Account Created (person property), Auth Login Succeeded (via `identifyUser()`), Auth Session Restore Succeeded (via `identifyUser()`) |
+```
+
+**What changed:** Scope updated from `person ($set)` to `event, person ($set)`. Used In expanded to include all events that reference this property.
+
+**Add new row** (after `current_persona`):
+```md
+| `activated_personas`    | array | event, person ($set)      | e.g., `["recruiter", "job_seeker"]`                                                 | Persona Updated (event property + person property via `$set`)  |
+```
 
 ### Event Schema (`docs/event-schema.md`)
 
-#### 1. Standard Objects table — Persona row updated (already applied)
+#### 1. Standard Objects table — Persona row
 
-Example Events: `Switch Persona Button Clicked, Persona Updated`
+Update Example Events to: `Switch Persona Button Clicked, Persona Updated`
 
-#### 2. Intent vs Outcome table — row added (already applied)
+#### 2. Intent vs Outcome table — add row
 
 ```md
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
