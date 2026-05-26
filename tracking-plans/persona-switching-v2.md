@@ -913,6 +913,19 @@ posthog.identify(user.id,
 
 **What changed:** Removed phantom `org_name`, added missing `role`, updated `current_persona` derivation to match actual implementation (Delta 2). This snippet appears twice in the schema doc (lines ~152 and ~294) — both must be updated.
 
+### Dashboards (`docs/dashboards.md`)
+
+#### 1. Platform Health Dashboard table (line ~103) — add row
+
+**Current (on main):** No persona switching row.
+
+**Add after the "Team invite" row:**
+```md
+| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
+```
+
+This matches the Intent vs Outcome row added to the schema (Schema §2 above). Without it, Rule 9 (Platform Health alignment) will flag this as an error.
+
 ---
 
 ## Summary: All Helix Codebase Changes
