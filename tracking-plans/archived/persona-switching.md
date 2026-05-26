@@ -811,6 +811,20 @@ Already correct on main:
 | `activated_personas`    | array | event, person ($set)      | e.g., `["recruiter", "job_seeker"]`                                                 | Persona Updated (event property + person property via `$set`)  |
 ```
 
+#### 5. Account Created row (line 32) — fix Property Updates column
+
+**Current (on main):**
+```md
+| Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | ... | --    | `$set: current_persona, activated_personas`; `$set_once: first_persona, account_created_at, referred_by` | Live   |
+```
+
+**Target (after merge):**
+```md
+| Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | ... | --    | `$set: current_persona`; `$set_once: first_persona, account_created_at, referred_by` | Live   |
+```
+
+**What changed:** Removed `activated_personas` from `$set`. Per Delta 4, the `Account Created` PostHog call only adds `$set: { current_persona }`. The DB column accumulates `activated_personas` during onboarding (Delta 3), but the PostHog `$set` for `activated_personas` only happens in `Persona Updated` (backend, on switch). The catalog row must reflect what the PostHog event actually fires, not what the DB does.
+
 ### Event Schema (`docs/event-schema.md`)
 
 #### 1. Standard Objects table — Persona row
@@ -822,6 +836,71 @@ Update Example Events to: `Switch Persona Button Clicked, Persona Updated`
 ```md
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
 ```
+
+#### 3. Person Properties `$set` table (lines 139–145) — fix 5 issues
+
+**Current (on main):**
+```md
+| `email` | string | `identifyUser()` | User's current email |
+| `name` | string | `identifyUser()` | User's current name |
+| `org_id` | string | `identifyUser()` | User's current organization ID |
+| `org_name` | string | `identifyUser()` | User's current organization name. Resolved from org_id on backend before identify call. |
+| `org_domain` | string | `identifyUser()` | User's organization domain (e.g., `seekout.com`). Resolved from org_id on backend before identify call. |
+| `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
+| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has tried. Seeded with `[first_persona]` on account creation, grows as user switches personas. |
+```
+
+**Target (after merge):**
+```md
+| `email` | string | `identifyUser()` | User's current email |
+| `name` | string | `identifyUser()` | User's current name |
+| `role` | string | `identifyUser()` | User's current role enum (e.g., `HIRING_MANAGER`, `RECRUITER`, `PROFESSIONAL`) |
+| `org_id` | string | `identifyUser()` | User's current organization ID |
+| `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
+| `activated_personas` | array | Persona Updated | All unique personas the user has tried via switching. Only set as PostHog person property on persona switch — not on Account Created. DB column accumulates from onboarding but the `$set` is switch-only. |
+```
+
+**What changed:**
+- **Removed `org_name`:** `identifyUser()` does not set this — phantom property (Delta 5)
+- **Removed `org_domain`:** `identifyUser()` does not set this — phantom property (Delta 5)
+- **Added `role`:** `identifyUser()` sets `role: user.role` — was missing from schema (Delta 5)
+- **Updated `activated_personas` Set By:** Changed from "Account Created, Persona Updated" to "Persona Updated" only — Account Created does not `$set` `activated_personas`, only `current_persona` (Delta 3/4)
+
+#### 4. Persona properties explanation text (line 147) — update
+
+**Current (on main):**
+```
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) is seeded with the first persona on Account Created and accumulates every persona the user has tried over time — it only grows, never shrinks.
+```
+
+**Target (after merge):**
+```
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and `identifyUser()` (every login), and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) is set only by Persona Updated on persona switch — the DB column accumulates from onboarding, but the PostHog person property is only `$set` on switch events.
+```
+
+#### 5. Example `posthog.identify()` snippet (lines 152–155, repeated at 294–298) — update
+
+**Current (on main):**
+```javascript
+// In lib/posthog.ts → identifyUser()
+const persona = ROLE_TO_PERSONA[user.role] || 'unknown';
+posthog.identify(user.id,
+  { email: user.email, name: user.name, org_id: user.orgId, org_name: user.orgName, current_persona: persona },  // $set
+  { account_created_at: user.createdAt }  // $set_once
+);
+```
+
+**Target (after merge):**
+```javascript
+// In lib/posthog.ts → identifyUser()
+const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
+posthog.identify(user.id,
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId, current_persona: currentPersona },  // $set
+  { account_created_at: user.createdAt, first_surface: ... }  // $set_once
+);
+```
+
+**What changed:** Removed phantom `org_name`, added missing `role`, updated `current_persona` derivation to match actual implementation (Delta 2). This snippet appears twice in the schema doc (lines ~152 and ~294) — both must be updated.
 
 ---
 
