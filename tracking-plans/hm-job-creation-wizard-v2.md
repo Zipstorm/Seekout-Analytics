@@ -1352,32 +1352,43 @@ JOB_POSTING_PUBLISHED = "Job Posting Published"
 
 ---
 
-## New Events
+## New Events (updated per Implementation Delta)
 
-Events introduced by this feature. All follow Object-Action, Proper Case.
+Events introduced by this feature. All follow Object-Action, Proper Case. **This table reflects the finalized implementation, incorporating all delta changes.**
 
-| Event | Area | Trigger | Key Properties | Group | Property Updates |
-|---|---|---|---|---|---|
-| Create Job Button Clicked | Hiring | User clicks "+ Create job" button on HM job postings page | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
-| Job Post Wizard Started | Hiring | Wizard page mounts with router state isNewWizard=true | `start_source`, `current_page_context` | -- | -- |
-| Job Post Wizard Job Details Completed | Hiring | User clicks "Next →" on Job Details step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | -- | -- |
-| Job Posting Draft Created | Hiring | Server creates job draft via POST /api/v1/core/job | `job_id`, `job_title`, `company_name`, `location`, `job_status` | `job` | `group(job): job_title, job_status, created_by_user_id, created_at` |
-| Job Post Wizard Role Understanding Completed | Hiring | User clicks "Next →" or "Skip" on Understanding the Role step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode` | `job` | -- |
-| Sam Session Started | Hiring | Sam session initializes after user selects voice or text | `job_id`, `input_mode` | `job` | -- |
-| Sam Session Ended | Hiring | User clicks "End Session" in confirmation modal or Sam auto-ends | `job_id`, `input_mode`, `duration_seconds`, `ended_by` | `job` | -- |
-| Sam Voice Session Setup Failed | Hiring | Mic permission denied or device unavailable | `job_id`, `error_reason`, `error_category` | `job` | -- |
-| Job Post Wizard Role Requirements Completed | Hiring | User clicks "Next →" or "+ Add question" on Role Requirements step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
-| Job Post Wizard Interview Questions Completed | Hiring | User clicks "Next →", "+ Add question", or "← Back" on Interview Questions step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
-| Screening Configuration Saved | Hiring | Backend saves screening config via POST /api/v1/jobs/flow/{job_id}/screening | `job_id`, `job_title`, `company_name`, `location`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): questions_count, identity_verification_mode` |
-| Job Post Wizard Verification Completed | Hiring | User clicks "Send code", "Maybe later", or "← Back" on Verify step | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name` | `job` | -- |
-| Job Posting Verified | Hiring | Backend verifies 6-digit code successfully | `job_id`, `job_title`, `is_verified` | `job` | `group(job): is_verified` |
-| Job Posting Published | Hiring | Backend publishes the job via POST /api/v1/jobs/flow/{job_id}/verify | `job_id`, `job_title`, `company_name`, `location`, `job_status`, `is_verified`, `visibility`, `questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): job_status, is_verified, job_visibility` |
+| Event | Area | Trigger | Source | Key Properties | Group | Property Updates |
+|---|---|---|---|---|---|---|
+| Create Job Button Clicked | Hiring | User clicks "+ Create job" button on job postings page | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | -- |
+| Job Post Wizard Started | Hiring | Wizard page mounts with router state isNewWizard=true | Frontend | `start_source`, `current_page_context` | -- | -- |
+| Job Post Wizard Job Details Completed | Hiring | User clicks "Next" on Job Details step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
+| Job Posting Draft Created | Hiring | Server creates job draft via POST /api/v1/core/job | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility` | `job` | `group(job): job_title, job_status, created_by_user_id, created_at` |
+| Job Creation Failed | Hiring | Backend exception during POST /api/v1/core/job | Backend | `current_persona`, `error_reason` | -- | -- |
+| Job Post Wizard Intake Mode Selected | Hiring | User clicks "Next" (voice/text) or "Skip" on Understanding the Role step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode`, `$groups` | `job` | -- |
+| Sam Session Started | Hiring | Sam session initializes after user selects voice or text | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `session_id`, `mic_enabled`*, `error_category`*, `error_reason`*, `$groups` | `job` | -- |
+| Sam Session Ended | Hiring | User clicks "End Session" or intake auto-completes | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `duration_seconds`, `ended_by` (`user`/`completed`), `$groups` | `job` | -- |
+| Job Post Wizard Role Requirements Completed | Hiring | User clicks "Next" on Role Requirements step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
+| Requirement Add Button Clicked | Hiring | User clicks "+ Add" on Role Requirements step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
+| Job Post Wizard Interview Questions Completed | Hiring | User clicks "Next" on Interview Questions step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `identity_verification_mode`, `$groups` | `job` | -- |
+| Question Add Button Clicked | Hiring | User clicks "+ Add" on Interview Questions step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
+| Screening Configuration Saved | Hiring | Backend saves screening config (2 endpoints — see Delta 12) | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): questions_count, identity_verification_mode` |
+| Job Verification Code Send Button Clicked | Hiring | User clicks "Send code" on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
+| Job Post Wizard Verification Completed | Hiring | Email verified successfully on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
+| Job Post Wizard Verification Skipped | Hiring | User clicks "Maybe later" on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
+| Job Post Wizard Back Button Clicked | Hiring | User clicks "Back" on any wizard step (2–5) | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
+| Job Posting Verified | Hiring | Backend verifies 6-digit code successfully | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `identity_verification_mode`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `intake_mode` | `job` | `group(job): is_verified` |
+| Job Posting Published | Hiring | Backend publishes the job (2 endpoints — see Delta 12) | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): job_status, is_verified, job_visibility` |
+| Job Status Changed | Hiring | Job archived or unarchived | Backend | `current_persona`, `job_id`, `from_status`, `to_status` | `job` | `group(job): job_status` |
+| Share Button Clicked | Hiring | User clicks share button on job card | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `component`, `context_object_type`, `context_object_id`, `current_persona` | -- | -- |
+| Job Shared | Hiring | Backend grants job access successfully | Backend | `current_persona`, `job_id`, `shared_by_user_id`, `share_channel` | `job` | -- |
+| Job Share Failed | Hiring | Backend grant access fails | Backend | `current_persona`, `job_id`, `error_reason` | `job` | -- |
+| Team Member Invited | Hiring | Backend sends HM invite email successfully | Backend | `current_persona`, `job_id`, `invited_role_label`, `invite_method` | `job` | -- |
+| Team Member Invite Failed | Hiring | Backend invite email fails | Backend | `current_persona`, `job_id`, `error_reason` | `job` | -- |
 
-> **Note:** `Create Job Button Clicked` exists in the catalog but with no properties (`--`). This plan replaces it with 6 enriched properties. On merge, update the catalog entry to match.
+\* `mic_enabled`, `error_category`, `error_reason` — voice mode only, when voiceStatus is present (see Delta 2)
+
+> **Standard property `acting_as`:** Replaced by `current_persona` — sent as explicit event property on all backend events AND available as person property via `$set`. See "Decision" section and Delta 10.
 >
-> **Standard property `acting_as`:** Intentionally omitted from all events — replaced by `current_persona` person property. See "Decision: `acting_as` replaced by `current_persona`" section below. Validator TP5 errors for `acting_as` will resolve when the validator is updated on merge.
->
-> **Standard property `surface`:** Intentionally omitted — the existing `current_page_context` property provides more granular surface identification. Validator TP5 errors for `surface` are expected.
+> **Standard property `surface`:** Intentionally omitted — `current_page_context` provides more granular surface identification.
 >
 > **Standard Objects:** `Sam` and `Screening Configuration` are new objects introduced by this plan. To be added to `docs/event-schema.md` Standard Objects table on merge.
 
@@ -1431,6 +1442,417 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 
 ---
 
+## Implementation Delta (2026-05-26)
+
+> **What this section is:** During implementation and local PostHog testing on the Helix codebase (`posthog-hiring-manager-job-wizard-event-schema-v1` branch), several changes were made to the original tracking plan spec above. This section documents every difference so the tracking plan stays in sync with what's actually firing in production.
+>
+> **How to read this:** Each delta entry references the original section number, states what changed, and explains why. The original sections above remain as-is for historical context — this delta is the authoritative override.
+
+---
+
+### Delta 1: Step 2 event renamed
+
+**Original (Section 3b):** `Job Post Wizard Role Understanding Completed`
+**Implemented as:** `Job Post Wizard Intake Mode Selected`
+
+**Why:** During testing, "Role Understanding Completed" implied the user finished understanding the role. But the event actually fires when the user selects an intake mode (voice, text, or skip) — a UX decision point, not a comprehension milestone. "Intake Mode Selected" describes the actual user action.
+
+**Properties unchanged** — same properties as Section 3b, including `intake_mode: 'voice' | 'text' | 'skipped'`.
+
+**PostHog call (updated):**
+
+```javascript
+captureJobWizardInteraction(
+  JOB_POST_WIZARD_INTAKE_MODE_SELECTED,
+  JOB_WIZARD_STEPS.roleUnderstanding,
+  jobId,
+  'next_button',        // or 'skip_button' when skipping
+  undefined,
+  { intake_mode: selectedMode },  // 'voice', 'text', or 'skipped'
+);
+```
+
+**Additional change:** When skipping, `action_value` is `'skip_button'` (was `'skip_and_go_to_role_requirements_link'` in the plan). Shortened for consistency with other button action values.
+
+---
+
+### Delta 2: `Sam Voice Session Setup Failed` removed as separate event
+
+**Original (Section 3f):** Standalone event `Sam Voice Session Setup Failed`
+**Implemented as:** Voice failure info captured as **properties on `Sam Session Started`** instead
+
+**Why:** During testing, the voice setup flow is: user clicks "Start" → mic check → session connects. If mic fails, the `Sam Session Started` event still fires (it captures the attempt) but includes error properties. This gives a single event to analyze session starts — both successful and failed — rather than requiring analysts to union two separate events.
+
+**How it works now:**
+
+```javascript
+captureSamSessionStarted(jobId, 'voice', sessionId, {
+  micEnabled: false,
+  errorCategory: 'hardware',
+  errorReason: 'Permission denied',
+});
+```
+
+**`Sam Session Started` full properties (updated from Section 3d):**
+
+| Property | Type | Values | Condition | Description |
+|---|---|---|---|---|
+| `current_page_context` | string | `hm_job_creation_wizard_sam_voice_session` or `hm_job_creation_wizard_sam_text_session` | Always | Page context |
+| `previous_page_context` | string | snake_case page identifier | Always | Previous page |
+| `entity_type` | string | `job` | Always | Business object |
+| `job_id` | UUID | job ID | Always | Job identifier |
+| `input_mode` | enum | `voice`, `text` | Always | Session type |
+| `session_id` | string | LiveKit session ID | Voice only, when available | Session identifier for debugging |
+| `mic_enabled` | boolean | `true`, `false` | Voice only, when voiceStatus present | Whether mic access succeeded |
+| `error_category` | string | `hardware`, `timeout`, `connection` | Voice only, on failure | Error classification |
+| `error_reason` | string | e.g., `Permission denied` | Voice only, on failure | Specific error from browser/device |
+| `$groups` | object | `{ job: jobId }` | Always | PostHog group association |
+
+**Impact:** Remove `Sam Voice Session Setup Failed` from the New Events table and Catalog Cleanup section.
+
+---
+
+### Delta 3: `Sam Session Ended` — `ended_by` value changed
+
+**Original (Section 3e):** `ended_by: 'user' | 'sam'`
+**Implemented as:** `ended_by: 'user' | 'completed'`
+
+**Why:** "sam" implied the AI agent made a decision to end. In reality, the session auto-completes when the intake flow finishes — `'completed'` is more accurate.
+
+**`Sam Session Ended` full properties (updated from Section 3e):**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `current_page_context` | string | `hm_job_creation_wizard_sam_voice_session` or `hm_job_creation_wizard_sam_text_session` | Page context |
+| `previous_page_context` | string | snake_case page identifier | Previous page |
+| `entity_type` | string | `job` | Business object |
+| `job_id` | UUID | job ID | Job identifier |
+| `input_mode` | enum | `voice`, `text` | Session type |
+| `duration_seconds` | number | e.g., `180` | Time from start to end |
+| `ended_by` | enum | `user`, `completed` | Who ended — user clicked "End Session" or intake auto-completed |
+| `$groups` | object | `{ job: jobId }` | PostHog group association |
+
+---
+
+### Delta 4: Back button clicks split into separate event
+
+**Original (Sections 5d, 6d):** Back clicks reused step completion events with `action_value: 'back_button'`
+**Implemented as:** Separate **`Job Post Wizard Back Button Clicked`** event
+
+**Why:** Reusing the step completion event for back navigation inflated completion counts. A user clicking "Back" on Interview Questions would fire `Job Post Wizard Interview Questions Completed` — misleading in funnel analysis. Splitting it out keeps completion events clean.
+
+**Fires from:** Every wizard step that has a back button (Steps 2–5)
+
+**Properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `back_button` | UI element |
+| `current_page_context` | string | Step's page context | Current wizard step |
+| `previous_page_context` | string | snake_case page identifier | Previous page |
+| `entity_type` | string | `job` | Business object |
+| `component` | string | `job_creation_wizard_footer_cta` | Footer area |
+| `job_id` | UUID | job ID | Job identifier |
+| `step_number` | number | `2`, `3`, `4`, `5` | Which step the user is backing from |
+| `step_name` | enum | step name | Which step the user is backing from |
+| `$groups` | object | `{ job: jobId }` | PostHog group association |
+
+---
+
+### Delta 5: Add button clicks split into separate events
+
+**Original (Sections 4c, 5c):** Add clicks reused step completion events with `action_value: 'add_question_button'`
+**Implemented as:** Two separate events:
+- **`Requirement Add Button Clicked`** (Role Requirements step)
+- **`Question Add Button Clicked`** (Interview Questions step)
+
+**Why:** Same reason as Delta 4 — reusing the completion event for an in-step interaction (adding a question) inflated completion metrics. These are distinct user actions: "I want to add a requirement" vs "I'm done with this step."
+
+**`Requirement Add Button Clicked` properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `add_question_button` | UI element |
+| `current_page_context` | string | `hm_job_creation_wizard_role_requirements` | Step 3 page |
+| `previous_page_context` | string | snake_case page identifier | Previous page |
+| `entity_type` | string | `job` | Business object |
+| `component` | string | `role_requirements_add_question_cta` | Add button container |
+| `job_id` | UUID | job ID | Job identifier |
+| `step_number` | number | `3` | Wizard step |
+| `step_name` | string | `role_requirements` | Wizard step name |
+| `$groups` | object | `{ job: jobId }` | PostHog group association |
+
+**`Question Add Button Clicked` properties:** Same structure, with:
+- `current_page_context`: `hm_job_creation_wizard_interview_questions`
+- `component`: `interview_questions_add_question_cta`
+- `step_number`: `4`
+- `step_name`: `interview_questions`
+
+---
+
+### Delta 6: Verification step split into 3 separate events
+
+**Original (Sections 6b, 6c, 6d):** All actions on the Verify page reused `Job Post Wizard Verification Completed`
+**Implemented as:** Three separate events:
+
+| User action | Original event | Implemented event |
+|---|---|---|
+| Clicks "Send code" | `Job Post Wizard Verification Completed` (action_value: send_code_button) | **`Job Verification Code Send Button Clicked`** |
+| Email verified successfully | (not a separate event) | **`Job Post Wizard Verification Completed`** |
+| Clicks "Maybe later" | `Job Post Wizard Verification Completed` (action_value: maybe_later_link) | **`Job Post Wizard Verification Skipped`** |
+| Clicks "Back" | `Job Post Wizard Verification Completed` (action_value: back_button) | **`Job Post Wizard Back Button Clicked`** (see Delta 4) |
+
+**Why:** The original plan used one event for 4 different user actions, differentiated only by `action_value`. During testing, this made funnel analysis confusing — "Verification Completed" should mean the user actually completed verification, not that they clicked "Maybe later" or "Back."
+
+**`Job Verification Code Send Button Clicked` properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `send_code_button` | UI element |
+| `current_page_context` | string | `hm_job_creation_wizard_verify` | Step 5 page |
+| `previous_page_context` | string | snake_case page identifier | Previous page |
+| `entity_type` | string | `job` | Business object |
+| `component` | string | `job_creation_wizard_footer_cta` | Footer area |
+| `job_id` | UUID | job ID | Job identifier |
+| `step_number` | number | `5` | Wizard step |
+| `step_name` | string | `verify` | Wizard step name |
+| `$groups` | object | `{ job: jobId }` | PostHog group association |
+
+**`Job Post Wizard Verification Completed`** now fires ONLY on successful email verification (action_value: `next_button`). Clean signal for the funnel.
+
+**`Job Post Wizard Verification Skipped` properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `maybe_later_link` | UI element |
+| `current_page_context` | string | `hm_job_creation_wizard_verify` | Step 5 page |
+| `previous_page_context` | string | snake_case page identifier | Previous page |
+| `entity_type` | string | `job` | Business object |
+| `component` | string | `job_creation_wizard_footer_cta` | Footer area |
+| `job_id` | UUID | job ID | Job identifier |
+| `step_number` | number | `5` | Wizard step |
+| `step_name` | string | `verify` | Wizard step name |
+| `$groups` | object | `{ job: jobId }` | PostHog group association |
+
+---
+
+### Delta 7: `Create Job Button Clicked` — property values updated
+
+**Original (Section 1):**
+- `action_value`: always `create_job_button`
+- `component`: `hm_job_postings_header_cta` or `hm_job_postings_empty_state_cta`
+
+**Implemented as:**
+- `action_value`: `create_job_posting_button` (recruiter) or `create_job_button` (hiring manager)
+- `component`: `job_postings_page_header` (recruiter) or `hm_job_postings_header_cta` (HM) for header; `job_postings_empty_state_cta` (recruiter) or `hm_job_postings_empty_state_cta` (HM) for empty state
+- **New property:** `current_persona` added (from `ROLE_TO_PERSONA` mapping)
+
+**Why:** The `JobList.tsx` page is shared between recruiters and hiring managers. During implementation, the button labels and contexts differ by role, so `action_value` and `component` were split to reflect the actual UI text per persona. `current_persona` was added as an explicit event property for filtering without relying on person properties.
+
+**Full property table (replaces Section 1):**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `create_job_posting_button` (recruiter) or `create_job_button` (HM) | Button label in snake_case |
+| `current_page_context` | string | `recruiter_ai_job_flows` (recruiter) or `hiring_manager_job_postings` (HM) | Page context |
+| `previous_page_context` | string | snake_case page identifier | Previous page |
+| `entity_type` | string | `job` | Business object |
+| `component` | string | See below | UI container |
+| `current_persona` | string | `hiring_manager`, `recruiter` | User's active persona |
+
+**Component values by location and persona:**
+
+| Location | Recruiter | Hiring Manager |
+|---|---|---|
+| Header button | `job_postings_page_header` | `hm_job_postings_header_cta` |
+| Empty state button | `job_postings_empty_state_cta` | `hm_job_postings_empty_state_cta` |
+
+---
+
+### Delta 8: `Interview Questions Completed` — `identity_verification_mode` added
+
+**Original (Section 5b):** No `identity_verification_mode` property
+**Implemented as:** `identity_verification_mode: 'require' | 'off'` added to `Job Post Wizard Interview Questions Completed`
+
+**Why:** The Interview Questions step includes a "Require ID verification" checkbox. Capturing the state of this toggle at step completion tells us what % of HMs enable ID verification — useful for product decisions without waiting for the backend `Screening Configuration Saved` event.
+
+---
+
+### Delta 9: Backend events — property name changes
+
+**Original (Section 2c, 5e, 6e, 7b):** Used `location` as property name
+**Implemented as:** `job_location` in all backend events via `base_job_setup_properties()`
+
+**Why:** `location` is a generic name that could conflict with PostHog's built-in `$geoip_city` / browser location properties. `job_location` is unambiguous.
+
+**Additional backend snapshot properties not in original plan:**
+
+| Property | Type | Source | Description |
+|---|---|---|---|
+| `job_verified` | boolean | `job.is_verified` | Whether HM email is verified |
+| `job_visibility` | string | `job.visibility` | `private` or `public` |
+
+These were added to `base_job_setup_properties()` so every backend event carries the full job state. Not in the original plan because they were deemed redundant with `Job Posting Verified` — but during testing, having them on every event simplified debugging.
+
+---
+
+### Delta 10: `current_persona` added as explicit backend event property
+
+**Original (Section "Decision: acting_as replaced by current_persona"):** Recommended relying on `current_persona` person property (`$set`) — no per-event property needed
+**Implemented as:** `current_persona` sent as an **explicit event property** on ALL backend events via `get_current_persona(user.role)`
+
+**Why:** Person properties in PostHog are eventually consistent — there's a small window where the `$set` hasn't propagated. Sending `current_persona` per-event guarantees it's always available on the event itself, with no dependency on person property propagation timing. The person property `$set` is still maintained for user profile queries.
+
+**Applies to:** `Job Posting Draft Created`, `Job Creation Failed`, `Screening Configuration Saved`, `Job Posting Verified`, `Job Posting Published`, `Job Status Changed`, `Job Shared`, `Job Share Failed`, `Team Member Invited`, `Team Member Invite Failed`
+
+---
+
+### Delta 11: `Job Posting Verified` — full snapshot properties
+
+**Original (Section 6e):** Only `job_id`, `job_title`, `is_verified`
+**Implemented as:** Full `build_job_setup_analytics_snapshot()` properties
+
+**Why:** During testing, we needed to debug verification issues and having the full job state at verification time (questions count, intake mode, etc.) saved multiple PostHog queries. The marginal cost of extra properties is near zero.
+
+**Updated properties:**
+
+| Property | Type | Description |
+|---|---|---|
+| `current_persona` | string | User's active persona |
+| `job_id` | UUID | Job identifier |
+| `job_title` | string | Job posting title |
+| `company_name` | string | Company name |
+| `job_location` | string | Job location |
+| `job_status` | string | Current status |
+| `job_verified` | boolean | Verification state |
+| `job_visibility` | string | `private` or `public` |
+| `identity_verification_mode` | string | `require` or `off` |
+| `questions_count` | number | Total screening questions |
+| `ai_generated_questions_count` | number | AI-generated questions |
+| `manual_questions_count` | number | Manual questions |
+| `intake_mode` | string | `ai_copilot`, `hm_solo`, `manual`, or null |
+
+---
+
+### Delta 12: `Screening Configuration Saved` — fires from multiple endpoints
+
+**Original (Section 5e):** Fires from `POST /api/v1/jobs/flow/{job_id}/screening` only
+**Implemented as:** Fires from TWO endpoints:
+1. `POST /api/v1/jobs/flow/{job_id}/screening` (jobflow/router.py) — original
+2. `PATCH /api/v1/core/job/{job_id}` (core/router.py) — conditional
+
+**Why:** The core PATCH endpoint can also transition a job to verify/completed state (e.g., ATS imports, admin actions). The conditional guard ensures it only fires when transitioning TO verify/completed step AND the job wasn't already there — preventing duplicates.
+
+**Condition (core/router.py):**
+```python
+# Only fires if:
+# 1. Not ATS source
+# 2. wizard_step or status is being updated to verify/completed/active/published
+# 3. Job wasn't already in verify/completed state before this update
+```
+
+---
+
+### Delta 13: New events not in original plan
+
+The following events were added during implementation. They're part of the broader hiring manager job management flow but were not in the original wizard-focused tracking plan:
+
+#### Job Creation Failed
+
+| Field | Value |
+|---|---|
+| **Trigger** | Backend exception during `POST /api/v1/core/job` |
+| **Source** | Backend |
+| **Properties** | `current_persona`, `error_reason` |
+| **Group** | -- (no job_id — creation failed) |
+| **Note** | Original plan said "not yet covered" — now implemented |
+
+#### Job Status Changed
+
+| Field | Value |
+|---|---|
+| **Trigger** | Job archived or unarchived via `POST /api/v1/jobs/flow/{job_id}/archive` or `/unarchive` |
+| **Source** | Backend |
+| **Properties** | `current_persona`, `job_id`, `from_status`, `to_status` |
+| **Group** | `job` |
+| **Note** | Post-publish lifecycle event — not part of wizard but part of job management |
+
+#### Share Button Clicked
+
+| Field | Value |
+|---|---|
+| **Trigger** | User clicks share button on job card in JobList page |
+| **Source** | Frontend |
+| **Properties** | `action`, `action_value: 'share_job_button'`, `current_page_context`, `previous_page_context`, `component: 'job_card'`, `context_object_type: 'job'`, `context_object_id`, `current_persona` |
+| **Group** | -- |
+
+#### Job Shared / Job Share Failed
+
+| Field | Value |
+|---|---|
+| **Trigger** | Backend `POST /api/v1/jobs/flow/{job_id}/access` succeeds or fails |
+| **Source** | Backend |
+| **Properties (success)** | `current_persona`, `job_id`, `shared_by_user_id`, `share_channel: 'other'` |
+| **Properties (failure)** | `current_persona`, `job_id`, `error_reason` |
+| **Group** | `job` |
+
+#### Team Member Invited / Team Member Invite Failed
+
+| Field | Value |
+|---|---|
+| **Trigger** | Backend `POST /api/v1/jobs/flow/{job_id}/intake/invite-hm` succeeds or fails |
+| **Source** | Backend |
+| **Properties (success)** | `current_persona`, `job_id`, `invited_role_label: 'hiring_manager'`, `invite_method: 'email'` |
+| **Properties (failure)** | `current_persona`, `job_id`, `error_reason` |
+| **Group** | `job` |
+
+---
+
+### Delta 14: `$groups` on all frontend wizard events
+
+**Original:** `$groups: { job: jobId }` mentioned in some sections but not consistently shown
+**Implemented as:** ALL frontend wizard events include `$groups: { job: jobId }` when `jobId` is available (every event after Step 1 completion)
+
+**Why:** PostHog group analytics requires `$groups` on every event to associate it with the job entity. The `captureJobWizardStepCompleted` and `captureJobWizardInteraction` helpers automatically inject this.
+
+---
+
+### Delta 15: Page context slashes fixed
+
+**Original:** Not specified
+**Implemented as:** The `pathnameToPageContext()` helper was updated to handle leading slashes correctly. Previously, URLs like `/interview/job-details` could produce `_interview_job_details` (leading underscore). Now correctly produces `interview/job_details`.
+
+**Helix commit:** `8baba215` — "fix(analytics): replace acting_as with current_persona and fix page context slashes"
+
+---
+
+### Delta Summary Table
+
+| # | Change Type | Original | Implemented | Why |
+|---|---|---|---|---|
+| 1 | Renamed | `Job Post Wizard Role Understanding Completed` | `Job Post Wizard Intake Mode Selected` | Describes actual user action (selecting intake mode) |
+| 2 | Removed | `Sam Voice Session Setup Failed` (separate event) | Properties on `Sam Session Started` | Single event for all session start attempts |
+| 3 | Value change | `ended_by: 'sam'` | `ended_by: 'completed'` | Session auto-completes, not agent decision |
+| 4 | Split out | Back clicks on step completion events | `Job Post Wizard Back Button Clicked` | Avoid inflating completion metrics |
+| 5 | Split out | Add clicks on step completion events | `Requirement Add Button Clicked`, `Question Add Button Clicked` | Avoid inflating completion metrics |
+| 6 | Split out | All verify actions on one event | 3 events: `Code Send Button Clicked`, `Verification Completed`, `Verification Skipped` | Clean funnel signal |
+| 7 | Values updated | `create_job_button` / `hm_*` components | Role-specific `action_value` and `component` | Shared page between recruiter and HM |
+| 8 | Property added | No `identity_verification_mode` on step 4 | Added to `Interview Questions Completed` | Capture toggle state at step completion |
+| 9 | Property renamed | `location` | `job_location` | Avoid conflict with PostHog built-in geo properties |
+| 10 | Property added | No per-event `current_persona` | `current_persona` on all backend events | Guarantee availability without person property propagation delay |
+| 11 | Properties expanded | `Job Posting Verified`: 3 properties | Full snapshot (13 properties) | Full job state at verification for debugging |
+| 12 | Trigger expanded | `Screening Configuration Saved`: 1 endpoint | 2 endpoints (conditional) | Core PATCH can also transition job state |
+| 13 | New events | Not in plan | `Job Creation Failed`, `Job Status Changed`, `Share Button Clicked`, `Job Shared/Failed`, `Team Member Invited/Failed` | Broader job lifecycle coverage |
+| 14 | Consistency | `$groups` inconsistent | `$groups` on all frontend events with jobId | Required for PostHog group analytics |
+| 15 | Bug fix | Leading slash issue | `pathnameToPageContext()` fixed | Correct page context values |
+
+---
+
 ## Catalog Cleanup: Replace Existing Events
 
 The following events in `docs/event-catalog.md` must be **removed** on merge — they are replaced by events in this tracking plan:
@@ -1448,7 +1870,7 @@ The following events in `docs/event-catalog.md` must be **removed** on merge —
 |---|---|
 | `Job Wizard Started` | `Job Post Wizard Started` |
 | `Job Wizard Step Completed` (step_name: job_details) | `Job Post Wizard Job Details Completed` |
-| `Job Wizard Step Completed` (step_name: understanding_the_role) | `Job Post Wizard Role Understanding Completed` |
+| `Job Wizard Step Completed` (step_name: understanding_the_role) | `Job Post Wizard Intake Mode Selected` *(renamed — see Delta 1)* |
 | `Job Wizard Step Completed` (step_name: role_requirements) | `Job Post Wizard Role Requirements Completed` |
 | `Job Wizard Step Completed` (step_name: interview_questions) | `Job Post Wizard Interview Questions Completed` |
 | `Job Wizard Step Completed` (step_name: verify) | `Job Post Wizard Verification Completed` |
@@ -1470,14 +1892,14 @@ The following events in `docs/event-catalog.md` must be **removed** on merge —
 |---|---|---|
 | `Voice Session Started` | `Sam Session Started` | Now covers both voice AND text sessions via `input_mode` property |
 | `Voice Session Ended` | `Sam Session Ended` | Now covers both modalities; carries over `duration_seconds` and `ended_by` |
-| `Voice Session Setup Failed` | `Sam Voice Session Setup Failed` | Renamed to Sam namespace; voice-only (text has no hardware setup) |
+| `Voice Session Setup Failed` | *(removed — voice failure info captured as properties on `Sam Session Started`; see Delta 2)* | Single event for all session start attempts simplifies analysis |
 
 **Property changes:**
 
 | Old property | New property | Reason |
 |---|---|---|
 | — (not on Voice Session) | `input_mode` (`voice`/`text`) | Reuses existing catalog property `input_mode`; differentiates voice vs text |
-| `ended_by` (`user`/`sam`) | `ended_by` (`user`/`sam`) | Carried over unchanged from `Voice Session Ended` |
+| `ended_by` (`user`/`sam`) | `ended_by` (`user`/`completed`) | `sam` renamed to `completed` — session auto-completes, not agent decision *(see Delta 3)* |
 
 ---
 
