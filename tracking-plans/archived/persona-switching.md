@@ -684,7 +684,7 @@ export function identifyUser(user: User): void {
 | `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on before switching. Used in Persona Updated and Persona Update Failed. |
 | `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user tried to switch to. Used only in Persona Update Failed. |
 | `current_persona` | enum | event + person ($set) | `hiring_manager`, `recruiter`, `job_seeker` | The user's active persona. Set as person property via `identifyUser()` on every login and via `$set` in Persona Updated. Also sent as regular event property on Switch Persona Button Clicked and Persona Updated so historical queries reflect the persona at event time. |
-| `activated_personas` | array | person ($set) + DB column | e.g., `["recruiter", "job_seeker"]` | All unique personas the user has tried via the switch flow. Persisted in DB as JSONB, sent to PostHog via `$set`. Only grows via persona switching, not onboarding. `null` in DB means never switched. |
+| `activated_personas` | array | event + person ($set) + DB column | e.g., `["recruiter", "job_seeker"]` | All unique personas the user has ever been in. Sent as top-level event property on Persona Updated (frozen at event time) and as person property via `$set`. Persisted in DB as JSONB. Accumulates on all role updates including onboarding. `null` in DB means no role set yet. |
 
 ---
 
@@ -711,6 +711,7 @@ export function identifyUser(user: User): void {
 - `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Updated, Persona Update Failed
 - `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Update Failed
 - `current_persona` Used In → `Account Created, Persona Updated, Switch Persona Button Clicked (person property + event property)`
+- `activated_personas` | array | event, person ($set) | e.g., `["recruiter", "job_seeker"]` | Persona Updated (event property + person property via `$set`), Account Created (person property via `$set`)
 
 ### Event Schema (`docs/event-schema.md`)
 
