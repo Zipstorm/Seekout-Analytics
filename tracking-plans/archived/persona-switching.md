@@ -1002,6 +1002,50 @@ All three are needed for complete coverage.
 
 ---
 
+### Delta 5: Auth catalog rows list wrong `identifyUser()` person properties — CATALOG FIX NEEDED ON MERGE
+
+**Current catalog state (`docs/event-catalog.md`, lines 43 & 45):**
+
+The Person Properties column for `Auth Login Succeeded` and `Auth Session Restore Succeeded` says:
+
+```
+$set: email, name, org_id, org_name, org_domain (via identifyUser())
+```
+
+**What `identifyUser()` actually sets (verified against Helix `develop`):**
+
+```typescript
+identify(
+  user.id,
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId },
+  setOnce,  // { account_created_at, first_surface }
+);
+```
+
+**Discrepancy:**
+
+| Property | Catalog says | `identifyUser()` actually sets |
+|---|---|---|
+| `email` | Yes | Yes |
+| `name` | Yes | Yes |
+| `role` | **Missing** | **Yes — present in code** |
+| `org_id` | Yes | Yes |
+| `org_name` | **Yes** | **No — does not exist** |
+| `org_domain` | **Yes** | **No — does not exist** |
+
+**After Deltas 2 & 4 are implemented, `identifyUser()` will set:**
+
+`$set: email, name, role, org_id, current_persona`
+
+**Catalog rows must be updated on merge to:**
+
+```md
+| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
+| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
+```
+
+---
+
 ## Delta Summary Table
 
 | # | Change Type | Status | Original | Implemented / Required | Why |
@@ -1010,3 +1054,4 @@ All three are needed for complete coverage.
 | 2 | Must implement | **Not yet done** | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` unchanged — must add `current_persona` to `$set` via `ROLE_TO_PERSONA` | Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering |
 | 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
 | 4 | Must implement | **Not yet done** | `Account Created` only uses `$set_once: { first_persona }` | Must add `$set: { current_persona: persona }` alongside existing `$set_once` | Closes the gap between account creation and first re-login — user has `current_persona` from the very first moment |
+| 5 | Catalog fix | **On merge** | Auth Login Succeeded / Auth Session Restore Succeeded list `$set: email, name, org_id, org_name, org_domain` | Must be `$set: email, name, role, org_id, current_persona` — `org_name`/`org_domain` don't exist, `role` was missing | Aligns catalog with what `identifyUser()` actually sets (verified against Helix `develop`) |
