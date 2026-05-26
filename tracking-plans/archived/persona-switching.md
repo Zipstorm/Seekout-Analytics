@@ -828,30 +828,16 @@ posthog_client.capture(
 
 ---
 
-### Delta 2: `identifyUser()` fix not implemented
+### Delta 2: `identifyUser()` must set `current_persona` as person property — NOT YET IMPLEMENTED
 
 **Original (Section — Helix Implementation: `identifyUser()` Fix):**
 
-The spec called for updating `identifyUser()` in `frontend/src/lib/posthog.ts` to include `current_persona` in the `$set` properties via `ROLE_TO_PERSONA`, so that every user — including those who never switch — would have `current_persona` as a person property in PostHog.
+The spec correctly called for updating `identifyUser()` in `frontend/src/lib/posthog.ts` to include `current_persona` in the `$set` properties. This was not picked up during initial implementation but is **required**.
+
+**Current state (what exists today):**
 
 ```typescript
-// Spec called for this change:
-const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
-identify(
-  user.id,
-  {
-    email: user.email, name: user.name, role: user.role, org_id: user.orgId,
-    current_persona: currentPersona,
-  },
-  setOnce,
-);
-```
-
-**Implemented as:**
-
-`identifyUser()` was **left unchanged**. No `current_persona` in the frontend `identify()` call:
-
-```typescript
+// frontend/src/lib/posthog.ts → identifyUser()
 identify(
   user.id,
   { email: user.email, name: user.name, role: user.role, org_id: user.orgId },
@@ -859,14 +845,48 @@ identify(
 );
 ```
 
-**Why:** The `current_persona` person property is set exclusively via the backend `$set` in the `Persona Updated` event. This means users who have **never switched personas** will not have `current_persona` as a person property in PostHog. This was an intentional scoping decision for the v2 branch — the `identifyUser()` fix can be picked up in a follow-up if cohort analysis by persona for non-switchers becomes a priority.
+No `current_persona` in `$set`. The person property is only set via `Persona Updated` (backend `$set` on switch), meaning users who never switch personas have no `current_persona` person property in PostHog.
 
-**Impact:**
+**Must be implemented as:**
 
-| User segment | `current_persona` person property? | How to query |
-|---|---|---|
-| Has switched at least once | Yes (set by backend `$set`) | Filter by `current_persona` person property |
-| Never switched | **No** — person property not set | Must derive from `role` person property or use `role` → persona mapping in PostHog |
+```typescript
+// frontend/src/lib/posthog.ts → identifyUser()
+import { ROLE_TO_PERSONA } from '@/lib/posthogEvents';
+
+export function identifyUser(user: User): void {
+  const setOnce: Record<string, unknown> = {
+    account_created_at: user.createdAt,
+  };
+  if (user.role) {
+    setOnce.first_surface =
+      user.role === UserRole.PROFESSIONAL ? SURFACE_PROSPECT : SURFACE_HIRING;
+  }
+  const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
+  identify(
+    user.id,
+    {
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      org_id: user.orgId,
+      ...(currentPersona && { current_persona: currentPersona }),
+    },
+    setOnce,
+  );
+}
+```
+
+**Why this is required:** Without this, `current_persona` as a person property only exists for users who have switched personas at least once. That's a tiny minority. Any PostHog query that filters by `current_persona` (funnels, cohorts, retention, dashboards) would silently exclude the vast majority of users. This makes the person property useless for segmentation until the fix is in place.
+
+**What this achieves:**
+- Every user gets `current_persona` set as a person property on every login/session restore
+- `ROLE_TO_PERSONA` already exists in `posthogEvents.ts` — no new mapping needed
+- The `$set` in `Persona Updated` (backend) overrides this on switch, which is correct
+- Users with no role yet (pre-onboarding) get `null` — no false data
+
+**Where `identifyUser()` is called:**
+- `frontend/src/stores/authStore.ts` — after successful login and session restore
+- Fires on every app load for authenticated users
 
 ---
 
@@ -907,10 +927,85 @@ The router guard (`previous_role is not None`) only prevents the **PostHog event
 
 ---
 
+### Delta 4: `Account Created` must `$set` `current_persona` during onboarding — NOT YET IMPLEMENTED
+
+**Original (not in tracking plan spec):**
+
+The original persona switching tracking plan did not address `Account Created` because onboarding was considered out of scope. However, `Account Created` is the first moment a user has a persona, and it must set `current_persona` as a person property so PostHog has it from the very first session.
+
+**Current state (what exists today):**
+
+```typescript
+// frontend/src/pages/RoleSelection.tsx → handleContinue()
+capture(ACCOUNT_CREATED, {
+  action: 'click',
+  action_value: ROLE_TO_ACTION_VALUE[selectedRole] || 'continue_as_unknown_button',
+  current_page_context: 'onboarding/role_selection',
+  previous_page_context: getPreviousPageContext(),
+  entry_point: entryPoint,
+  entity_type: 'onboarding',
+  component: 'onboarding_role_selection_footer_cta',
+  context_object_type: null,
+  context_object_id: null,
+  persona,
+  signup_context: entryPoint,
+  $set_once: {
+    first_persona: persona,
+    entry_point: entryPoint,
+    account_created_at: new Date().toISOString(),
+  },
+});
+```
+
+The event sends `persona` as an event property and `first_persona` via `$set_once`, but does **not** `$set` `current_persona`. This means even after onboarding completes, the user has no `current_persona` person property until they switch personas (which most users never do).
+
+**Must be implemented as:**
+
+Add a `$set` block alongside the existing `$set_once`:
+
+```typescript
+capture(ACCOUNT_CREATED, {
+  action: 'click',
+  action_value: ROLE_TO_ACTION_VALUE[selectedRole] || 'continue_as_unknown_button',
+  current_page_context: 'onboarding/role_selection',
+  previous_page_context: getPreviousPageContext(),
+  entry_point: entryPoint,
+  entity_type: 'onboarding',
+  component: 'onboarding_role_selection_footer_cta',
+  context_object_type: null,
+  context_object_id: null,
+  persona,
+  signup_context: entryPoint,
+  $set: {
+    current_persona: persona,
+  },
+  $set_once: {
+    first_persona: persona,
+    entry_point: entryPoint,
+    account_created_at: new Date().toISOString(),
+  },
+});
+```
+
+**Why this is required:** `Account Created` fires once during onboarding when the user picks their role. Without `$set: { current_persona }` here, users start their lifecycle with no `current_persona` person property. The `identifyUser()` fix (Delta 2) will set it on subsequent logins, but there's a gap between account creation and the first re-login where queries by persona would miss the user. Setting it at the point of creation closes this gap completely.
+
+**Relationship between the two fixes:**
+
+| Fix | When it fires | Purpose |
+|---|---|---|
+| Delta 2: `identifyUser()` | Every login / session restore | Ensures `current_persona` is always up-to-date for returning users |
+| Delta 4: `Account Created` | Once, during onboarding | Ensures `current_persona` is set from the very first moment the user has a role |
+| Existing: `Persona Updated` `$set` | On persona switch | Updates `current_persona` when the user switches |
+
+All three are needed for complete coverage.
+
+---
+
 ## Delta Summary Table
 
-| # | Change Type | Original | Implemented | Why |
-|---|---|---|---|---|
-| 1 | Property added | `activated_personas` only inside `$set` on Persona Updated | Also sent as top-level event property | Historical queries can see the full persona list at event time without relying on person property |
-| 2 | Not implemented | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` unchanged — `current_persona` only set via backend `$set` on switch | Scoping decision; non-switchers can be identified by `role` property instead |
-| 3 | Behavior change | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
+| # | Change Type | Status | Original | Implemented / Required | Why |
+|---|---|---|---|---|---|
+| 1 | Property added | Done | `activated_personas` only inside `$set` on Persona Updated | Also sent as top-level event property | Historical queries can see the full persona list at event time without relying on person property |
+| 2 | Must implement | **Not yet done** | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` unchanged — must add `current_persona` to `$set` via `ROLE_TO_PERSONA` | Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering |
+| 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
+| 4 | Must implement | **Not yet done** | `Account Created` only uses `$set_once: { first_persona }` | Must add `$set: { current_persona: persona }` alongside existing `$set_once` | Closes the gap between account creation and first re-login — user has `current_persona` from the very first moment |
