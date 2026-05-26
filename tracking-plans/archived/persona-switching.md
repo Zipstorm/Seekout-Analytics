@@ -696,7 +696,7 @@ export function identifyUser(user: User): void {
 
 ```md
 | Switch Persona Button Clicked | Account | Intent  | User clicks the ⇄ chevron next to current persona in sidebar        | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | -- | Not Started |
-| Persona Updated               | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona`, `current_persona` | -- | `$set: current_persona, activated_personas` | Not Started |
+| Persona Updated               | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona`, `current_persona`, `activated_personas` | -- | `$set: current_persona, activated_personas` | Not Started |
 | Persona Update Failed          | Account | Failure | Backend returns error on persona switch attempt                       | Backend  | `previous_persona`, `target_persona`, `error_reason`, `error_category` | -- | -- | Not Started |
 ```
 
