@@ -4,7 +4,6 @@
 |---|---|---|---|---|
 | Login & Onboarding Events | — | Draft | [helix-code-changes-login-onboarding.md](./helix-code-changes-login-onboarding.md) | 2026-04-17 |
 | Persona Switching | — | Merged | [archived/persona-switching.md](./archived/persona-switching.md) | 2026-05-11 |
-| HM Job Post Wizard | — | Review | [hm-job-creation-wizard.md](./hm-job-creation-wizard.md) | 2026-05-11 |
 
 ### Status Legend
 
