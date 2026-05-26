@@ -3,7 +3,7 @@
 | Feature | PRD Link | Status | Tracking Plan | Date Created |
 |---|---|---|---|---|
 | Login & Onboarding Events | — | Draft | [helix-code-changes-login-onboarding.md](./helix-code-changes-login-onboarding.md) | 2026-04-17 |
-| Persona Switching | — | Review | [archived/persona-switching.md](./archived/persona-switching.md) | 2026-05-11 (v2 updated 2026-05-20) |
+| Persona Switching v2 | — | Review | [persona-switching-v2.md](./persona-switching-v2.md) | 2026-05-20 |
 
 ### Status Legend
 

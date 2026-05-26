@@ -2,7 +2,7 @@
 
 **Product:** Helix (SeekOut.ai)
 **Feature:** Persona switching flow
-**Date:** 2026-05-11 (updated 2026-05-20)
+**Date:** 2026-05-20 (v1: 2026-05-11, implementation delta: 2026-05-26)
 **Related PRD:** —
 
 > Reference: `docs/event-catalog.md` for naming conventions and existing event catalog.
@@ -68,7 +68,7 @@
 | `current_persona` | enum | event + person (`$set`) | `hiring_manager`, `recruiter`, `job_seeker` | Switch Persona Button Clicked (event), Persona Updated (event + `$set`), Account Created (`$set`), Auth Login Succeeded (`$set` via `identifyUser()`), Auth Session Restore Succeeded (`$set` via `identifyUser()`) |
 | `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Update Failed |
 | `activated_personas` | array | event + person (`$set`) + DB column | e.g., `["recruiter", "job_seeker"]` | Persona Updated (event + `$set`) |
-| `error_reason` | string | event | system error description (truncated to 256 chars) | Persona Update Failed |
+| `error_reason` | string | event | system error description (truncated to 256 chars via `str(e)[:256]` — note: other failure events do not truncate, this is a parity difference) | Persona Update Failed |
 | `error_category` | enum | event | `validation`, `server` | Persona Update Failed |
 
 ### Funnels
@@ -117,7 +117,7 @@ User explores the persona switching option by clicking the ⇄ icon (ArrowLeftRi
 | **Trigger** | User clicks the ⇄ ArrowLeftRight icon next to current persona label in sidebar |
 | **Source** | Frontend |
 | **Group** | -- |
-| **Status** | Not Started |
+| **Status** | Done (tested locally) |
 
 **Properties:**
 
@@ -242,7 +242,7 @@ Server confirms persona switch succeeded.
 | **Trigger** | Backend confirms persona switch via `PATCH /api/users/me` with `{ role: "..." }` — only fires when `previous_role is not None AND dto.role != previous_role` (skips initial onboarding role pick) |
 | **Source** | Backend |
 | **Group** | -- |
-| **Status** | Not Started |
+| **Status** | Done (tested locally) |
 
 **Properties:**
 
@@ -323,7 +323,7 @@ Server returns error when persona switch fails.
 | **Trigger** | `service.update_user()` raises exception during a role-only PATCH (guard: `role_only_update and dto.role is not None and previous_role is not None`) |
 | **Source** | Backend |
 | **Group** | -- |
-| **Status** | Not Started |
+| **Status** | Done (tested locally) |
 
 **Properties:**
 
@@ -642,7 +642,7 @@ async def update_my_profile(
 - `previous_role = current_user.role` MUST be captured before calling `service.update_user()` — after the call, the user object has the new role
 - `role_only_update` scopes the failure event to role-only PATCHes — prevents phone validation errors from triggering persona failure events
 - `result.activated_personas` comes from the `UserResponse` returned by `service.update_user()`, which reads from the DB column populated in Step 5
-- `BadRequestException` is already imported in the current router — check imports if not
+- `BadRequestException` is imported from `app.shared.exceptions` — confirmed: `from app.shared.exceptions import BadRequestException, NotFoundException` (line 9 in `users/router.py`)
 
 ---
 
@@ -783,7 +783,7 @@ export function identifyUser(user: User): void {
 | Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
 ```
 
-**What changed:** Person Properties column updated from `--` to reflect what `identifyUser()` actually sets (Delta 2 + 5). Removes phantom `org_name`/`org_domain`, adds missing `role` and new `current_persona`.
+**What changed:** Person Properties column updated from `--` (nothing documented) to `$set: email, name, role, org_id, current_persona` — reflecting what `identifyUser()` actually sets after Delta 2. Note: the phantom `org_name`/`org_domain` properties only appear in `docs/event-schema.md` (fixed in Schema §3 below), not in these catalog rows.
 
 #### 3. Removed Events table (line 188) — no change needed
 
@@ -806,10 +806,19 @@ Already correct on main:
 
 **What changed:** Scope updated from `person ($set)` to `event, person ($set)`. Used In expanded to include all events that reference this property.
 
-**Add new row** (after `current_persona`):
+**Update existing row** (line 245 — already exists in Array Properties section):
+
+**Current (on main):**
 ```md
-| `activated_personas`    | array | event, person ($set)      | e.g., `["recruiter", "job_seeker"]`                                                 | Persona Updated (event property + person property via `$set`)  |
+| `activated_personas` | array | person ($set) | All unique personas the user has tried; grows over time | All events (person property) |
 ```
+
+**Target (after merge):**
+```md
+| `activated_personas` | array | event, person ($set) | All unique personas the user has tried via switching. Sent as top-level event property on Persona Updated and as person property via `$set`. DB column accumulates from onboarding but PostHog `$set` is switch-only. | Persona Updated (event property + person property via `$set`) |
+```
+
+**What changed:** Scope updated from `person ($set)` to `event, person ($set)` per Delta 1. Used In narrowed from "All events (person property)" to "Persona Updated" — that's the only event that fires the `$set`. Description updated to clarify DB vs PostHog behavior per Delta 3.
 
 #### 5. Account Created row (line 32) — fix Property Updates column
 
@@ -824,6 +833,8 @@ Already correct on main:
 ```
 
 **What changed:** Removed `activated_personas` from `$set`. Per Delta 4, the `Account Created` PostHog call only adds `$set: { current_persona }`. The DB column accumulates `activated_personas` during onboarding (Delta 3), but the PostHog `$set` for `activated_personas` only happens in `Persona Updated` (backend, on switch). The catalog row must reflect what the PostHog event actually fires, not what the DB does.
+
+**Downstream impact:** If any existing PostHog cohort or dashboard filters on `activated_personas` being populated "since signup", those queries will now only see `activated_personas` populated after the user's first persona switch (not at account creation). This is the correct behavior — the DB column (authoritative) still accumulates from onboarding, but the PostHog person property is only `$set` on switch. Users who never switch will not have `activated_personas` as a PostHog person property. To query total persona history including onboarding, use the backend API (`GET /me` → `activatedPersonas`) rather than PostHog person properties.
 
 ### Event Schema (`docs/event-schema.md`)
 
@@ -938,6 +949,7 @@ Every change below must be implemented. Nothing has been done yet.
 | `test_persona_updated_skips_onboarding` | null → HM (initial role pick) does NOT fire `Persona Updated` |
 | `test_persona_update_failed_fires_on_role_error` | Invalid role with role-only PATCH fires `Persona Update Failed` |
 | `test_persona_update_failed_skips_non_role_error` | Phone error with role in combined PATCH does NOT fire failure event |
+| `test_role_plus_phone_combined_patch_skips_event` | Combined role+phone PATCH where role succeeds — fires `Persona Updated` but does NOT fire `Persona Update Failed` if phone fails separately. Locks the `role_only_update` guard. |
 | `test_persona_switch_accumulates_activated_personas` | HM → Recruiter → Job Seeker accumulates `["recruiter", "job_seeker"]` |
 | `test_duplicate_switch_does_not_duplicate` | HM → Recruiter → HM → Recruiter has no duplicates in array |
 | `test_onboarding_then_switch_fires_only_on_switch` | null → HM = no event; HM → Recruiter = event |
@@ -1172,15 +1184,17 @@ All three are needed for complete coverage.
 
 ---
 
-### Delta 5: Auth catalog rows list wrong `identifyUser()` person properties — CATALOG FIX NEEDED ON MERGE
+### Delta 5: `identifyUser()` person properties are wrong in schema doc — FIXES NEEDED ON MERGE
 
-**Current catalog state (`docs/event-catalog.md`, lines 43 & 45):**
+**Where the phantom properties actually live:**
 
-The Person Properties column for `Auth Login Succeeded` and `Auth Session Restore Succeeded` says:
+The `org_name` and `org_domain` phantom properties are in `docs/event-schema.md` (lines 142–143, and the code snippets at lines 155/298), NOT in `docs/event-catalog.md`. The catalog auth rows (lines 43/45) simply have `--` (nothing) in the Person Properties column — they were never documented there.
 
-```
-$set: email, name, org_id, org_name, org_domain (via identifyUser())
-```
+**Two docs need fixes on merge:**
+
+1. **`docs/event-catalog.md`** (lines 43/45): Person Properties column is `--` → must be updated to `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) so the catalog reflects what these events actually trigger.
+
+2. **`docs/event-schema.md`** (lines 139–145, 147, 152–155, 294–298): Remove phantom `org_name`/`org_domain`, add missing `role`, fix `activated_personas` Set By, update code snippets. See Schema §3–§5 in the Catalog Changes section above for full before/after.
 
 **What `identifyUser()` actually sets (verified against Helix `develop`):**
 
@@ -1192,9 +1206,13 @@ identify(
 );
 ```
 
-**Discrepancy:**
+**After Delta 2 is implemented, `identifyUser()` will set:**
 
-| Property | Catalog says | `identifyUser()` actually sets |
+`$set: email, name, role, org_id, current_persona`
+
+**Discrepancy (schema doc `$set` table vs reality):**
+
+| Property | Schema doc says | `identifyUser()` actually sets |
 |---|---|---|
 | `email` | Yes | Yes |
 | `name` | Yes | Yes |
@@ -1202,17 +1220,6 @@ identify(
 | `org_id` | Yes | Yes |
 | `org_name` | **Yes** | **No — does not exist** |
 | `org_domain` | **Yes** | **No — does not exist** |
-
-**After Deltas 2 & 4 are implemented, `identifyUser()` will set:**
-
-`$set: email, name, role, org_id, current_persona`
-
-**Catalog rows must be updated on merge to:**
-
-```md
-| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
-| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
-```
 
 ---
 
@@ -1224,4 +1231,4 @@ identify(
 | 2 | Must implement | Done | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` updated — `current_persona` added to `$set` via `ROLE_TO_PERSONA` | Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering |
 | 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
 | 4 | Must implement | Done | `Account Created` only uses `$set_once: { first_persona }` | Added `$set: { current_persona: persona }` alongside existing `$set_once` | Closes the gap between account creation and first re-login — user has `current_persona` from the very first moment |
-| 5 | Catalog fix | **On merge** | Auth Login Succeeded / Auth Session Restore Succeeded list `$set: email, name, org_id, org_name, org_domain` | Must be `$set: email, name, role, org_id, current_persona` — `org_name`/`org_domain` don't exist, `role` was missing | Aligns catalog with what `identifyUser()` actually sets (verified against Helix `develop`) |
+| 5 | Catalog + schema fix | **On merge** | Catalog auth rows have `--` for Person Properties; schema doc lists phantom `org_name`/`org_domain` and is missing `role` | Catalog: `--` → `$set: email, name, role, org_id, current_persona`; Schema: remove phantoms, add `role`, fix code snippets | Aligns both docs with what `identifyUser()` actually sets (verified against Helix `develop`) |
