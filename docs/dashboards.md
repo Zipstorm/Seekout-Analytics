@@ -61,7 +61,7 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - K-factor per viral loop (job sharing, profile sharing)
 - Conversion funnel: Job Link Viewed → Job Link Engaged → Signup Started → Account Created → Activated
 - Activation rate by signup context
-- Onboarding-to-job conversion: Account Created → Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Posting Draft Created → Job Posting Published
+- Onboarding-to-job conversion: Account Created → Persona Selected → Job Wizard Started → Job Wizard Step Completed (step 1) → Job Created
 - Retention: WAU, MAU, D7/D30 return rates
 
 ### Prospect Dashboard (Prospect Team)
@@ -81,11 +81,8 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Time from Interest Expressed → first Interest Reviewed (`time_to_review_seconds`)
 - Review decision distribution (shortlisted / declined / needs_discussion)
 - Interests per job (using job group analytics)
-- Job post wizard completion funnel — step-by-step drop-off rates (Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Post Wizard Role Understanding Completed → Job Post Wizard Role Requirements Completed → Job Post Wizard Interview Questions Completed → Job Post Wizard Verification Completed → Job Posting Published)
-- Job post wizard abandonment — Step 1 drop-off rate (Job Post Wizard Started → Job Post Wizard Job Details Completed)
-- Sam session adoption — voice/text session completion rate (Job Post Wizard Role Understanding Completed → Sam Session Started → Sam Session Ended), broken down by `input_mode`
-- Sam voice setup failure rate — Sam Voice Session Setup Failed count, `error_category` distribution (hardware / timeout / connection)
-- Voice session stats — completion rate (Sam Session Started → Sam Session Ended), avg `duration_seconds`
+- Job wizard completion funnel — step-by-step drop-off rates (Job Wizard Started → Job Wizard Step Completed step 1 → 2 → 3 → 4 → Job Created). Note: Step 4 completion fires both Job Wizard Step Completed (step 4) and the Create Job Button Clicked → Job Created intent/outcome pair.
+- Voice session stats — completion rate (Voice Session Started → Voice Session Ended), avg `duration_seconds`
 - AI content modification rate — % of jobs where requirements/questions were modified (Requirement Modified / Question Modified counts vs Job Created)
 - Intro video adoption — % of jobs with intro video (`has_intro_video`), recording completion rate (Record Video Button Clicked → Intro Video Created)
 - Candidate review depth — avg tabs viewed per candidate, % of candidates where recording was played. Time-to-decision: median seconds from Candidate Viewed timestamp to Review Decision Made timestamp (computed per-candidate, not a funnel).
@@ -102,10 +99,7 @@ Tracks failure rates across the five Intent → Success / Failure triplets defin
 
 | Flow | Intent Event | Success Event | Failure Event |
 |------|-------------|---------------|---------------|
-| Creating a job (wizard start) | Create Job Button Clicked | Job Post Wizard Started | -- |
-| Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
-| Publishing a job | Job Post Wizard Verification Completed | Job Posting Published | -- |
-| Email verification | Job Post Wizard Verification Completed | Job Posting Verified | -- |
+| Job creation | Create Job Button Clicked | Job Created | Job Creation Failed |
 | Job sharing | Share Button Clicked | Job Shared | Job Share Failed |
 | Interest expression | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Team invite | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
