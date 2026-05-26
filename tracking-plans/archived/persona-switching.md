@@ -9,9 +9,15 @@
 
 ---
 
-## Implementation Status
+## Implementation & Testing Status
 
-**None of these changes have been implemented in the Helix codebase yet.** This tracking plan is the single source of truth. When feeding this file to the Helix codebase LLM, it should implement ALL changes described below from scratch.
+**All events have been implemented and tested locally.** The Helix branch `soumabrata/persona-switching-v2` contains all code changes. Events were verified against a local PostHog instance connected to a locally hosted Helix environment.
+
+> **Important — workflow context:**
+> - All events are tested on a **local Helix instance** connected to a **local PostHog API** — they are NOT on the main Helix `develop` branch yet.
+> - Once this tracking plan PR is approved and merged into the Seekout-Analytics repo, the event catalog and schema docs will be updated (via `/merge-tracking-plan`).
+> - The Helix repo will then read the updated catalog/schema as the source of truth and implement the changes on its `develop` branch.
+> - This tracking plan contains **every detail** — events, properties, PostHog calls, file paths, guard logic, and code snippets — so the Helix codebase LLM can replicate the exact implementation from the local branch onto `develop`.
 
 ### What needs to be implemented
 
@@ -42,7 +48,7 @@
 
 | Event | Change | Person Properties (after change) | Status |
 |---|---|---|---|
-| Account Created | Add `$set: { current_persona: persona }` alongside existing `$set_once: { first_persona }` | `$set: current_persona` · `$set_once: first_persona, entry_point, account_created_at` | **Not yet done** (Delta 4) |
+| Account Created | Add `$set: { current_persona: persona }` alongside existing `$set_once: { first_persona }` | `$set: current_persona` · `$set_once: first_persona, entry_point, account_created_at` | Done (Delta 4) |
 | Auth Login Succeeded | Fix `identifyUser()` — add `current_persona`, add missing `role`, remove non-existent `org_name`/`org_domain` | `$set: email, name, role, org_id, current_persona` | Done (Delta 2 + 5) |
 | Auth Session Restore Succeeded | Same `identifyUser()` fix as above | `$set: email, name, role, org_id, current_persona` | Done (Delta 2 + 5) |
 
@@ -976,26 +982,18 @@ The router guard (`previous_role is not None`) only prevents the **PostHog event
 
 ---
 
-### Delta 4: `Account Created` must `$set` `current_persona` during onboarding — NOT YET IMPLEMENTED
+### Delta 4: `Account Created` now `$set`s `current_persona` during onboarding — IMPLEMENTED
 
 **Original (not in tracking plan spec):**
 
 The original persona switching tracking plan did not address `Account Created` because onboarding was considered out of scope. However, `Account Created` is the first moment a user has a persona, and it must set `current_persona` as a person property so PostHog has it from the very first session.
 
-**Current state (what exists today):**
+**Previous state (before the fix):**
 
 ```typescript
 // frontend/src/pages/RoleSelection.tsx → handleContinue()
 capture(ACCOUNT_CREATED, {
-  action: 'click',
-  action_value: ROLE_TO_ACTION_VALUE[selectedRole] || 'continue_as_unknown_button',
-  current_page_context: 'onboarding/role_selection',
-  previous_page_context: getPreviousPageContext(),
-  entry_point: entryPoint,
-  entity_type: 'onboarding',
-  component: 'onboarding_role_selection_footer_cta',
-  context_object_type: null,
-  context_object_id: null,
+  // ... existing properties ...
   persona,
   signup_context: entryPoint,
   $set_once: {
@@ -1006,17 +1004,18 @@ capture(ACCOUNT_CREATED, {
 });
 ```
 
-The event sends `persona` as an event property and `first_persona` via `$set_once`, but does **not** `$set` `current_persona`. This means even after onboarding completes, the user has no `current_persona` person property until they switch personas (which most users never do).
+The event sent `persona` as an event property and `first_persona` via `$set_once`, but did not `$set` `current_persona`.
 
-**Must be implemented as:**
+**Implemented as:**
 
-Add a `$set` block alongside the existing `$set_once`:
+Added `$set: { current_persona: persona }` alongside the existing `$set_once`:
 
 ```typescript
+// frontend/src/pages/RoleSelection.tsx → handleContinue()
 capture(ACCOUNT_CREATED, {
   action: 'click',
   action_value: ROLE_TO_ACTION_VALUE[selectedRole] || 'continue_as_unknown_button',
-  current_page_context: 'onboarding/role_selection',
+  current_page_context: 'onboarding_role_selection',
   previous_page_context: getPreviousPageContext(),
   entry_point: entryPoint,
   entity_type: 'onboarding',
@@ -1036,7 +1035,7 @@ capture(ACCOUNT_CREATED, {
 });
 ```
 
-**Why this is required:** `Account Created` fires once during onboarding when the user picks their role. Without `$set: { current_persona }` here, users start their lifecycle with no `current_persona` person property. The `identifyUser()` fix (Delta 2) will set it on subsequent logins, but there's a gap between account creation and the first re-login where queries by persona would miss the user. Setting it at the point of creation closes this gap completely.
+**Why this is required:** `Account Created` fires once during onboarding when the user picks their role. Without `$set: { current_persona }` here, users start their lifecycle with no `current_persona` person property. Setting it at the point of creation ensures PostHog has the persona from the very first moment.
 
 **Relationship between the two fixes:**
 
@@ -1101,5 +1100,5 @@ identify(
 | 1 | Property added | Done | `activated_personas` only inside `$set` on Persona Updated | Also sent as top-level event property | Historical queries can see the full persona list at event time without relying on person property |
 | 2 | Must implement | Done | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` updated — `current_persona` added to `$set` via `ROLE_TO_PERSONA` | Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering |
 | 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
-| 4 | Must implement | **Not yet done** | `Account Created` only uses `$set_once: { first_persona }` | Must add `$set: { current_persona: persona }` alongside existing `$set_once` | Closes the gap between account creation and first re-login — user has `current_persona` from the very first moment |
+| 4 | Must implement | Done | `Account Created` only uses `$set_once: { first_persona }` | Added `$set: { current_persona: persona }` alongside existing `$set_once` | Closes the gap between account creation and first re-login — user has `current_persona` from the very first moment |
 | 5 | Catalog fix | **On merge** | Auth Login Succeeded / Auth Session Restore Succeeded list `$set: email, name, org_id, org_name, org_domain` | Must be `$set: email, name, role, org_id, current_persona` — `org_name`/`org_domain` don't exist, `role` was missing | Aligns catalog with what `identifyUser()` actually sets (verified against Helix `develop`) |
