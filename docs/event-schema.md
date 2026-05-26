@@ -60,7 +60,7 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Account | User (account-level actions) | Account Created, Account Activated |
 | Intro | Onboarding intro screen | Intro Completed |
 | Profile | Prospect's career profile | Profile Created, Profile Section Updated |
-| Job | Job posting | Job Posting Draft Created, Job Shared |
+| Job | Job posting | Job Created, Job Shared |
 | Interest | Expression of Interest | Interest Expressed, Interest Reviewed |
 | Review | Interest Review | Review Decision Made |
 | Team Member | JobTeamMember | Team Member Invited, Team Member Joined |
@@ -69,11 +69,9 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Persona | User persona (hiring_manager, recruiter, job_seeker) | Switch Persona Button Clicked, Persona Updated |
 | Job Link | Shared job posting link viewed by anonymous visitors | Job Link Viewed, Job Link Engaged |
 | Profile Link | Prospect's shareable profile link viewed by visitors | Profile Link Viewed, Profile Link Engaged |
-| Job Post Wizard | Job post creation wizard session | Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Post Wizard Role Understanding Completed, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed |
-| Job Posting | Job posting lifecycle (draft, verified, published) | Job Posting Draft Created, Job Posting Verified, Job Posting Published |
-| Sam | AI hiring partner (Sam) conversation | Sam Session Started, Sam Session Ended |
-| Sam Voice Session | AI hiring partner voice-specific session | Sam Voice Session Setup Failed |
-| Screening Configuration | Job screening setup (questions, ID verification) | Screening Configuration Saved |
+| Job Wizard | Job creation wizard session | Job Wizard Started |
+| Job Wizard Step | Job creation wizard step | Job Wizard Step Completed |
+| Voice Session | AI hiring partner conversation | Voice Session Started, Voice Session Ended, Voice Session Setup Failed |
 | Intro Video | HM intro video recording | Intro Video Created, Intro Video Deleted |
 | Candidate | Candidate in review pipeline | Candidate Viewed, Candidate Tab Viewed, Candidate Recording Played |
 | Requirement | AI-generated role requirement | Requirement Modified |
@@ -399,10 +397,7 @@ For critical flows, track the UI interaction (intent) and the server-confirmed r
 | Sharing a job | Share Button Clicked | Job Shared | Job Share Failed |
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
-| Creating a job (wizard start) | Create Job Button Clicked | Job Post Wizard Started | -- |
-| Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
-| Publishing a job | Job Post Wizard Verification Completed | Job Posting Published | -- |
-| Email verification | Job Post Wizard Verification Completed | Job Posting Verified | -- |
+| Creating a job | Create Job Button Clicked | Job Created | Job Creation Failed |
 | Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed |
 | Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed |
 | Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed |
