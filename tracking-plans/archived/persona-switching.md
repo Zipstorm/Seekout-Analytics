@@ -26,6 +26,54 @@
 
 ---
 
+## Event Schema Summary
+
+> **For reviewer:** This section is the finalized state of all events and properties being shipped, with all implementation deltas applied. See the [Implementation Delta](#implementation-delta-2026-05-26) section at the bottom for the detailed changelog.
+
+### New Events
+
+| Event | Area | Type | Trigger | Source | Properties | Person Properties | Status |
+|---|---|---|---|---|---|---|---|
+| Switch Persona Button Clicked | Account | Intent | User clicks ⇄ icon next to current persona in sidebar | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | Done |
+| Persona Updated | Account | Success | Backend confirms persona switch (`PATCH /api/users/me`) — only fires when `previous_role is not None AND dto.role != previous_role` | Backend | `previous_persona`, `current_persona`, `activated_personas` | `$set: current_persona, activated_personas` | Done |
+| Persona Update Failed | Account | Failure | Backend returns error on role-only PATCH | Backend | `previous_persona`, `target_persona`, `error_reason`, `error_category` | -- | Done |
+
+### Existing Events Modified
+
+| Event | Change | Person Properties (after change) | Status |
+|---|---|---|---|
+| Account Created | Add `$set: { current_persona: persona }` alongside existing `$set_once: { first_persona }` | `$set: current_persona` · `$set_once: first_persona, entry_point, account_created_at` | **Not yet done** (Delta 4) |
+| Auth Login Succeeded | Fix `identifyUser()` — add `current_persona`, add missing `role`, remove non-existent `org_name`/`org_domain` | `$set: email, name, role, org_id, current_persona` | **Not yet done** (Delta 2 + 5) |
+| Auth Session Restore Succeeded | Same `identifyUser()` fix as above | `$set: email, name, role, org_id, current_persona` | **Not yet done** (Delta 2 + 5) |
+
+### Removed Events
+
+| Event | Replaced By | Reason |
+|---|---|---|
+| Persona Switch Chevron Clicked | Switch Persona Button Clicked | Renamed — aligns with Object-Action naming convention |
+| Persona Switched (frontend) | Persona Updated (backend) | Frontend event fired before API call, causing false positives on failure. Backend is now the source of truth. |
+| Persona Activated | Persona Updated | Renamed — "Activated" implied adding a new persona; "Updated" reflects switching |
+
+### Property Dictionary (finalized)
+
+| Property | Type | Scope | Values | Used In |
+|---|---|---|---|---|
+| `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Updated, Persona Update Failed |
+| `current_persona` | enum | event + person (`$set`) | `hiring_manager`, `recruiter`, `job_seeker` | Switch Persona Button Clicked (event), Persona Updated (event + `$set`), Account Created (`$set`), Auth Login Succeeded (`$set` via `identifyUser()`), Auth Session Restore Succeeded (`$set` via `identifyUser()`) |
+| `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | Persona Update Failed |
+| `activated_personas` | array | event + person (`$set`) + DB column | e.g., `["recruiter", "job_seeker"]` | Persona Updated (event + `$set`) |
+| `error_reason` | string | event | system error description (truncated to 256 chars) | Persona Update Failed |
+| `error_category` | enum | event | `validation`, `server` | Persona Update Failed |
+
+### Funnels
+
+| Funnel Name | Steps | Purpose |
+|---|---|---|
+| Persona Switch Completion | Switch Persona Button Clicked → Persona Updated | Conversion from exploring the switch to actually switching |
+| Persona Switch Full Flow | Switch Persona Button Clicked → Persona Updated → Page Viewed | Full switch flow including page load |
+
+---
+
 ## User Flow
 
 ```text
