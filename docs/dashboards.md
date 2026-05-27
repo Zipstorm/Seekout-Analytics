@@ -104,6 +104,7 @@ Tracks failure rates across the five Intent → Success / Failure triplets defin
 | Interest expression | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Team invite | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
 | Intro video recording | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
+| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
 
 - Failure rate per flow (failures / intents) over time
 - `error_category` distribution per flow (with `error_reason` drill-down for debugging)

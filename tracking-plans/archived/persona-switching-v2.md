@@ -4,6 +4,7 @@
 **Feature:** Persona switching flow
 **Date:** 2026-05-20 (v1: 2026-05-11, implementation delta: 2026-05-26)
 **Related PRD:** —
+**Approved by:** Akshay Gupta (via PR #14 review). Status updated to Approved by Soumabrata on 2026-05-27.
 
 > Reference: `docs/event-catalog.md` for naming conventions and existing event catalog.
 

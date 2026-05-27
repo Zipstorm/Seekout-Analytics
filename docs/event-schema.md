@@ -138,22 +138,21 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 |----------|------|--------|-------------|
 | `email` | string | `identifyUser()` | User's current email |
 | `name` | string | `identifyUser()` | User's current name |
+| `role` | string | `identifyUser()` | User's current role enum (e.g., `HIRING_MANAGER`, `RECRUITER`, `PROFESSIONAL`) |
 | `org_id` | string | `identifyUser()` | User's current organization ID |
-| `org_name` | string | `identifyUser()` | User's current organization name. Resolved from org_id on backend before identify call. |
-| `org_domain` | string | `identifyUser()` | User's organization domain (e.g., `seekout.com`). Resolved from org_id on backend before identify call. |
 | `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
-| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has tried. Seeded with `[first_persona]` on account creation, grows as user switches personas. |
+| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has ever been in. Seeded with `[persona]` on Account Created, grows as user switches personas via Persona Updated. DB column and PostHog person property are now in sync. |
 
-**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) is seeded with the first persona on Account Created and accumulates every persona the user has tried over time — it only grows, never shrinks.
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and `identifyUser()` (every login), and updated on persona switch via Persona Updated. `activated_personas` (`$set`) is seeded with `[persona]` on Account Created and accumulates every persona the user has tried via Persona Updated — it only grows, never shrinks. Both DB column and PostHog person property stay in sync.
 
 **Identifying a user (JS SDK — called after auth succeeds):**
 
 ```javascript
 // In lib/posthog.ts → identifyUser()
-const persona = ROLE_TO_PERSONA[user.role] || 'unknown';
+const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
 posthog.identify(user.id,
-  { email: user.email, name: user.name, org_id: user.orgId, org_name: user.orgName, current_persona: persona },  // $set
-  { account_created_at: user.createdAt }  // $set_once
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId, current_persona: currentPersona },  // $set
+  { account_created_at: user.createdAt, first_surface: ... }  // $set_once
 );
 ```
 
@@ -293,10 +292,10 @@ posthog.capture('Intro Completed', {
 ```javascript
 // Called in identifyUser() after login/session restore
 // Uses positional args: (distinctId, $set, $set_once)
-const persona = ROLE_TO_PERSONA[user.role] || 'unknown';
+const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
 posthog.identify(user.id,
-  { email: user.email, name: user.name, org_id: user.orgId, org_name: user.orgName, current_persona: persona },  // $set
-  { account_created_at: user.createdAt }  // $set_once
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId, current_persona: currentPersona },  // $set
+  { account_created_at: user.createdAt, first_surface: ... }  // $set_once
 );
 ```
 
