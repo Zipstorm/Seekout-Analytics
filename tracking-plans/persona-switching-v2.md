@@ -1,0 +1,1269 @@
+# Tracking Plan: Persona Switching
+
+**Product:** Helix (SeekOut.ai)
+**Feature:** Persona switching flow
+**Date:** 2026-05-20 (v1: 2026-05-11, implementation delta: 2026-05-26)
+**Related PRD:** —
+
+> Reference: `docs/event-catalog.md` for naming conventions and existing event catalog.
+
+---
+
+## Implementation & Testing Status
+
+**All events have been implemented and tested locally.** The Helix branch `soumabrata/persona-switching-v2` contains all code changes. Events were verified against a local PostHog instance connected to a locally hosted Helix environment.
+
+> **Important — workflow context:**
+> - All events are tested on a **local Helix instance** connected to a **local PostHog API** — they are NOT on the main Helix `develop` branch yet.
+> - Once this tracking plan PR is approved and merged into the Seekout-Analytics repo, the event catalog and schema docs will be updated (via `/merge-tracking-plan`).
+> - The Helix repo will then read the updated catalog/schema as the source of truth and implement the changes on its `develop` branch.
+> - This tracking plan contains **every detail** — events, properties, PostHog calls, file paths, guard logic, and code snippets — so the Helix codebase LLM can replicate the exact implementation from the local branch onto `develop`.
+
+### What needs to be implemented
+
+| Area | Summary |
+|---|---|
+| **Backend: `activated_personas` column** | New JSONB column on `users` table via Alembic migration, wired through User model → AuthUser → UserResponse → service → router |
+| **Backend: `ROLE_TO_PERSONA` mapping** | New mapping in `posthog_events.py` — `PROFESSIONAL` → `"job_seeker"` (separate from existing `_ROLE_TO_ACTING_AS`) |
+| **Backend: `Persona Updated` event** | PostHog event fired from `users/router.py` on successful persona switch, with guard logic to skip onboarding |
+| **Backend: `Persona Update Failed` event** | PostHog event fired from `users/router.py` on failed role-only PATCH |
+| **Frontend: Rename switch event** | `Persona Switch Chevron Clicked` → `Switch Persona Button Clicked`, align properties, remove `Persona Switched` |
+| **Frontend: `identifyUser()` fix** | Add `current_persona` to the `posthog.identify()` call so all users have this person property |
+
+---
+
+## Event Schema Summary
+
+> **For reviewer:** This section is the finalized state of all events and properties being shipped, with all implementation deltas applied. See the [Implementation Delta](#implementation-delta-2026-05-26) section at the bottom for the detailed changelog.
+
+### New Events
+
+| Event | Area | Type | Trigger | Source | Properties | Person Properties | Status |
+|---|---|---|---|---|---|---|---|
+| Switch Persona Button Clicked | Account | Intent | User clicks ⇄ icon next to current persona in sidebar | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | Done |
+| Persona Updated | Account | Success | Backend confirms persona switch (`PATCH /api/users/me`) — only fires when `previous_role is not None AND dto.role != previous_role` | Backend | `previous_persona`, `current_persona`, `activated_personas` | `$set: current_persona, activated_personas` | Done |
+| Persona Update Failed | Account | Failure | Backend returns error on role-only PATCH | Backend | `previous_persona`, `target_persona`, `error_reason`, `error_category` | -- | Done |
+
+### Existing Events Modified
+
+| Event | Change | Person Properties (after change) | Status |
+|---|---|---|---|
+| Account Created | Add `$set: { current_persona, activated_personas }` alongside existing `$set_once: { first_persona }` | `$set: current_persona, activated_personas` · `$set_once: first_persona, entry_point, account_created_at` | Done (Delta 4) |
+| Auth Login Succeeded | Fix `identifyUser()` — add `current_persona`, add missing `role`, remove non-existent `org_name`/`org_domain` | `$set: email, name, role, org_id, current_persona` | Done (Delta 2 + 5) |
+| Auth Session Restore Succeeded | Same `identifyUser()` fix as above | `$set: email, name, role, org_id, current_persona` | Done (Delta 2 + 5) |
+
+### Removed Events
+
+| Event | Replaced By | Reason |
+|---|---|---|
+| Persona Switch Chevron Clicked | Switch Persona Button Clicked | Renamed — aligns with Object-Action naming convention |
+| Persona Switched (frontend) | Persona Updated (backend) | Frontend event fired before API call, causing false positives on failure. Backend is now the source of truth. |
+| Persona Activated | Persona Updated | Renamed — "Activated" implied adding a new persona; "Updated" reflects switching |
+
+### Property Dictionary (finalized)
+
+| Property | Type | Scope | Values | Used In |
+|---|---|---|---|---|
+| `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker`, `unknown` | Persona Updated, Persona Update Failed |
+| `current_persona` | enum | event + person (`$set`) | `hiring_manager`, `recruiter`, `job_seeker`, `unknown` | Switch Persona Button Clicked (event), Persona Updated (event + `$set`), Account Created (`$set`), Auth Login Succeeded (`$set` via `identifyUser()`), Auth Session Restore Succeeded (`$set` via `identifyUser()`) |
+| `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker`, `unknown` | Persona Update Failed |
+| `activated_personas` | array | event + person (`$set`) + DB column | e.g., `["recruiter", "job_seeker"]` | Persona Updated (event + `$set`), Account Created (`$set`) |
+| `error_reason` | string | event | system error description (truncated to 256 chars via `str(e)[:256]` — note: other failure events do not truncate, this is a parity difference) | Persona Update Failed |
+| `error_category` | enum | event | `validation`, `server` | Persona Update Failed |
+
+### Funnels
+
+| Funnel Name | Steps | Purpose |
+|---|---|---|
+| Persona Switch Completion | Switch Persona Button Clicked → Persona Updated | Conversion from exploring the switch to actually switching |
+| Persona Switch Full Flow | Switch Persona Button Clicked → Persona Updated → Page Viewed | Full switch flow including page load |
+
+---
+
+## User Flow
+
+```text
+User is on any page (e.g., HM Job Postings)
+  │
+  ├─ Step 1: Clicks ⇄ ArrowLeftRight icon next to current persona in sidebar
+  │    → fires: Switch Persona Button Clicked (Frontend)
+  │    → "Choose a role" dropdown opens
+  │
+  ├─ Step 2: Clicks on a different persona card (e.g., Recruiter)
+  │    → Frontend calls PATCH /api/users/me with { role: "RECRUITER" }
+  │    ├─ Success → fires: Persona Updated (Backend)
+  │    │    → $set: current_persona = "recruiter"
+  │    │    → $set: activated_personas (accumulated, deduplicated)
+  │    └─ Failure → fires: Persona Update Failed (Backend)
+  │         → current_persona unchanged
+  │
+  └─ Step 3: New persona's home page loads (on success only)
+       → fires: Page Viewed (Frontend)
+       → current_page_context reflects the new persona's landing page
+```
+
+---
+
+## New Events
+
+### 1. Switch Persona Button Clicked
+
+User explores the persona switching option by clicking the ⇄ icon (ArrowLeftRight from lucide-react).
+
+| Field | Value |
+|-------|-------|
+| **Area** | Account |
+| **Type** | user_action |
+| **Trigger** | User clicks the ⇄ ArrowLeftRight icon next to current persona label in sidebar |
+| **Source** | Frontend |
+| **Group** | -- |
+| **Status** | Done (tested locally) |
+
+**Properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `persona_switch_chevron` | Icon-only button — no visible text, `aria-label="Switch role"`. Uses descriptive identifier per icon-only convention. |
+| `current_page_context` | string | e.g., `hiring_manager/job_postings`, `recruiter/ai_job_flows`, `candidate/dashboard` | Page the user was on when they clicked |
+| `previous_page_context` | string | snake_case page identifier or null | Previous page before current one |
+| `entity_type` | string | `persona` | Business object being acted on |
+| `component` | string | `sidebar_persona_switcher` | The persona label + icon area in the left sidebar |
+| `current_persona` | string | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | The user's persona at the time of the click. Derived from `ROLE_TO_PERSONA[user.role]`. Passed as event property (not person property) so historical queries show the persona at event time, not the latest value. |
+
+*\* `unknown` is a fallback from `ROLE_TO_PERSONA.get(role, "unknown")` — should only appear if a new role is added without updating the mapping.*
+
+**PostHog call:**
+
+```javascript
+posthog.capture('Switch Persona Button Clicked', {
+  action: 'click',
+  action_value: 'persona_switch_chevron',
+  current_page_context: currentPageCtx,
+  previous_page_context: getPreviousPageContext(),
+  entity_type: 'persona',
+  component: 'sidebar_persona_switcher',
+  current_persona: currentPersona,
+});
+```
+
+**Notes:**
+- Fires regardless of whether the user actually switches personas
+- Useful for measuring awareness/exploration of persona switching
+- `current_persona` is an event property — tells us which persona the user was in when they clicked, frozen at event time
+- The icon is `ArrowLeftRight` from lucide-react (a bidirectional arrow), not a chevron — the property name `persona_switch_chevron` is the canonical identifier from the tracking plan
+
+### Helix Implementation: Switch Persona Button Clicked
+
+**The current codebase has a different event name and properties that must be changed.**
+
+**Current state (what exists today):**
+- Constant `PERSONA_SWITCH_CHEVRON_CLICKED = 'Persona Switch Chevron Clicked'` in `frontend/src/lib/posthogEvents.ts` — **wrong name**
+- Constant `PERSONA_SWITCHED = 'Persona Switched'` fires on persona card click — **must be removed** (backend handles this)
+- `action_value: 'persona_switch_toggle'` — **wrong value**
+- `component: 'sidebar_persona_section'` — **wrong value**
+- Sends null properties: `entry_point: null`, `context_object_type: null`, `context_object_id: null` — **unnecessary, remove**
+
+**Changes required:**
+
+**File 1: `frontend/src/lib/posthogEvents.ts`**
+
+Find and replace these two constants:
+```typescript
+// REMOVE these two lines:
+export const PERSONA_SWITCH_CHEVRON_CLICKED = 'Persona Switch Chevron Clicked';
+export const PERSONA_SWITCHED = 'Persona Switched';
+
+// REPLACE with this single line:
+export const SWITCH_PERSONA_BUTTON_CLICKED = 'Switch Persona Button Clicked';
+```
+
+**File 2: `frontend/src/components/layout/Sidebar/RoleSwitcherDropdown.tsx`**
+
+This component has two analytics calls. Replace them as follows:
+
+*Import change:*
+```typescript
+// CURRENT:
+import { PERSONA_SWITCH_CHEVRON_CLICKED, PERSONA_SWITCHED, getPreviousPageContext, pathnameToPageContext, ROLE_TO_PERSONA } from '@/lib/posthogEvents';
+
+// CHANGE TO:
+import { SWITCH_PERSONA_BUTTON_CLICKED, getPreviousPageContext, pathnameToPageContext, ROLE_TO_PERSONA } from '@/lib/posthogEvents';
+```
+
+*Toggle click handler (`handleToggleClick`):*
+```typescript
+// CURRENT:
+capture(PERSONA_SWITCH_CHEVRON_CLICKED, {
+  action: 'click',
+  action_value: 'persona_switch_toggle',
+  current_page_context: currentPageCtx,
+  previous_page_context: getPreviousPageContext(),
+  entry_point: null,
+  entity_type: 'persona',
+  component: 'sidebar_persona_section',
+  context_object_type: null,
+  context_object_id: null,
+  current_persona: currentPersona,
+});
+
+// CHANGE TO:
+capture(SWITCH_PERSONA_BUTTON_CLICKED, {
+  action: 'click',
+  action_value: 'persona_switch_chevron',
+  current_page_context: currentPageCtx,
+  previous_page_context: getPreviousPageContext(),
+  entity_type: 'persona',
+  component: 'sidebar_persona_switcher',
+  current_persona: currentPersona,
+});
+```
+
+*Card click handler (`handleSwitch`):*
+
+Remove the entire `capture(PERSONA_SWITCHED, ...)` block from `handleSwitch()`. The backend `Persona Updated` event is the source of truth for successful switches. The frontend was firing this BEFORE the API call, causing false positives when the API failed.
+
+**File 3: `frontend/src/components/layout/__tests__/RoleSwitcherDropdown.test.tsx`**
+
+Update tests to:
+- Assert `'Switch Persona Button Clicked'` as event name (not `'Persona Switch Chevron Clicked'`)
+- Assert `action_value: 'persona_switch_chevron'` (not `'persona_switch_toggle'`)
+- Assert `component: 'sidebar_persona_switcher'` (not `'sidebar_persona_section'`)
+- Assert no frontend capture on persona card click (the `PERSONA_SWITCHED` call was removed)
+
+---
+
+### 2. Persona Updated — Success
+
+Server confirms persona switch succeeded.
+
+| Field | Value |
+|-------|-------|
+| **Area** | Account |
+| **Type** | Success |
+| **Trigger** | Backend confirms persona switch via `PATCH /api/users/me` with `{ role: "..." }` — only fires when `previous_role is not None AND dto.role != previous_role` (skips initial onboarding role pick) |
+| **Source** | Backend |
+| **Group** | -- |
+| **Status** | Done (tested locally) |
+
+**Properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | Derived from `user.role` BEFORE the update via `ROLE_TO_PERSONA` |
+| `current_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | The NEW persona after the switch. Must be sent as a regular event property (not just inside `$set`) so PostHog queries on historical events reflect the persona at the time of the event, not the latest value. |
+
+*\* `unknown` is a fallback from `ROLE_TO_PERSONA.get(role, "unknown")` — should only appear if a new role is added without updating the mapping.*
+
+**Property Updates:**
+
+| Operation | Property | Description |
+|---|---|---|
+| `$set` | `current_persona` | Updated to the newly selected persona |
+| `$set` | `activated_personas` | Array of all unique personas the user has tried via switching; grows over time, deduplicated, read from the DB column |
+
+**PostHog call:**
+
+```python
+# In users/router.py → update_my_profile(), after service.update_user() + db.commit() succeeds
+# Only fire when: dto.role is not None AND previous_role is not None AND dto.role != previous_role
+
+from app.shared.posthog_events import PERSONA_UPDATED, ROLE_TO_PERSONA
+
+previous_persona = ROLE_TO_PERSONA.get(previous_role, "unknown")
+new_persona = ROLE_TO_PERSONA.get(dto.role, "unknown")
+
+posthog_client.capture(
+    str(current_user.id),
+    PERSONA_UPDATED,
+    {
+        "previous_persona": previous_persona,
+        "current_persona": new_persona,        # regular event property — frozen at event time
+        "$set": {
+            "current_persona": new_persona,
+            "activated_personas": result.activated_personas or [],
+        },
+    },
+)
+```
+
+**Guard logic — when the event fires and doesn't fire:**
+
+| Scenario | `previous_role` | `dto.role` | Fires? | Why |
+|---|---|---|---|---|
+| Actual switch (HM → Recruiter) | `"HIRING_MANAGER"` | `"RECRUITER"` | **Yes** | Role changed |
+| Initial onboarding (null → HM) | `None` | `"HIRING_MANAGER"` | No | `previous_role is None` — onboarding, not a switch |
+| Same role selected | `"RECRUITER"` | `"RECRUITER"` | No | `dto.role == previous_role` — no actual change |
+| Non-role update (phone only) | `"HIRING_MANAGER"` | `None` | No | `dto.role is None` — not a role change |
+
+**Notes:**
+- Fires from `users/router.py` after `service.update_user()` + `db.commit()` succeeds
+- Backend is the source of truth — the frontend `Persona Switched` event must be removed because it fires BEFORE the API call (causing false positives when the API fails)
+- `activated_personas` is read from `result.activated_personas` (the `UserResponse` returned by `service.update_user()`), which reads from the DB column
+- `ROLE_TO_PERSONA` maps `UserRole` strings to persona labels: `HIRING_MANAGER` → `"hiring_manager"`, `RECRUITER` → `"recruiter"`, `PROFESSIONAL` → `"job_seeker"`
+- This mapping is SEPARATE from `_ROLE_TO_ACTING_AS` (which maps `PROFESSIONAL` → `"team_member"`) — they serve different analytics contexts
+- `current_persona` is sent BOTH as a regular event property AND inside `$set`. The event property freezes the value at event time for historical analysis. The `$set` updates the person property for current-state queries.
+
+### Helix Implementation: Persona Updated
+
+**The current codebase has NO PostHog events in the persona switch path. All of this is new.**
+
+**Current state:** `users/router.py` → `update_my_profile()` calls `service.update_user()` and returns the result. No PostHog capture, no try/except, no persona event logic.
+
+**Changes required:**
+
+See [Helix Implementation: Backend Router Changes](#helix-implementation-backend-router-changes) for the full `update_my_profile()` rewrite that covers both `Persona Updated` and `Persona Update Failed`.
+
+---
+
+### 3. Persona Update Failed
+
+Server returns error when persona switch fails.
+
+| Field | Value |
+|-------|-------|
+| **Area** | Account |
+| **Type** | Failure |
+| **Trigger** | `service.update_user()` raises exception during a role-only PATCH (guard: `role_only_update and dto.role is not None and previous_role is not None`) |
+| **Source** | Backend |
+| **Group** | -- |
+| **Status** | Done (tested locally) |
+
+**Properties:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | Derived from `current_user.role` (unchanged — switch failed) |
+| `target_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker`, `unknown`* | Derived from `dto.role` — what the user tried to switch to |
+| `error_reason` | string | system error description | `str(e)[:256]` from the caught exception — truncated to 256 chars for safety |
+| `error_category` | enum | `validation`, `server` | `validation` for `ValueError`/`BadRequestException`, `server` for others |
+
+*\* `unknown` is a fallback from `ROLE_TO_PERSONA.get(role, "unknown")` — should only appear if a new role is added without updating the mapping.*
+
+**PostHog call:**
+
+```python
+# In users/router.py → update_my_profile() except block
+# Only fire when: role_only_update AND dto.role is not None AND previous_role is not None
+
+posthog_client.capture(
+    str(current_user.id),
+    PERSONA_UPDATE_FAILED,
+    {
+        "previous_persona": previous_persona,
+        "target_persona": target_persona,
+        "error_reason": str(e)[:256],
+        "error_category": "validation" if isinstance(e, (ValueError, BadRequestException)) else "server",
+    },
+)
+```
+
+**Guard logic — `role_only_update`:**
+
+The failure event uses `role_only_update = set(updated_fields) == {"role"}` to only fire when the PATCH body contains ONLY the role field. This prevents false attribution when an unrelated field (like phone) causes the error in a combined PATCH. In practice, the frontend always sends role and phone as separate requests, but the guard is a safety net.
+
+**Notes:**
+- `previous_persona` stays unchanged (switch didn't happen)
+- `error_reason` is truncated to 256 chars to prevent verbose exception details leaking to PostHog
+- Common failure: invalid role enum value → `ValueError` from `UserRole(dto.role)` in `service.update_user()`
+- Org resolution failure in `ensure_org_for_role()` (called in `service.update_user()`) would also trigger this
+
+### Helix Implementation: Persona Update Failed
+
+See [Helix Implementation: Backend Router Changes](#helix-implementation-backend-router-changes) — the failure event is part of the same try/except block.
+
+---
+
+### 4. Page Viewed (existing — no changes needed)
+
+The new persona's home page loads after the switch.
+
+| Field | Value |
+|-------|-------|
+| **Area** | Navigation |
+| **Type** | page_view |
+| **Trigger** | User lands on a meaningful page |
+| **Source** | Frontend |
+| **Group** | -- |
+| **Status** | Live |
+
+**PostHog call:**
+
+```javascript
+posthog.capture('Page Viewed', {
+  current_page_context: newPersonaPageContext,          // e.g., 'recruiter/ai_job_flows'
+  previous_page_context: previousPageContext,           // page before the switch
+});
+```
+
+**Post-switch landing pages:**
+- Hiring Manager → `/hiring-manager/job-postings` → `hiring_manager/job_postings`
+- Recruiter → `/recruiter/ai-job-flows` → `recruiter/ai_job_flows`
+- Job Seeker → `/candidate/dashboard` → `candidate/dashboard` (or `/candidate/create-profile` if no resume)
+
+**Notes:**
+- No changes needed to this event — it already exists and is Live
+- After `Persona Updated` fires, `current_persona` person property is already updated via `$set`, so this Page Viewed is automatically associated with the new persona in PostHog queries
+
+---
+
+## Helix Implementation: Backend Event Constants and ROLE_TO_PERSONA
+
+**File: `backend/app/shared/posthog_events.py`**
+
+Add the following after the existing `REVIEW_DECISION_MADE` constant (in the "Hiring Surface" section):
+
+```python
+# Persona Switching
+PERSONA_UPDATED = "Persona Updated"
+PERSONA_UPDATE_FAILED = "Persona Update Failed"
+```
+
+Add the following after the existing `_ROLE_TO_ACTING_AS` dict and `get_acting_as()` function:
+
+```python
+# Persona labels for PostHog persona-switching events.
+# PROFESSIONAL maps to "job_seeker" (not "team_member") to match the
+# user-facing label in the UI and the frontend analytics mapping.
+# This is deliberately separate from _ROLE_TO_ACTING_AS which maps
+# PROFESSIONAL to "team_member" for the legacy acting_as property.
+ROLE_TO_PERSONA = {
+    "HIRING_MANAGER": "hiring_manager",
+    "RECRUITER": "recruiter",
+    "PROFESSIONAL": "job_seeker",
+}
+```
+
+**Important:** `ROLE_TO_PERSONA` is deliberately separate from `_ROLE_TO_ACTING_AS`. They map `PROFESSIONAL` to different values:
+- `ROLE_TO_PERSONA["PROFESSIONAL"]` → `"job_seeker"` (analytics persona label, matches UI)
+- `_ROLE_TO_ACTING_AS["PROFESSIONAL"]` → `"team_member"` (legacy acting_as property)
+
+Do NOT modify `_ROLE_TO_ACTING_AS` — it's used by existing events.
+
+---
+
+## Helix Implementation: `activated_personas` Database Column
+
+**This column does not exist yet. It must be created from scratch.**
+
+### Step 1: Alembic migration
+
+Create a new migration file in `backend/alembic/versions/`. Run `alembic revision --autogenerate -m "add activated_personas to users"` or create manually:
+
+```python
+"""add activated_personas to users"""
+
+from alembic import op
+import sqlalchemy as sa
+
+def upgrade() -> None:
+    op.add_column("users", sa.Column("activated_personas", sa.dialects.postgresql.JSONB, nullable=True))
+
+def downgrade() -> None:
+    op.drop_column("users", "activated_personas")
+```
+
+This is a non-blocking `ADD COLUMN NULLABLE` in PostgreSQL. No backfill needed — `null` means "never switched."
+
+### Step 2: User model
+
+**File: `backend/app/database/models/user.py`**
+
+Add the column to the `User` class, after the `alternate_email_addresses` field:
+
+```python
+# Analytics — accumulating set of personas the user has tried via switching
+activated_personas: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
+```
+
+This follows the same pattern as the existing `alternate_email_addresses` JSONB column on the same model.
+
+### Step 3: AuthUser dataclass
+
+**File: `backend/app/auth/dependencies.py`**
+
+Add to the `AuthUser` dataclass (after the `timezone` field):
+
+```python
+activated_personas: list[str] | None = None
+```
+
+Wire it in `_user_to_auth_user()` function — add to the constructor:
+
+```python
+activated_personas=user.activated_personas,
+```
+
+### Step 4: UserResponse schema
+
+**File: `backend/app/auth/schemas.py`**
+
+Add to the `UserResponse` model (after the `timezone` field):
+
+```python
+activated_personas: list[str] | None = Field(default=None, serialization_alias="activatedPersonas")
+```
+
+### Step 5: Service layer — accumulation logic
+
+**File: `backend/app/users/service.py`**
+
+Add import at top:
+```python
+from app.shared.posthog_events import ROLE_TO_PERSONA
+```
+
+In the `update_user()` function, after `user.role = new_role` and `user.org_id = new_org_id` (inside the `if dto.role is not None:` block), add:
+
+```python
+new_persona = ROLE_TO_PERSONA.get(dto.role, "unknown")
+existing = user.activated_personas or []
+if new_persona not in existing:
+    user.activated_personas = existing + [new_persona]
+```
+
+Also add `activated_personas` to `_user_to_response()`:
+```python
+activated_personas=user.activated_personas,
+```
+
+### Step 6: Router — wire into GET /me and auth responses
+
+**File: `backend/app/users/router.py`** — In the `get_my_profile()` function, add to the `UserResponse(...)` constructor:
+
+```python
+activated_personas=current_user.activated_personas,
+```
+
+**File: `backend/app/auth/router.py`** — In the `_user_to_response()` function, add:
+
+```python
+activated_personas=user.activated_personas,
+```
+
+### Key design decisions
+
+- `activated_personas` is persisted in the DB (not PostHog-only) because PostHog's `$set` overwrites the array each time — without DB persistence, the accumulating array would be lost between sessions
+- `null` means "never switched via the chevron" — distinct from `[]` (which shouldn't happen)
+- The array only grows via the persona switch flow, NOT during initial onboarding
+- The `previous_role is not None` guard in the router ensures onboarding (null → first role) doesn't fire events or accumulate personas
+
+---
+
+<a id="helix-implementation-backend-router-changes"></a>
+## Helix Implementation: Backend Router Changes
+
+**File: `backend/app/users/router.py`**
+
+This is the most significant change. The `update_my_profile()` function must be wrapped in try/except to fire PostHog events on success/failure.
+
+**Add imports at top of file:**
+
+```python
+from app.shared.posthog_events import (
+    CUSTOM_LINK_CREATED,
+    PERSONA_UPDATED,
+    PERSONA_UPDATE_FAILED,
+    PROP_SURFACE,
+    ROLE_TO_PERSONA,
+    SURFACE_PROSPECT,
+)
+```
+
+**Replace the body of `update_my_profile()` (the `PATCH /me` handler) with:**
+
+```python
+@router.patch("/me", response_model=UserResponse)
+async def update_my_profile(
+    dto: UpdateUserDto,
+    current_user: AuthUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    """Update current user profile."""
+    set_context(pipeline="onboarding", pipeline_stage="profile_update")
+    updated_fields = list(dto.model_dump(exclude_unset=True).keys())
+    logger.info(
+        "User profile update requested",
+        extra={
+            "pipeline_stage": "profile_update_requested",
+            "user_id": str(current_user.id),
+            "org_id": str(current_user.org_id) if current_user.org_id else None,
+            "updated_fields": ",".join(updated_fields) if updated_fields else "",
+        },
+    )
+    previous_role = current_user.role  # capture role BEFORE update
+    role_only_update = set(updated_fields) == {"role"}
+    try:
+        result = await service.update_user(db, current_user.id, dto)
+        await db.commit()
+
+        # Fire Persona Updated only on actual persona switches (not onboarding)
+        if dto.role is not None and previous_role is not None and dto.role != previous_role:
+            previous_persona = ROLE_TO_PERSONA.get(previous_role, "unknown")
+            new_persona = ROLE_TO_PERSONA.get(dto.role, "unknown")
+            posthog_client.capture(
+                str(current_user.id),
+                PERSONA_UPDATED,
+                {
+                    "previous_persona": previous_persona,
+                    "current_persona": new_persona,
+                    "$set": {
+                        "current_persona": new_persona,
+                        "activated_personas": result.activated_personas or [],
+                    },
+                },
+            )
+
+        logger.info(
+            "User profile update completed",
+            extra={
+                "pipeline_stage": "profile_update_completed",
+                "user_id": str(current_user.id),
+                "role": result.role,
+                "phone_present": bool(result.phone),
+            },
+        )
+        return result
+    except Exception as e:
+        # Only fire Persona Update Failed when role is the sole field
+        # being updated, so unrelated field errors (e.g. phone validation)
+        # don't pollute persona analytics.
+        if role_only_update and dto.role is not None and previous_role is not None:
+            previous_persona = ROLE_TO_PERSONA.get(previous_role, "unknown")
+            target_persona = ROLE_TO_PERSONA.get(dto.role, "unknown")
+            posthog_client.capture(
+                str(current_user.id),
+                PERSONA_UPDATE_FAILED,
+                {
+                    "previous_persona": previous_persona,
+                    "target_persona": target_persona,
+                    "error_reason": str(e)[:256],
+                    "error_category": "validation" if isinstance(e, (ValueError, BadRequestException)) else "server",
+                },
+            )
+        raise
+```
+
+**Key implementation notes:**
+- `previous_role = current_user.role` MUST be captured before calling `service.update_user()` — after the call, the user object has the new role
+- `role_only_update` scopes the failure event to role-only PATCHes — prevents phone validation errors from triggering persona failure events
+- `result.activated_personas` comes from the `UserResponse` returned by `service.update_user()`, which reads from the DB column populated in Step 5
+- `BadRequestException` is imported from `app.shared.exceptions` — confirmed: `from app.shared.exceptions import BadRequestException, NotFoundException` (line 9 in `users/router.py`)
+
+---
+
+## Helix Implementation: `identifyUser()` Fix
+
+**File: `frontend/src/lib/posthog.ts`**
+
+**Problem:** `identifyUser()` currently sets `email`, `name`, `role`, `org_id` via `$set` and `account_created_at`, `first_surface` via `$set_once`. It does NOT set `current_persona`. This means users who never switch personas will have no `current_persona` person property in PostHog, making cohort analysis by persona incomplete.
+
+**Change the `identifyUser()` function:**
+
+```typescript
+// CURRENT:
+import { SURFACE_PROSPECT, SURFACE_HIRING } from '@/lib/posthogEvents';
+
+export function identifyUser(user: User): void {
+  const setOnce: Record<string, unknown> = {
+    account_created_at: user.createdAt,
+  };
+  if (user.role) {
+    setOnce.first_surface =
+      user.role === UserRole.PROFESSIONAL ? SURFACE_PROSPECT : SURFACE_HIRING;
+  }
+  identify(
+    user.id,
+    { email: user.email, name: user.name, role: user.role, org_id: user.orgId },
+    setOnce,
+  );
+}
+
+// CHANGE TO:
+import { SURFACE_PROSPECT, SURFACE_HIRING, ROLE_TO_PERSONA } from '@/lib/posthogEvents';
+
+export function identifyUser(user: User): void {
+  const setOnce: Record<string, unknown> = {
+    account_created_at: user.createdAt,
+  };
+  if (user.role) {
+    setOnce.first_surface =
+      user.role === UserRole.PROFESSIONAL ? SURFACE_PROSPECT : SURFACE_HIRING;
+  }
+  const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
+  identify(
+    user.id,
+    {
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      org_id: user.orgId,
+      current_persona: currentPersona,
+    },
+    setOnce,
+  );
+}
+```
+
+**What this achieves:**
+- Every user gets `current_persona` set as a person property on every login/session restore
+- Users who never switch personas still have `current_persona` in PostHog (derived from their role)
+- `ROLE_TO_PERSONA` mapping already exists in `posthogEvents.ts` — no new code needed for the mapping
+- The `$set` in `Persona Updated` (backend) will override this on switch, which is correct
+
+**Where `identifyUser()` is called:**
+- `frontend/src/stores/authStore.ts` — after successful login and session restore
+- This means `current_persona` gets set on every app load for authenticated users
+
+---
+
+## Event Sequence
+
+| Order | Event | Source | What happens | current_persona |
+|-------|-------|--------|-------------|-----------------|
+| 1 | Switch Persona Button Clicked | Frontend | Dropdown opens | Old persona (event property) |
+| 2a | Persona Updated | Backend | Server confirms switch | New persona (event property + $set) |
+| 2b | Persona Update Failed | Backend | Server returns error | Unchanged (no event property needed — `previous_persona` covers it) |
+| 3 | Page Viewed | Frontend | New persona's home page loads | New persona (person property from $set) |
+
+---
+
+## Funnels
+
+| Funnel Name | Steps | Purpose |
+|---|---|---|
+| Persona Switch Completion | Switch Persona Button Clicked → Persona Updated | Measures conversion from exploring the switch to actually switching |
+| Persona Switch Full Flow | Switch Persona Button Clicked → Persona Updated → Page Viewed | Full switch flow including page load |
+
+---
+
+## New Property Details
+
+| Property | Type | Scope | Values | Description |
+|---|---|---|---|---|
+| `previous_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user was on before switching. Used in Persona Updated and Persona Update Failed. |
+| `target_persona` | enum | event | `hiring_manager`, `recruiter`, `job_seeker` | The persona the user tried to switch to. Used only in Persona Update Failed. |
+| `current_persona` | enum | event + person ($set) | `hiring_manager`, `recruiter`, `job_seeker` | The user's active persona. Set as person property via `identifyUser()` on every login and via `$set` in Persona Updated. Also sent as regular event property on Switch Persona Button Clicked and Persona Updated so historical queries reflect the persona at event time. |
+| `activated_personas` | array | event + person ($set) + DB column | e.g., `["recruiter", "job_seeker"]` | All unique personas the user has ever been in. Sent as top-level event property on Persona Updated (frozen at event time) and as person property via `$set`. Persisted in DB as JSONB. Accumulates on all role updates including onboarding. `null` in DB means no role set yet. |
+
+---
+
+## Catalog Changes (to be applied on merge via `/merge-tracking-plan`)
+
+> **These changes have NOT been applied yet.** The catalog on `main` still has the old values. Each change below shows the current state → target state so the merge is unambiguous.
+
+### Event Catalog (`docs/event-catalog.md`)
+
+#### 1. Account & Persona Events (line 89–91) — update 2 rows
+
+**Current (on main):**
+```md
+| Switch Persona Button Clicked  | Account | Intent  | User clicks the ⇄ chevron next to current persona in sidebar        | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | --                                                                          | Not Started |
+| Persona Updated                | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona`                                                          | --    | `$set: current_persona, activated_personas`                                 | Not Started |
+| Persona Update Failed          | Account | Failure | Backend returns error on persona switch attempt                       | Backend  | `previous_persona`, `target_persona`, `error_reason`, `error_category`      | --    | --                                                                          | Not Started |
+```
+
+**Target (after merge):**
+```md
+| Switch Persona Button Clicked  | Account | Intent  | User clicks the ⇄ chevron next to current persona in sidebar        | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | --                                                                          | Not Started |
+| Persona Updated                | Account | Success | Backend confirms persona switch after user selects a different persona | Backend  | `previous_persona`, `current_persona`, `activated_personas`                 | --    | `$set: current_persona, activated_personas`                                 | Not Started |
+| Persona Update Failed          | Account | Failure | Backend returns error on persona switch attempt                       | Backend  | `previous_persona`, `target_persona`, `error_reason`, `error_category`      | --    | --                                                                          | Not Started |
+```
+
+**What changed:**
+- `Switch Persona Button Clicked`: added `current_persona` to Properties column
+- `Persona Updated`: added `current_persona`, `activated_personas` to Properties column (Delta 1)
+- `Persona Update Failed`: no change
+
+#### 2. Auth Events (lines 43, 45) — update 2 rows (Delta 5)
+
+**Current (on main):**
+```md
+| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | --               | Live (legacy) |
+| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | --               | Live (legacy) |
+```
+
+**Target (after merge):**
+```md
+| Auth Login Succeeded           | Account | --   | Backend confirms successful auth               | Frontend | `auth_mode`, `verification_required`           | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
+| Auth Session Restore Succeeded | Account | --   | Session restored from refresh token            | Frontend | `auth_mode`                                    | --    | `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) | Live (legacy) |
+```
+
+**What changed:** Person Properties column updated from `--` (nothing documented) to `$set: email, name, role, org_id, current_persona` — reflecting what `identifyUser()` actually sets after Delta 2. Note: the phantom `org_name`/`org_domain` properties only appear in `docs/event-schema.md` (fixed in Schema §3 below), not in these catalog rows.
+
+#### 3. Removed Events table (line 188) — no change needed
+
+Already correct on main:
+```md
+| Persona Activated | Persona Updated | Renamed — "Activated" implied adding a new persona; "Updated" reflects switching between existing personas | May 2026 |
+```
+
+#### 4. Property Dictionary (line 202) — update 1 row
+
+**Current (on main):**
+```md
+| `current_persona`       | enum | person ($set)             | `hiring_manager`, `recruiter`, `job_seeker`                                         | Account Created, Persona Updated (person property)             |
+```
+
+**Target (after merge):**
+```md
+| `current_persona`       | enum | event, person ($set)      | `hiring_manager`, `recruiter`, `job_seeker`                                         | Switch Persona Button Clicked, Persona Updated, Account Created (person property), Auth Login Succeeded (via `identifyUser()`), Auth Session Restore Succeeded (via `identifyUser()`) |
+```
+
+**What changed:** Scope updated from `person ($set)` to `event, person ($set)`. Used In expanded to include all events that reference this property.
+
+**Update existing row** (line 245 — already exists in Array Properties section):
+
+**Current (on main):**
+```md
+| `activated_personas` | array | person ($set) | All unique personas the user has tried; grows over time | All events (person property) |
+```
+
+**Target (after merge):**
+```md
+| `activated_personas` | array | event, person ($set) | All unique personas the user has ever been in. Seeded with `[persona]` on Account Created, accumulates via Persona Updated. Sent as top-level event property on Persona Updated. DB column and PostHog person property stay in sync. | Account Created (`$set`), Persona Updated (event property + `$set`) |
+```
+
+**What changed:** Scope updated from `person ($set)` to `event, person ($set)` per Delta 1. Used In updated from "All events (person property)" to "Account Created (`$set`), Persona Updated (event + `$set`)" — the specific events that set it.
+
+#### 5. Account Created row (line 32) — Property Updates column is now correct
+
+**Current (on main):**
+```md
+| Account Created   | Account    | user_action | User clicks "Continue as [Persona]" and server confirms role   | Frontend | ... | --    | `$set: current_persona, activated_personas`; `$set_once: first_persona, account_created_at, referred_by` | Live   |
+```
+
+**No change needed** — the catalog already lists `$set: current_persona, activated_personas` which matches what Delta 4 now implements. The `Account Created` PostHog call sets both `$set: { current_persona: persona, activated_personas: [persona] }` to ensure both person properties are populated from the first session. This eliminates the DB ↔ PostHog divergence: analysts querying `activated_personas` in PostHog will see onboarding-only users too.
+
+### Event Schema (`docs/event-schema.md`)
+
+#### 1. Standard Objects table — Persona row
+
+Update Example Events to: `Switch Persona Button Clicked, Persona Updated`
+
+#### 2. Intent vs Outcome table — add row
+
+```md
+| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
+```
+
+#### 3. Person Properties `$set` table (lines 139–145) — fix 5 issues
+
+**Current (on main):**
+```md
+| `email` | string | `identifyUser()` | User's current email |
+| `name` | string | `identifyUser()` | User's current name |
+| `org_id` | string | `identifyUser()` | User's current organization ID |
+| `org_name` | string | `identifyUser()` | User's current organization name. Resolved from org_id on backend before identify call. |
+| `org_domain` | string | `identifyUser()` | User's organization domain (e.g., `seekout.com`). Resolved from org_id on backend before identify call. |
+| `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
+| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has tried. Seeded with `[first_persona]` on account creation, grows as user switches personas. |
+```
+
+**Target (after merge):**
+```md
+| `email` | string | `identifyUser()` | User's current email |
+| `name` | string | `identifyUser()` | User's current name |
+| `role` | string | `identifyUser()` | User's current role enum (e.g., `HIRING_MANAGER`, `RECRUITER`, `PROFESSIONAL`) |
+| `org_id` | string | `identifyUser()` | User's current organization ID |
+| `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
+| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has ever been in. Seeded with `[persona]` on Account Created, grows as user switches personas via Persona Updated. DB column and PostHog person property are now in sync. |
+```
+
+**What changed:**
+- **Removed `org_name`:** `identifyUser()` does not set this — phantom property (Delta 5)
+- **Removed `org_domain`:** `identifyUser()` does not set this — phantom property (Delta 5)
+- **Added `role`:** `identifyUser()` sets `role: user.role` — was missing from schema (Delta 5)
+- **`activated_personas` Set By:** Stays as "Account Created, Persona Updated" (no change from current schema) — Delta 4 now `$set`s `activated_personas: [persona]` on Account Created
+
+#### 4. Persona properties explanation text (line 147) — update
+
+**Current (on main):**
+```
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and changes whenever the user switches personas via Persona Updated. `activated_personas` (`$set`) is seeded with the first persona on Account Created and accumulates every persona the user has tried over time — it only grows, never shrinks.
+```
+
+**Target (after merge):**
+```
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and `identifyUser()` (every login), and updated on persona switch via Persona Updated. `activated_personas` (`$set`) is seeded with `[persona]` on Account Created and accumulates every persona the user has tried via Persona Updated — it only grows, never shrinks. Both DB column and PostHog person property stay in sync.
+```
+
+#### 5. Example `posthog.identify()` snippet (lines 152–155, repeated at 294–298) — update
+
+**Current (on main):**
+```javascript
+// In lib/posthog.ts → identifyUser()
+const persona = ROLE_TO_PERSONA[user.role] || 'unknown';
+posthog.identify(user.id,
+  { email: user.email, name: user.name, org_id: user.orgId, org_name: user.orgName, current_persona: persona },  // $set
+  { account_created_at: user.createdAt }  // $set_once
+);
+```
+
+**Target (after merge):**
+```javascript
+// In lib/posthog.ts → identifyUser()
+const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
+posthog.identify(user.id,
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId, current_persona: currentPersona },  // $set
+  { account_created_at: user.createdAt, first_surface: ... }  // $set_once
+);
+```
+
+**What changed:** Removed phantom `org_name`, added missing `role`, updated `current_persona` derivation to match actual implementation (Delta 2). This snippet appears twice in the schema doc (lines ~152 and ~294) — both must be updated.
+
+### Dashboards (`docs/dashboards.md`)
+
+#### 1. Platform Health Dashboard table (line ~103) — add row
+
+**Current (on main):** No persona switching row.
+
+**Add after the "Team invite" row:**
+```md
+| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
+```
+
+This matches the Intent vs Outcome row added to the schema (Schema §2 above). Without it, Rule 9 (Platform Health alignment) will flag this as an error.
+
+#### 6. `error_reason` truncation — add footnote on Persona Update Failed catalog row
+
+`Persona Update Failed` truncates `error_reason` to 256 chars via `str(e)[:256]`. Other failure events do not truncate. On merge, add a footnote to the `Persona Update Failed` row in `docs/event-catalog.md` (line 91):
+
+**Current:**
+```md
+| Persona Update Failed | Account | Failure | Backend returns error on persona switch attempt | Backend | `previous_persona`, `target_persona`, `error_reason`, `error_category` | -- | -- | Not Started |
+```
+
+**Target:**
+```md
+| Persona Update Failed | Account | Failure | Backend returns error on persona switch attempt | Backend | `previous_persona`, `target_persona`, `error_reason`†, `error_category` | -- | -- | Not Started |
+```
+
+Add footnote below the table: `† error_reason on Persona Update Failed is truncated to 256 chars server-side (str(e)[:256]). Other failure events send the full error string.`
+
+#### 7. Account Created event properties column (line 32) — pre-existing drift, tracked separately
+
+The catalog lists `first_persona, auth_method, referred_by` as event properties but the actual code sends `persona, entry_point, signup_context`. This is pre-existing drift not introduced by this PR — **will be tracked and fixed in a separate tracking plan** to keep this PR's merge scope clean.
+
+---
+
+## Summary: All Helix Codebase Changes
+
+Every change below must be implemented. Nothing has been done yet.
+
+### Backend changes
+
+| File | Change |
+|---|---|
+| `backend/alembic/versions/<new>_add_activated_personas_to_users.py` | **NEW FILE** — Migration: `ADD COLUMN activated_personas JSONB NULLABLE` on `users` table |
+| `backend/app/database/models/user.py` | **ADD** `activated_personas: Mapped[list[str] \| None] = mapped_column(JSONB, nullable=True)` after `alternate_email_addresses` |
+| `backend/app/auth/dependencies.py` | **ADD** `activated_personas: list[str] \| None = None` to `AuthUser` dataclass + wire in `_user_to_auth_user()` |
+| `backend/app/auth/schemas.py` | **ADD** `activated_personas: list[str] \| None = Field(default=None, serialization_alias="activatedPersonas")` to `UserResponse` |
+| `backend/app/auth/router.py` | **ADD** `activated_personas=user.activated_personas` to `_user_to_response()` |
+| `backend/app/shared/posthog_events.py` | **ADD** `PERSONA_UPDATED`, `PERSONA_UPDATE_FAILED` constants + `ROLE_TO_PERSONA` dict |
+| `backend/app/users/service.py` | **ADD** `ROLE_TO_PERSONA` import, persona accumulation in `update_user()`, `activated_personas` in `_user_to_response()` |
+| `backend/app/users/router.py` | **REWRITE** `update_my_profile()` with try/except, `Persona Updated` + `Persona Update Failed` events, `activated_personas` in GET /me |
+
+### Frontend changes
+
+| File | Change |
+|---|---|
+| `frontend/src/lib/posthogEvents.ts` | **RENAME** `PERSONA_SWITCH_CHEVRON_CLICKED` → `SWITCH_PERSONA_BUTTON_CLICKED`, **REMOVE** `PERSONA_SWITCHED` |
+| `frontend/src/components/layout/Sidebar/RoleSwitcherDropdown.tsx` | **UPDATE** import, `action_value`, `component`; **REMOVE** `capture(PERSONA_SWITCHED, ...)` from `handleSwitch()` |
+| `frontend/src/components/layout/__tests__/RoleSwitcherDropdown.test.tsx` | **UPDATE** tests to match new event name and properties |
+| `frontend/src/lib/posthog.ts` | **UPDATE** `identifyUser()` to add `current_persona` via `ROLE_TO_PERSONA` |
+
+### Tests to include
+
+| Test | What it verifies |
+|---|---|
+| `test_persona_updated_fires_on_role_switch` | HM → Recruiter fires `Persona Updated` with correct `previous_persona`, `current_persona`, `$set` |
+| `test_persona_updated_skips_onboarding` | null → HM (initial role pick) does NOT fire `Persona Updated` |
+| `test_persona_update_failed_fires_on_role_error` | Invalid role with role-only PATCH fires `Persona Update Failed` |
+| `test_persona_update_failed_skips_non_role_error` | Phone error with role in combined PATCH does NOT fire failure event |
+| `test_role_plus_phone_combined_patch_skips_event` | Combined role+phone PATCH where role succeeds — fires `Persona Updated` but does NOT fire `Persona Update Failed` if phone fails separately. Locks the `role_only_update` guard. |
+| `test_persona_switch_accumulates_activated_personas` | HM → Recruiter → Job Seeker accumulates `["recruiter", "job_seeker"]` |
+| `test_duplicate_switch_does_not_duplicate` | HM → Recruiter → HM → Recruiter has no duplicates in array |
+| `test_onboarding_then_switch_fires_only_on_switch` | null → HM = no event; HM → Recruiter = event |
+| `test_get_me_includes_activated_personas` | GET /me response includes `activatedPersonas` field |
+
+---
+
+## Implementation Delta (2026-05-26)
+
+> **What this section is:** During implementation on the Helix codebase (`soumabrata/persona-switching-v2` branch), several changes were made relative to the original tracking plan spec above. This section documents every difference so the tracking plan stays in sync with what's actually firing in production.
+>
+> **How to read this:** Each delta entry references the original section, states what changed, and explains why. The original sections above remain as-is for historical context — this delta is the authoritative override.
+
+---
+
+### Delta 1: `activated_personas` added as top-level event property on Persona Updated
+
+**Original (Section 2 — Persona Updated):**
+
+The PostHog call only included `activated_personas` inside the `$set` operator (person property update). The top-level event properties were `previous_persona` and `current_persona` only.
+
+```python
+posthog_client.capture(
+    str(current_user.id),
+    PERSONA_UPDATED,
+    {
+        "previous_persona": previous_persona,
+        "current_persona": new_persona,
+        "$set": {
+            "current_persona": new_persona,
+            "activated_personas": result.activated_personas or [],
+        },
+    },
+)
+```
+
+**Implemented as:**
+
+`activated_personas` is also sent as a regular top-level event property alongside the `$set`:
+
+```python
+posthog_client.capture(
+    str(current_user.id),
+    PERSONA_UPDATED,
+    {
+        "previous_persona": previous_persona,
+        "current_persona": new_persona,
+        "activated_personas": result.activated_personas or [],
+        "$set": {
+            "current_persona": new_persona,
+            "activated_personas": result.activated_personas or [],
+        },
+    },
+)
+```
+
+**Why:** Sending `activated_personas` as a top-level event property means historical queries on `Persona Updated` events can see the full persona list at the exact moment of the switch, without relying on the person property (which only reflects the latest state via `$set`). This is the same intent-vs-snapshot pattern used for `current_persona`, which is already both a top-level event property and a `$set` person property.
+
+**Updated properties table for Persona Updated:**
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `previous_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Persona before the switch |
+| `current_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Persona after the switch (event property + `$set`) |
+| `activated_personas` | array | e.g., `["recruiter", "job_seeker"]` | All personas tried so far, frozen at event time (event property + `$set`) |
+
+---
+
+### Delta 2: `identifyUser()` sets `current_persona` as person property — IMPLEMENTED
+
+**Original (Section — Helix Implementation: `identifyUser()` Fix):**
+
+The spec correctly called for updating `identifyUser()` in `frontend/src/lib/posthog.ts` to include `current_persona` in the `$set` properties. This has been implemented on the Helix `soumabrata/persona-switching-v2` branch.
+
+**Previous state (before the fix):**
+
+```typescript
+// frontend/src/lib/posthog.ts → identifyUser()
+identify(
+  user.id,
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId },
+  setOnce,
+);
+```
+
+Without this fix, `current_persona` as a person property only existed for users who had switched personas at least once.
+
+**Implemented as:**
+
+```typescript
+// frontend/src/lib/posthog.ts → identifyUser()
+import { SURFACE_PROSPECT, SURFACE_HIRING, ROLE_TO_PERSONA } from '@/lib/posthogEvents';
+
+export function identifyUser(user: User): void {
+  const setOnce: Record<string, unknown> = {
+    account_created_at: user.createdAt,
+  };
+  if (user.role) {
+    setOnce.first_surface =
+      user.role === UserRole.PROFESSIONAL ? SURFACE_PROSPECT : SURFACE_HIRING;
+  }
+  const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
+  identify(
+    user.id,
+    {
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      org_id: user.orgId,
+      current_persona: currentPersona,
+    },
+    setOnce,
+  );
+}
+```
+
+**Why this is required:** Without this, `current_persona` as a person property only exists for users who have switched personas at least once. That's a tiny minority. Any PostHog query that filters by `current_persona` (funnels, cohorts, retention, dashboards) would silently exclude the vast majority of users.
+
+**What this achieves:**
+- Every user gets `current_persona` set as a person property on every login/session restore
+- `ROLE_TO_PERSONA` already exists in `posthogEvents.ts` — no new mapping needed
+- The `$set` in `Persona Updated` (backend) overrides this on switch, which is correct
+- Users with no role yet (pre-onboarding) get `null` — no false data
+
+**Where `identifyUser()` is called:**
+- `frontend/src/stores/authStore.ts` — after successful login and session restore
+- Fires on every app load for authenticated users
+
+---
+
+### Delta 3: `activated_personas` accumulates on onboarding role pick
+
+**Original (Section — `activated_personas` Database Column, Key design decisions):**
+
+The spec stated:
+- "The array only grows via the persona switch flow, NOT during initial onboarding"
+- "`null` means 'never switched via the chevron' — distinct from `[]`"
+- "The `previous_role is not None` guard in the router ensures onboarding (null → first role) doesn't fire events **or accumulate personas**"
+
+**Implemented as:**
+
+The `activated_personas` accumulation logic lives in `service.py` inside the `if dto.role is not None:` block, which runs for **all** role updates — including the initial onboarding role pick:
+
+```python
+# In service.py → update_user(), inside `if dto.role is not None:`
+new_persona = ROLE_TO_PERSONA.get(dto.role, "unknown")
+existing = user.activated_personas or []
+if new_persona not in existing:
+    user.activated_personas = existing + [new_persona]
+```
+
+The router guard (`previous_role is not None`) only prevents the **PostHog event** from firing on onboarding — it does NOT prevent the DB column from accumulating. So a user who picks Hiring Manager during onboarding will have `activated_personas = ["hiring_manager"]` in the DB even though no `Persona Updated` event fired.
+
+**Why:** Accumulating from onboarding provides a complete history of every persona a user has ever been in, not just personas reached via switching. This is more useful for analytics — a user with `activated_personas = ["hiring_manager", "recruiter"]` means they've been in both personas regardless of whether the first one was set during onboarding or via switching. The PostHog person property (`$set`) only gets updated on switches (since the event guard still applies), so the DB column is the authoritative source.
+
+**Updated semantics:**
+
+| DB value | Meaning (spec) | Meaning (implemented) |
+|---|---|---|
+| `null` | Never switched | Never had any role set (brand new user, pre-onboarding) |
+| `["hiring_manager"]` | N/A (wouldn't happen without a switch) | Picked HM during onboarding, never switched |
+| `["hiring_manager", "recruiter"]` | Switched from HM to Recruiter | Has been in both personas (onboarding + switch, or two switches) |
+
+**Test confirmation:** `test_onboarding_then_switch_fires_only_on_switch` verifies this behavior — null → HM populates `["hiring_manager"]` in the DB without firing a PostHog event.
+
+---
+
+### Delta 4: `Account Created` now `$set`s `current_persona` and `activated_personas` during onboarding — IMPLEMENTED
+
+**Original (not in tracking plan spec):**
+
+The original persona switching tracking plan did not address `Account Created` because onboarding was considered out of scope. However, `Account Created` is the first moment a user has a persona, and it must set both `current_persona` and `activated_personas` as person properties so PostHog has them from the very first session.
+
+**Previous state (before the fix):**
+
+```typescript
+// frontend/src/pages/RoleSelection.tsx → handleContinue()
+capture(ACCOUNT_CREATED, {
+  // ... existing properties ...
+  persona,
+  signup_context: entryPoint,
+  $set_once: {
+    first_persona: persona,
+    entry_point: entryPoint,
+    account_created_at: new Date().toISOString(),
+  },
+});
+```
+
+The event sent `persona` as an event property and `first_persona` via `$set_once`, but did not `$set` any person properties.
+
+**Implemented as:**
+
+Added `$set: { current_persona, activated_personas }` alongside the existing `$set_once`:
+
+```typescript
+// frontend/src/pages/RoleSelection.tsx → handleContinue()
+capture(ACCOUNT_CREATED, {
+  action: 'click',
+  action_value: ROLE_TO_ACTION_VALUE[selectedRole] || 'continue_as_unknown_button',
+  current_page_context: 'onboarding_role_selection',
+  previous_page_context: getPreviousPageContext(),
+  entry_point: entryPoint,
+  entity_type: 'onboarding',
+  component: 'onboarding_role_selection_footer_cta',
+  context_object_type: null,
+  context_object_id: null,
+  persona,
+  signup_context: entryPoint,
+  $set: {
+    current_persona: persona,
+    activated_personas: [persona],
+  },
+  $set_once: {
+    first_persona: persona,
+    entry_point: entryPoint,
+    account_created_at: new Date().toISOString(),
+  },
+});
+```
+
+**Why both are required:**
+- `current_persona`: Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering.
+- `activated_personas`: Without this, the PostHog person property is only set on switch (via `Persona Updated`). Users who sign up but never switch would be excluded from any cohort or query filtering on `activated_personas`. The DB column accumulates from onboarding (Delta 3), and the PostHog person property must match so analysts get consistent results.
+
+**Relationship between all the fixes:**
+
+| Fix | When it fires | Sets `current_persona` | Sets `activated_personas` |
+|---|---|---|---|
+| Delta 2: `identifyUser()` | Every login / session restore | Yes (keeps up-to-date) | No (DB is source of truth, only set on events) |
+| Delta 4: `Account Created` | Once, during onboarding | Yes (first value) | Yes (seeded with `[persona]`) |
+| Existing: `Persona Updated` | On persona switch | Yes (updated) | Yes (full array from DB) |
+
+All three are needed for complete `current_persona` coverage. `activated_personas` is set by Account Created (seed) and Persona Updated (accumulates).
+
+---
+
+### Delta 5: `identifyUser()` person properties are wrong in schema doc — FIXES NEEDED ON MERGE
+
+**Where the phantom properties actually live:**
+
+The `org_name` and `org_domain` phantom properties are in `docs/event-schema.md` (lines 142–143, and the code snippets at lines 155/298), NOT in `docs/event-catalog.md`. The catalog auth rows (lines 43/45) simply have `--` (nothing) in the Person Properties column — they were never documented there.
+
+**Two docs need fixes on merge:**
+
+1. **`docs/event-catalog.md`** (lines 43/45): Person Properties column is `--` → must be updated to `$set: email, name, role, org_id, current_persona` (via `identifyUser()`) so the catalog reflects what these events actually trigger.
+
+2. **`docs/event-schema.md`** (lines 139–145, 147, 152–155, 294–298): Remove phantom `org_name`/`org_domain`, add missing `role`, fix `activated_personas` Set By, update code snippets. See Schema §3–§5 in the Catalog Changes section above for full before/after.
+
+**What `identifyUser()` actually sets (verified against Helix `develop`):**
+
+```typescript
+identify(
+  user.id,
+  { email: user.email, name: user.name, role: user.role, org_id: user.orgId },
+  setOnce,  // { account_created_at, first_surface }
+);
+```
+
+**After Delta 2 is implemented, `identifyUser()` will set:**
+
+`$set: email, name, role, org_id, current_persona`
+
+**Discrepancy (schema doc `$set` table vs reality):**
+
+| Property | Schema doc says | `identifyUser()` actually sets |
+|---|---|---|
+| `email` | Yes | Yes |
+| `name` | Yes | Yes |
+| `role` | **Missing** | **Yes — present in code** |
+| `org_id` | Yes | Yes |
+| `org_name` | **Yes** | **No — does not exist** |
+| `org_domain` | **Yes** | **No — does not exist** |
+
+---
+
+## Delta Summary Table
+
+| # | Change Type | Status | Original | Implemented / Required | Why |
+|---|---|---|---|---|---|
+| 1 | Property added | Done | `activated_personas` only inside `$set` on Persona Updated | Also sent as top-level event property | Historical queries can see the full persona list at event time without relying on person property |
+| 2 | Must implement | Done | `identifyUser()` updated to set `current_persona` person property on every login | `identifyUser()` updated — `current_persona` added to `$set` via `ROLE_TO_PERSONA` | Without this, users who never switch have no `current_persona` person property — breaks all persona-based filtering |
+| 3 | Behavior change | Done | `activated_personas` only grows via persona switching, not onboarding | Accumulates on ALL role updates including onboarding first-pick | Complete persona history is more useful; DB is authoritative, PostHog `$set` still guarded to switches only |
+| 4 | Must implement | Done | `Account Created` only uses `$set_once: { first_persona }` | Added `$set: { current_persona, activated_personas: [persona] }` alongside existing `$set_once` | Sets both person properties from onboarding — eliminates DB ↔ PostHog divergence for `activated_personas` |
+| 5 | Catalog + schema fix | **On merge** | Catalog auth rows have `--` for Person Properties; schema doc lists phantom `org_name`/`org_domain` and is missing `role` | Catalog: `--` → `$set: email, name, role, org_id, current_persona`; Schema: remove phantoms, add `role`, fix code snippets | Aligns both docs with what `identifyUser()` actually sets (verified against Helix `develop`) |
