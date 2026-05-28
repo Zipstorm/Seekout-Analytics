@@ -86,7 +86,7 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Sam session adoption — voice/text session completion rate (Job Post Wizard Intake Mode Selected → Sam Session Started → Sam Session Ended), broken down by `input_mode`
 - Sam voice setup failure rate — `Sam Session Started` where `mic_enabled = false`, `error_category` distribution (hardware / timeout / connection)
 - Voice session stats — completion rate (Sam Session Started → Sam Session Ended), avg `duration_seconds`
-- AI content modification rate — % of jobs where requirements/questions were modified (Requirement Modified / Question Modified counts vs Job Created)
+- AI content modification rate — % of jobs where requirements/questions were modified (Requirement Modified / Question Modified counts vs Job Posting Published)
 - Intro video adoption — % of jobs with intro video (`has_intro_video`), recording completion rate (Record Video Button Clicked → Intro Video Created)
 - Candidate review depth — avg tabs viewed per candidate, % of candidates where recording was played. Time-to-decision: median seconds from Candidate Viewed timestamp to Review Decision Made timestamp (computed per-candidate, not a funnel).
 
