@@ -10,6 +10,185 @@
 
 ---
 
+## Implementation & Testing Status
+
+All events are implemented and tested on Helix branch `posthog-hiring-manager-job-wizard-event-schema-v2` (off latest `develop`). Frontend tests: 278 files / 3738 tests passing. Backend tests: 4397 passing.
+
+### What was implemented
+
+**Frontend (13 files changed):**
+- `frontend/src/lib/jobWizardAnalytics.ts` — NEW: 6 analytics helper functions, page context constants, step metadata
+- `frontend/src/lib/posthogEvents.ts` — ADD: 17 new event constants (wizard steps, Sam sessions, archive)
+- `frontend/src/components/common/JobInput.tsx` — ADD: Page Viewed, Wizard Started, Job Details Completed
+- `frontend/src/pages/interview/JobDetail.tsx` — ADD: Page Viewed, Intake Mode Selected (3 paths), Back Button
+- `frontend/src/pages/interview/EmbeddedSamSession.tsx` — ADD: Page Viewed, Sam Session Started, Sam Session Ended
+- `frontend/src/pages/interview/RoleRequirements.tsx` — ADD: Page Viewed, Role Requirements Completed, Add Button, Back Button
+- `frontend/src/pages/interview/InterviewQuestions.tsx` — ADD: Page Viewed, Interview Questions Completed, Add Button, Back Button
+- `frontend/src/pages/interview/JobVerify.tsx` — ADD: Page Viewed, Send Code, Verification Completed, Verification Skipped, Back Button (with auto-skip dedup)
+- `frontend/src/pages/interview/JobSuccess.tsx` — ADD: Page Viewed
+- `frontend/src/pages/recruiter/JobList.tsx` — MODIFY: Create Job Button Clicked (enriched), ADD: Archive Job Button Clicked
+- `frontend/src/stores/voiceStore.ts` — MODIFY: pass `lastSetupFailure` error info for Sam Session Started
+- `frontend/src/lib/livekitClient.ts` — MODIFY: pass error details via `onConnectionChange` callback
+- `frontend/src/main.tsx` — MODIFY: skip session restore for first-time visitors (noise reduction)
+
+**Backend (4 files changed):**
+- `backend/app/core/analytics.py` — NEW: `base_job_setup_properties()` and `build_job_setup_analytics_snapshot()` helpers
+- `backend/app/shared/posthog_events.py` — ADD: 13 new event constants, `get_current_persona()` helper
+- `backend/app/core/router.py` — MODIFY: replace `Job Created` with `Job Posting Draft Created`, ADD: `Screening Configuration Saved`, `Job Posting Published`, `Job Status Changed` (archive), `Job Posting Verified`
+- `backend/app/jobflow/router.py` — MODIFY: replace `Job Published` with `Job Posting Published`, ADD: `Screening Configuration Saved`, update all events to use `current_persona`
+
+**Noise reduction (frontend, 5 files):**
+- Removed 8 noisy events (widget_displayed, widget_interacted, voice_connected/disconnected, session_started/ended, intake_completed, Chat WebSocket Connected)
+- Gated `Career Coach Message Sent` to skip `HM_INTERVIEWER` agent type
+- Auth session restore skipped for first-time visitors (`main.tsx`)
+- Page Viewed dedup guards on Login, SignUp, RoleSelection pages
+
+---
+
+## v2 Implementation Reference
+
+This section maps every event to its exact location in the Helix v2 codebase. An LLM reading this should know exactly which file, function, and trigger condition produces each event.
+
+### Frontend Analytics Architecture
+
+All wizard events flow through helper functions in `frontend/src/lib/jobWizardAnalytics.ts`:
+
+| Helper | Fires Event | Adds Standard Properties |
+|--------|-------------|------------------------|
+| `captureJobWizardStarted()` | `Job Post Wizard Started` | `start_source`, `current_page_context` |
+| `captureJobWizardPageViewed(ctx, jobId?, extra?)` | `Page Viewed` | `current_page_context`, `previous_page_context`, `entity_type: 'job'`, `job_id`, `$groups` |
+| `captureJobWizardStepCompleted(event, step, jobId, extra?)` | *(passed event name)* | `action: 'click'`, `action_value: 'next_button'`, `current_page_context`, `previous_page_context`, `entity_type: 'job'`, `component: 'job_creation_wizard_footer_cta'`, `job_id`, `$groups`, `step_number`, `step_name` |
+| `captureJobWizardInteraction(event, step, jobId, actionValue, component?, extra?)` | *(passed event name)* | Same as above but with custom `action_value` and optional custom `component` |
+| `captureSamSessionStarted(jobId, inputMode, sessionId?, voiceStatus?)` | `Sam Session Started` | `current_page_context`, `previous_page_context`, `entity_type: 'job'`, `job_id`, `$groups`, `input_mode`, `session_id`, and if voice: `mic_enabled`, `error_category`, `error_reason` |
+| `captureSamSessionEnded(jobId, inputMode, durationSeconds, endedBy, sessionId?)` | `Sam Session Ended` | `current_page_context`, `previous_page_context`, `entity_type: 'job'`, `job_id`, `$groups`, `input_mode`, `duration_seconds`, `ended_by`, `session_id` |
+
+**Constants:** `JOB_WIZARD_PAGE_CONTEXTS` (9 contexts) and `JOB_WIZARD_STEPS` (5 steps with `stepNumber`, `stepName`, `pageContext`).
+
+**Guard pattern — `shouldTrackWizard`:** Used in `RoleRequirements.tsx` and `InterviewQuestions.tsx`. These pages are shared between HM wizard flow and recruiter source-network flow. The guard ensures analytics only fire for the wizard path (HM persona or recruiter on source route), not for recruiters viewing standalone pages.
+
+### Backend Analytics Architecture
+
+All backend job setup events use helpers in `backend/app/core/analytics.py`:
+
+| Helper | Returns | Used By |
+|--------|---------|---------|
+| `base_job_setup_properties(job)` | `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility` | All backend job events |
+| `build_job_setup_analytics_snapshot(job, db)` | Base props + `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `Screening Configuration Saved`, `Job Posting Verified`, `Job Posting Published` |
+
+All backend events include `current_persona: get_current_persona(user.role)` from `shared/posthog_events.py`.
+
+### File-by-File Event Map
+
+#### `frontend/src/components/common/JobInput.tsx` — Step 1: Job Details
+
+| Event | Trigger | Key Properties | Dedup |
+|-------|---------|----------------|-------|
+| `Page Viewed` | `useEffect` on mount, `flow === Flow.RECRUITER` | `current_page_context: 'hm_job_creation_wizard_job_details'` | `[]` deps (once) |
+| `Job Post Wizard Started` | Same useEffect, `isNewWizard && !isEditMode` | `start_source: 'create_job_button'` | Clears router state after fire |
+| `Job Post Wizard Job Details Completed` | After `createCoreJob()` succeeds + analysis ready | Standard step-completed + `step_number: 1` | — |
+
+#### `frontend/src/pages/interview/JobDetail.tsx` — Step 2: Understanding the Role
+
+| Event | Trigger | Key Properties | Dedup |
+|-------|---------|----------------|-------|
+| `Page Viewed` | `useEffect` when `job` loads | `current_page_context: 'hm_job_creation_wizard_understanding_the_role'`, `job_id` | — |
+| `Job Post Wizard Intake Mode Selected` | User clicks "Next" (voice/text selected) | `intake_mode: 'voice' \| 'text'`, `step_number: 2` | — |
+| `Job Post Wizard Intake Mode Selected` | User clicks "Skip" | `action_value: 'skip_button'`, `intake_mode: 'skipped'` | — |
+| `Job Post Wizard Back Button Clicked` | User clicks "Back" | `step_number: 2`, `step_name: 'understanding_the_role'` | — |
+
+#### `frontend/src/pages/interview/EmbeddedSamSession.tsx` — Sam Conversation
+
+| Event | Trigger | Key Properties | Dedup |
+|-------|---------|----------------|-------|
+| `Page Viewed` | `useEffect` when `modeChosen && selectedMode && jobId` | `current_page_context: '..._sam_voice_session' \| '..._sam_text_session'`, `input_mode` | `samPageViewed.current` ref |
+| `Sam Session Started` | After `startEmbeddedHmSession()` succeeds | `input_mode`, `session_id`, voice: `mic_enabled`, `error_category`, `error_reason` | — |
+| `Sam Session Ended` | `intake_summary` widget appears (completed) OR user confirms "End Session" (user) | `input_mode`, `duration_seconds`, `ended_by: 'user' \| 'completed'`, `session_id` | `samSessionEnded.current` ref |
+
+**Voice failure flow:** `livekitClient.ts` detects mic/device errors → passes `{ category, reason }` via `onConnectionChange` → `voiceStore.ts` stores as `lastSetupFailure` → `EmbeddedSamSession.tsx` reads it and passes to `captureSamSessionStarted()` as `voiceStatus`.
+
+#### `frontend/src/pages/interview/RoleRequirements.tsx` — Step 3
+
+| Event | Trigger | Key Properties | Dedup |
+|-------|---------|----------------|-------|
+| `Page Viewed` | `useEffect` when loaded + `shouldTrackWizard` | `current_page_context: 'hm_job_creation_wizard_role_requirements'` | `pageViewed.current` ref |
+| `Job Post Wizard Role Requirements Completed` | User clicks "Next" after save + `shouldTrackWizard` | `step_number: 3` | — |
+| `Requirement Add Button Clicked` | User clicks "+ Add" (legacy or v2 editor) + `shouldTrackWizard` | `action_value: 'add_question_button'`, `component: 'role_requirements_add_question_cta'` | — |
+| `Job Post Wizard Back Button Clicked` | User clicks "Back" + `shouldTrackWizard` | `step_number: 3` | — |
+
+#### `frontend/src/pages/interview/InterviewQuestions.tsx` — Step 4
+
+| Event | Trigger | Key Properties | Dedup |
+|-------|---------|----------------|-------|
+| `Page Viewed` | `useEffect` when loaded + not generating + `shouldTrackWizard` | `current_page_context: 'hm_job_creation_wizard_interview_questions'` | `pageViewedRef.current` ref |
+| `Job Post Wizard Interview Questions Completed` | User clicks "Next" after save + `shouldTrackWizard` | `step_number: 4`, `identity_verification_mode: 'require' \| 'off'` | — |
+| `Question Add Button Clicked` | User clicks "+ Add" + `shouldTrackWizard` | `action_value: 'add_question_button'`, `component: 'interview_questions_add_question_cta'` | — |
+| `Job Post Wizard Back Button Clicked` | User clicks "Back" + `shouldTrackWizard` | `step_number: 4` | — |
+
+**Special path:** If `hasRecentlyVerifiedEmail` is true when user clicks "Next", the component navigates directly to success (skipping verify step). The `Interview Questions Completed` event still fires.
+
+#### `frontend/src/pages/interview/JobVerify.tsx` — Step 5: Verify
+
+| Event | Trigger | Key Properties | Dedup |
+|-------|---------|----------------|-------|
+| `Page Viewed` | `useEffect` when loaded | `current_page_context: 'hm_job_creation_wizard_verify'` | `pageViewedRef.current` ref; auto-skip navigates away before this fires |
+| `Job Verification Code Send Button Clicked` | User clicks "Send code" with valid email | `action_value: 'send_code_button'`, `step_number: 5` | — |
+| `Job Post Wizard Verification Completed` | `handleVerified()` callback after successful code | `step_number: 5` | — |
+| `Job Post Wizard Verification Skipped` | User clicks "Maybe later" | `action_value: 'maybe_later_link'` | `autoSkipping.current` guard — does NOT fire on auto-skip paths |
+| `Job Post Wizard Back Button Clicked` | User clicks "Back" | `step_number: 5` | — |
+
+**Auto-skip logic (3 paths, no analytics events fire):**
+1. `job.is_verified === true` → navigate to success
+2. `hasRecentlyVerifiedEmail(alternateEmailAddresses)` → mark complete, navigate to success
+3. `!isPersonalEmail(user.email)` (work domain) → mark complete, navigate to success
+
+The `autoSkipping` ref prevents `Verification Skipped` from firing during these paths.
+
+#### `frontend/src/pages/interview/JobSuccess.tsx` — Success Page
+
+| Event | Trigger | Key Properties | Dedup |
+|-------|---------|----------------|-------|
+| `Page Viewed` | `useEffect` when `job` is truthy | `current_page_context: 'hm_job_creation_wizard_success'` | `pageViewed.current` ref |
+
+#### `frontend/src/pages/recruiter/JobList.tsx` — Job Postings Home
+
+| Event | Trigger | Key Properties | Dedup |
+|-------|---------|----------------|-------|
+| `Page Viewed` | `useEffect` on mount | `current_page_context: 'recruiter_ai_job_flows' \| 'hiring_manager_job_postings'`, `current_persona` | `previousPageContext === currentPageCtx` guard |
+| `Create Job Button Clicked` | User clicks "+ Create job" (header or empty state) | `action_value: 'create_job_posting_button' (recruiter) \| 'create_job_button' (HM)`, `component` varies by location+role, `current_persona` | — |
+| `Share Button Clicked` | User clicks share on job card | `action_value: 'share_job_button'`, `component: 'job_card'`, `context_object_id: job.id`, `current_persona` | — |
+| `Archive Job Button Clicked` | User clicks archive in overflow menu | `action_value: 'archive_job_menu_item'`, `component: 'job_card_overflow_menu'`, `job_id`, `current_persona` | — |
+
+#### `backend/app/core/router.py` — Core Job Endpoints
+
+| Event | Endpoint | Trigger Condition | Key Properties |
+|-------|----------|-------------------|----------------|
+| `Job Posting Draft Created` | `POST /api/v1/core/job` | `create_job()` succeeds | `base_job_setup_properties(job)` + `current_persona` |
+| `Job Creation Failed` | `POST /api/v1/core/job` | `create_job()` raises exception | `current_persona`, `error_reason` |
+| `Screening Configuration Saved` | `PATCH /api/v1/core/job/{job_id}` | `update_job()` transitions wizard_step to verify/COMPLETED from non-verify/COMPLETED, non-ATS only | Full `build_job_setup_analytics_snapshot` |
+| `Job Posting Published` | `PATCH /api/v1/core/job/{job_id}` | `update_job()` transitions status to active/published + wizard_step to COMPLETED, non-ATS, first time only | Full snapshot |
+| `Job Posting Published` | `POST /api/v1/core/job/{job_id}/finalize` | `finalize_job_setup()` transitions to published/active+COMPLETED | Full snapshot |
+| `Job Posting Verified` | `POST /api/v1/core/job/{job_id}/verify/confirm` | `confirm_job_verification()` succeeds with `verified=True` | Full snapshot |
+| `Job Status Changed` | `POST /api/v1/core/job/{job_id}/archive` | `archive_job()` | `current_persona`, `job_id`, `from_status`, `to_status: 'archived'` |
+
+**`group_identify`** fires on `Job Posting Draft Created` with: `job_title`, `job_status`, `created_by_user_id`, `created_at`.
+
+#### `backend/app/jobflow/router.py` — Jobflow Endpoints
+
+| Event | Endpoint | Trigger Condition | Key Properties |
+|-------|----------|-------------------|----------------|
+| `Screening Configuration Saved` | `POST /api/v1/jobs/flow/{job_id}/screening` | `configure_screening()` | Full snapshot |
+| `Job Posting Published` | `POST /api/v1/jobs/flow/{job_id}/verify` | `verify_and_publish()` | Full snapshot |
+| `Job Status Changed` | `POST /api/v1/jobs/flow/{job_id}/archive` | `archive_job()` | `current_persona`, `job_id`, `from_status`, `to_status: 'archived'` |
+| `Job Status Changed` | `POST /api/v1/jobs/flow/{job_id}/unarchive` | `unarchive_job()` | `current_persona`, `job_id`, `from_status: 'archived'`, `to_status: job.status` |
+| `Job Shared` | `POST /api/v1/jobs/flow/{job_id}/access` | `grant_access()` succeeds | `current_persona`, `job_id`, `shared_by_user_id`, `share_channel: 'other'` |
+| `Job Share Failed` | `POST /api/v1/jobs/flow/{job_id}/access` | `grant_access()` raises | `current_persona`, `job_id`, `error_reason` |
+| `Team Member Invited` | `POST /api/v1/jobs/flow/{job_id}/intake/invite-hm` | `invite_hm()` succeeds | `current_persona`, `job_id`, `invited_role_label: 'hiring_manager'`, `invite_method: 'email'` |
+| `Team Member Invite Failed` | `POST /api/v1/jobs/flow/{job_id}/intake/invite-hm` | `invite_hm()` raises | `current_persona`, `job_id`, `error_reason` |
+
+**`group_identify`** fires on publish (`job_status`, `job_visibility`), archive (`job_status: 'archived'`), and unarchive (`job_status`).
+
+---
+
 ## User Flow
 
 ```text
@@ -1413,9 +1592,9 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 
 | Funnel Name | Steps | Purpose |
 |---|---|---|
-| Job Post Wizard Completion | Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Post Wizard Role Understanding Completed → Job Post Wizard Role Requirements Completed → Job Post Wizard Interview Questions Completed → Job Post Wizard Verification Completed → Job Posting Published | End-to-end wizard conversion rate |
+| Job Post Wizard Completion | Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Post Wizard Intake Mode Selected → Job Post Wizard Role Requirements Completed → Job Post Wizard Interview Questions Completed → Job Post Wizard Verification Completed → Job Posting Published | End-to-end wizard conversion rate |
 | Job Post Wizard Abandonment | Job Post Wizard Started → Job Post Wizard Job Details Completed | Step 1 drop-off rate |
-| Sam Session Adoption | Job Post Wizard Role Understanding Completed → Sam Session Started → Sam Session Ended | Voice/text session completion rate |
+| Sam Session Adoption | Job Post Wizard Intake Mode Selected → Sam Session Started → Sam Session Ended | Voice/text session completion rate |
 
 ---
 
