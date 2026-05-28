@@ -2,8 +2,9 @@
 
 **Product:** Helix (SeekOut.ai)
 **Feature:** Job post wizard flow (hiring manager persona)
-**Date:** 2026-05-11
+**Date:** 2026-05-11 (v1), 2026-05-28 (v2 — rebased on latest develop)
 **Related PRD:** —
+**Helix branch:** `posthog-hiring-manager-job-wizard-event-schema-v2` (off latest `develop`)
 
 > Reference: `docs/event-catalog.md` for naming conventions and existing event catalog.
 
@@ -612,6 +613,7 @@ User confirms "End Session" in the confirmation modal, or Sam auto-ends the sess
 | `input_mode` | enum | `voice`, `text` | Session type — reuses existing `input_mode` property from catalog |
 | `duration_seconds` | number | e.g., 180 | Time from session start to end confirmation |
 | `ended_by` | enum | `user`, `sam` | Who ended the session — carried over from `Voice Session Ended` |
+| `session_id` | string | e.g., `session-abc` | Session identifier for backend correlation *(added in v2)* |
 
 **PostHog call:**
 
@@ -621,6 +623,7 @@ posthog.capture('Sam Session Ended', {
   input_mode: 'voice',  // or 'text'
   duration_seconds: sessionDuration,
   ended_by: 'user',  // or 'sam'
+  session_id: sessionId,  // from initSessionForJob response
 });
 ```
 
@@ -1365,7 +1368,7 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | Job Creation Failed | Hiring | Backend exception during POST /api/v1/core/job | Backend | `current_persona`, `error_reason` | -- | -- |
 | Job Post Wizard Intake Mode Selected | Hiring | User clicks "Next" (voice/text) or "Skip" on Understanding the Role step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode`, `$groups` | `job` | -- |
 | Sam Session Started | Hiring | Sam session initializes after user selects voice or text | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `session_id`, `mic_enabled`*, `error_category`*, `error_reason`*, `$groups` | `job` | -- |
-| Sam Session Ended | Hiring | User clicks "End Session" or intake auto-completes | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `duration_seconds`, `ended_by` (`user`/`completed`), `$groups` | `job` | -- |
+| Sam Session Ended | Hiring | User clicks "End Session" or intake auto-completes | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `duration_seconds`, `ended_by` (`user`/`completed`), `session_id`, `$groups` | `job` | -- |
 | Job Post Wizard Role Requirements Completed | Hiring | User clicks "Next" on Role Requirements step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Requirement Add Button Clicked | Hiring | User clicks "+ Add" on Role Requirements step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Job Post Wizard Interview Questions Completed | Hiring | User clicks "Next" on Interview Questions step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `identity_verification_mode`, `$groups` | `job` | -- |
@@ -1425,7 +1428,8 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | `step_name` | enum | `job_details`, `understanding_the_role`, `role_requirements`, `interview_questions`, `verify` | Wizard step name |
 | `intake_mode` | enum | `voice`, `text`, `skipped` | How user chose to interact with Sam on step 2 |
 | `input_mode` | enum | `voice`, `text` | Session modality for Sam sessions |
-| `ended_by` | enum | `user`, `sam` | Who ended the Sam session |
+| `ended_by` | enum | `user`, `completed` | Who ended the Sam session |
+| `session_id` | string | e.g., `session-abc` | Session identifier for backend correlation |
 | `error_reason` | string | `mic_permission_denied`, `device_unavailable`, etc. | Specific error for setup failures |
 | `error_category` | string | `permissions`, `hardware`, `timeout`, `connection` | Error classification |
 | `questions_count` | number | e.g., `5` | Total screening questions |
@@ -1443,9 +1447,11 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 
 ---
 
-## Implementation Delta (2026-05-26)
+## Implementation Delta (2026-05-26, updated 2026-05-28 for v2)
 
-> **What this section is:** During implementation and local PostHog testing on the Helix codebase (`posthog-hiring-manager-job-wizard-event-schema-v1` branch), several changes were made to the original tracking plan spec above. This section documents every difference so the tracking plan stays in sync with what's actually firing in production.
+> **What this section is:** During implementation and local PostHog testing on the Helix codebase, several changes were made to the original tracking plan spec above. This section documents every difference so the tracking plan stays in sync with what's actually firing in production.
+>
+> **Branches:** Deltas 1–19 originated on v1 (`posthog-hiring-manager-job-wizard-event-schema-v1`). Deltas 20–23 are v2-specific changes from cherry-picking onto latest `develop` (`posthog-hiring-manager-job-wizard-event-schema-v2`).
 >
 > **How to read this:** Each delta entry references the original section number, states what changed, and explains why. The original sections above remain as-is for historical context — this delta is the authoritative override.
 
@@ -1531,6 +1537,7 @@ captureSamSessionStarted(jobId, 'voice', sessionId, {
 | `input_mode` | enum | `voice`, `text` | Session type |
 | `duration_seconds` | number | e.g., `180` | Time from start to end |
 | `ended_by` | enum | `user`, `completed` | Who ended — user clicked "End Session" or intake auto-completed |
+| `session_id` | string | e.g., `session-abc` | Session identifier for backend correlation *(added in v2)* |
 | `$groups` | object | `{ job: jobId }` | PostHog group association |
 
 ---
@@ -1923,6 +1930,67 @@ The following events were added during implementation. They're part of the broad
 
 ---
 
+### Delta 20: `Sam Session Ended` — `session_id` property added (v2)
+
+**Original (Section 3e):** No `session_id` property
+**Implemented as:** `session_id` added as optional 5th parameter to `captureSamSessionEnded()`
+
+**Why:** Correlates the frontend session-ended event with backend session records. The `session_id` comes from the `initSessionForJob` response and is already available on `Sam Session Started` — adding it to the ended event completes the pair.
+
+**Updated `captureSamSessionEnded` signature:**
+
+```typescript
+captureSamSessionEnded(
+  jobId: string,
+  inputMode: 'voice' | 'text',
+  durationSeconds: number | null,
+  endedBy: 'user' | 'completed',
+  sessionId?: string | null,  // NEW in v2
+)
+```
+
+**Helix commit:** `c0ef45df` — "fix(analytics): add session_id to Sam Session Ended event"
+
+---
+
+### Delta 21: Verification Skipped — duplicate prevention on auto-skip (v2)
+
+**Original:** `Job Post Wizard Verification Skipped` could fire when the page auto-navigated away (work email auto-skip or recently verified email)
+**Implemented as:** `autoSkipping` ref gate prevents the skip event from firing during auto-skip paths
+
+**Why:** On develop, `JobVerify.tsx` gained auto-skip logic: users with a work email or a recently verified alternate email skip verification silently. The `handleSkip` function (triggered by "Maybe later") was also called during auto-skip cleanup, causing a spurious `Verification Skipped` event. The `autoSkipping` ref is set to `true` on all three auto-skip paths (already verified, recently verified email, work email), and `handleSkip` checks it before firing the analytics event.
+
+**Auto-skip conditions (3 paths, none fire analytics events):**
+1. `job.is_verified === true` — job already verified → navigate to success
+2. `hasRecentlyVerifiedEmail(alternateEmailAddresses)` — user has a recently verified work email → mark complete, navigate to success
+3. `!isPersonalEmail(user.email)` — user signed up with a work domain → mark complete, navigate to success
+
+**Helix commit:** `94073165` — "fix(analytics): prevent duplicate Verification Skipped event on auto-skip"
+
+---
+
+### Delta 22: Verify step — work email auto-skip (v2)
+
+**Original (Section 6):** All users see the verify form
+**Implemented as:** Users who signed up with a non-personal email (work domain) skip verification automatically
+
+**Why:** Develop introduced `isPersonalEmail()` in `JobVerify.tsx`. If the user's signup email is not from a personal provider (gmail, yahoo, hotmail, outlook), the verify step is skipped — the work email is trusted as job verification. This means fewer `Page Viewed`, `Verification Completed`, and `Verification Skipped` events fire for work-email users.
+
+**Impact on analytics:**
+- Work-email users: no verify step events fire (Page Viewed, send code, verification, skip)
+- Personal-email users: full verify step flow as documented in sections 6a–6e
+
+---
+
+### Delta 23: Success page `Page Viewed` — fires for all roles (v2)
+
+**Original (Section 7a):** `Page Viewed` for success page was suppressed for recruiters on non-source routes
+**Implemented as:** `Page Viewed` for `hm_job_creation_wizard_success` fires unconditionally for all roles
+
+**Why:** Develop redesigned `JobSuccess.tsx` into a single unified layout — the separate recruiter-specific render path (which had the guard) was removed. The `captureJobWizardPageViewed` call now runs for all users who reach the success page.
+
+---
+
 ### Delta Summary Table
 
 | # | Change Type | Original | Implemented | Why |
@@ -1946,6 +2014,10 @@ The following events were added during implementation. They're part of the broad
 | 17 | Trigger expanded | `Job Status Changed`: jobflow only | Also fires from core archive endpoint | Frontend uses core route, not legacy jobflow |
 | 18 | Property renamed | `is_verified` | `job_verified` | Consistency with `job_*` naming pattern |
 | 19 | Cleanup | Legacy noisy events in Helix | 8 events removed, 1 gated | Reduce PostHog noise, replaced by wizard events |
+| 20 | Property added (v2) | No `session_id` on `Sam Session Ended` | `session_id` added | Correlate frontend ended event with backend session record |
+| 21 | Bug fix (v2) | `Verification Skipped` fired on auto-skip | `autoSkipping` ref gate prevents it | Work-email and recently-verified users shouldn't fire skip event |
+| 22 | Behavior change (v2) | All users see verify form | Work-email users auto-skip | Develop added `isPersonalEmail()` trust logic |
+| 23 | Behavior change (v2) | Success `Page Viewed` suppressed for some recruiters | Fires for all roles | Develop removed recruiter-specific render path |
 
 ---
 
@@ -1979,7 +2051,7 @@ The following events in `docs/event-catalog.md` must be **removed** on merge —
 |---|---|---|
 | `Create Job Button Clicked` (no properties) | `Create Job Button Clicked` (6 properties) | Same event name, enriched with `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` |
 | `Job Created` | `Job Posting Draft Created` | Renamed — draft is created on step 1 "Next", not on final publish. Properties updated. |
-| `Job Creation Failed` | -- (not yet covered) | Existing failure event kept until a replacement is defined |
+| `Job Creation Failed` | `Job Creation Failed` (enriched with `current_persona`, `error_reason`) | Same event name, enriched properties — see Delta 13 |
 | `Job Published` | `Job Posting Published` | Renamed + enriched with full job snapshot properties |
 
 ### Voice Session Events (lines 147-149)
@@ -1996,6 +2068,7 @@ The following events in `docs/event-catalog.md` must be **removed** on merge —
 |---|---|---|
 | — (not on Voice Session) | `input_mode` (`voice`/`text`) | Reuses existing catalog property `input_mode`; differentiates voice vs text |
 | `ended_by` (`user`/`sam`) | `ended_by` (`user`/`completed`) | `sam` renamed to `completed` — session auto-completes, not agent decision *(see Delta 3)* |
+| — (not on Voice Session) | `session_id` | Correlates frontend event with backend session record *(see Delta 20)* |
 
 ---
 

@@ -69,10 +69,12 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Persona | User persona (hiring_manager, recruiter, job_seeker) | Switch Persona Button Clicked, Persona Updated |
 | Job Link | Shared job posting link viewed by anonymous visitors | Job Link Viewed, Job Link Engaged |
 | Profile Link | Prospect's shareable profile link viewed by visitors | Profile Link Viewed, Profile Link Engaged |
-| Job Post Wizard | Job post creation wizard session | Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Post Wizard Role Understanding Completed, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed |
+| Job Post Wizard | Job post creation wizard session | Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Post Wizard Intake Mode Selected, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Post Wizard Back Button Clicked |
 | Job Posting | Job posting lifecycle (draft, verified, published) | Job Posting Draft Created, Job Posting Verified, Job Posting Published |
 | Sam | AI hiring partner (Sam) conversation | Sam Session Started, Sam Session Ended |
-| Sam Voice Session | AI hiring partner voice-specific session | Sam Voice Session Setup Failed |
+| Requirement | Role requirement interaction | Requirement Add Button Clicked |
+| Question | Interview question interaction | Question Add Button Clicked |
+| Job Verification Code | Email verification code | Job Verification Code Send Button Clicked |
 | Screening Configuration | Job screening setup (questions, ID verification) | Screening Configuration Saved |
 | Intro Video | HM intro video recording | Intro Video Created, Intro Video Deleted |
 | Candidate | Candidate in review pipeline | Candidate Viewed, Candidate Tab Viewed, Candidate Recording Played |

@@ -81,10 +81,10 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Time from Interest Expressed → first Interest Reviewed (`time_to_review_seconds`)
 - Review decision distribution (shortlisted / declined / needs_discussion)
 - Interests per job (using job group analytics)
-- Job post wizard completion funnel — step-by-step drop-off rates (Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Post Wizard Role Understanding Completed → Job Post Wizard Role Requirements Completed → Job Post Wizard Interview Questions Completed → Job Post Wizard Verification Completed → Job Posting Published)
+- Job post wizard completion funnel — step-by-step drop-off rates (Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Post Wizard Intake Mode Selected → Job Post Wizard Role Requirements Completed → Job Post Wizard Interview Questions Completed → Job Post Wizard Verification Completed → Job Posting Published)
 - Job post wizard abandonment — Step 1 drop-off rate (Job Post Wizard Started → Job Post Wizard Job Details Completed)
-- Sam session adoption — voice/text session completion rate (Job Post Wizard Role Understanding Completed → Sam Session Started → Sam Session Ended), broken down by `input_mode`
-- Sam voice setup failure rate — Sam Voice Session Setup Failed count, `error_category` distribution (hardware / timeout / connection)
+- Sam session adoption — voice/text session completion rate (Job Post Wizard Intake Mode Selected → Sam Session Started → Sam Session Ended), broken down by `input_mode`
+- Sam voice setup failure rate — `Sam Session Started` where `mic_enabled = false`, `error_category` distribution (hardware / timeout / connection)
 - Voice session stats — completion rate (Sam Session Started → Sam Session Ended), avg `duration_seconds`
 - AI content modification rate — % of jobs where requirements/questions were modified (Requirement Modified / Question Modified counts vs Job Created)
 - Intro video adoption — % of jobs with intro video (`has_intro_video`), recording completion rate (Record Video Button Clicked → Intro Video Created)
