@@ -1574,6 +1574,8 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 > **Standard property `surface`:** Intentionally omitted — `current_page_context` provides more granular surface identification.
 >
 > **Standard Objects:** `Sam` and `Screening Configuration` are new objects introduced by this plan. To be added to `docs/event-schema.md` Standard Objects table on merge.
+>
+> **`requirements_count` intentionally omitted:** The old `Job Created` event carried `requirements_count` (AI-generated role requirements from step 3). The new events track `questions_count` / `ai_generated_questions_count` / `manual_questions_count` (screening questions from step 4) instead. Role requirements are intermediate AI artifacts used to generate screening questions — the actionable metric is the final question count, not the requirement count. If needed later, `len(job.key_requirements or [])` can be added to `base_job_setup_properties()`.
 
 ---
 
