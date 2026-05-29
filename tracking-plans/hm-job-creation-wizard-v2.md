@@ -162,7 +162,7 @@ The `autoSkipping` ref prevents `Verification Skipped` from firing during these 
 | Event | Endpoint | Trigger Condition | Key Properties |
 |-------|----------|-------------------|----------------|
 | `Job Posting Draft Created` | `POST /api/v1/core/job` | `create_job()` succeeds | `base_job_setup_properties(job)` + `current_persona` |
-| `Job Creation Failed` | `POST /api/v1/core/job` | `create_job()` raises exception | `current_persona`, `error_reason` |
+| `Job Creation Failed` | `POST /api/v1/core/job` | `create_job()` raises exception | `current_persona`, `error_reason`, `error_category` |
 | `Screening Configuration Saved` | `PATCH /api/v1/core/job/{job_id}` | `update_job()` transitions wizard_step to verify/COMPLETED from non-verify/COMPLETED, non-ATS only | Full `build_job_setup_analytics_snapshot` |
 | `Job Posting Published` | `PATCH /api/v1/core/job/{job_id}` | `update_job()` transitions status to active/published + wizard_step to COMPLETED, non-ATS, first time only | Full snapshot |
 | `Job Posting Published` | `POST /api/v1/core/job/{job_id}/finalize` | `finalize_job_setup()` transitions to published/active+COMPLETED | Full snapshot |
@@ -1545,7 +1545,7 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | Job Post Wizard Started | Hiring | Wizard page mounts with router state isNewWizard=true | Frontend | `start_source`, `current_page_context` | -- | -- |
 | Job Post Wizard Job Details Completed | Hiring | User clicks "Next" on Job Details step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Job Posting Draft Created | Hiring | Server creates job draft via POST /api/v1/core/job | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility` | `job` | `group(job): job_title, job_status, created_by_user_id, created_at` |
-| Job Creation Failed | Hiring | Backend exception during POST /api/v1/core/job | Backend | `current_persona`, `error_reason` | -- | -- |
+| Job Creation Failed | Hiring | Backend exception during POST /api/v1/core/job | Backend | `current_persona`, `error_reason`, `error_category` | -- | -- |
 | Job Post Wizard Intake Mode Selected | Hiring | User clicks "Next" (voice/text) or "Skip" on Understanding the Role step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode`, `$groups` | `job` | -- |
 | Sam Session Started | Hiring | Sam session initializes after user selects voice or text | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `session_id`, `mic_enabled`*, `error_category`*, `error_reason`*, `$groups` | `job` | -- |
 | Sam Session Ended | Hiring | User clicks "End Session" or intake auto-completes | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `duration_seconds`, `ended_by` (`user`/`completed`), `session_id`, `$groups` | `job` | -- |
@@ -1958,9 +1958,9 @@ The following events were added during implementation. They're part of the broad
 |---|---|
 | **Trigger** | Backend exception during `POST /api/v1/core/job` |
 | **Source** | Backend |
-| **Properties** | `current_persona`, `error_reason` |
+| **Properties** | `current_persona`, `error_reason`, `error_category` |
 | **Group** | -- (no job_id — creation failed) |
-| **Note** | Original plan said "not yet covered" — now implemented |
+| **Note** | Original plan said "not yet covered" — now implemented. `error_category` classifies the failure (`server` for unhandled exceptions, `validation` for input errors). Helix code needs updating to send `error_category` — currently only sends `error_reason`. |
 
 #### Job Status Changed
 
@@ -2256,7 +2256,7 @@ The following events in `docs/event-catalog.md` must be **removed** on merge —
 | Remove from catalog | Replaced by | Reason |
 |---|---|---|
 | `Voice Session Started` | `Sam Session Started` | Now covers both voice AND text sessions via `input_mode` property |
-| `Voice Session Ended` | `Sam Session Ended` | Now covers both modalities; carries over `duration_seconds` and `ended_by` |
+| `Voice Session Ended` | `Sam Session Ended` | Now covers both modalities; carries over `duration_seconds` and `ended_by` (values changed: `sam` → `completed`) |
 | `Voice Session Setup Failed` | *(removed — voice failure info captured as properties on `Sam Session Started`; see Delta 2)* | Single event for all session start attempts simplifies analysis |
 
 **Property changes:**
@@ -2303,15 +2303,21 @@ ACTING_JOB_SEEKER = "job_seeker"          # NEW — added for persona mapping
 
 This section documents all changes that must be applied to `docs/event-catalog.md`, `docs/event-schema.md`, and `docs/dashboards.md` when this tracking plan is merged via `/merge-tracking-plan`. These are precise instructions for the merge operation.
 
-### `docs/event-catalog.md` — Hiring Persona Events table
+### `docs/event-catalog.md`
 
-**Replace existing events:**
+**Hiring Persona Events section header — replace:**
+
+| Remove | Add |
+|--------|-----|
+| `All hiring persona events include job_id. The user's persona context is available via the current_persona person property ($set) — no need to pass it per-event. See Schema for standard event properties.` | `All hiring persona events include job_id. Backend events include current_persona as an explicit event property; frontend events inherit it from the person property ($set). See Schema for standard event properties.` |
+
+**Hiring Persona Events table — replace existing events:**
 
 | Remove | Add | Notes |
 |--------|-----|-------|
 | `Create Job Button Clicked` (no properties) | `Create Job Button Clicked` with `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | Same event name, enriched properties |
 | `Job Created` | `Job Posting Draft Created` (Backend, Success) with `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility` | Renamed — draft created on step 1 "Next" |
-| `Job Creation Failed` (old properties) | `Job Creation Failed` with `current_persona`, `error_reason` | Enriched, group changed from `job` to `--` |
+| `Job Creation Failed` (old properties) | `Job Creation Failed` with `current_persona`, `error_reason`, `error_category` | Enriched, group changed from `job` to `--` (job_id may not exist when creation fails before draft is persisted) |
 | `Job Published` | `Job Posting Published` (Backend, Success) with full snapshot properties | Renamed + enriched |
 | `Job Wizard Started` | _(remove entirely — replaced by Job Post Wizard Started below)_ | |
 | `Job Wizard Step Completed` | _(remove entirely — replaced by per-step events below)_ | |
@@ -2376,7 +2382,7 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 
 | Property | Change |
 |----------|--------|
-| `error_category` | Replace `connection` with `unknown` in Allowed Values |
+| `error_category` | Replace `connection` with `unknown` in Allowed Values. The Helix frontend code (`voiceStore.ts`) classifies errors as `timeout`, `hardware`, or `unknown` — `connection` is not used anywhere. |
 | `ended_by` | Change values from `user`, `sam` to `user`, `completed` |
 | `action` (user_action) | Add to Used In: `Job Status Tab Clicked`, `Job Post Wizard Intake Mode Selected`, all split events (Back Button, Add Button, Code Send, Verification Skipped), `Archive Job Button Clicked` |
 | `step_number` | Add to Used In: all new wizard step events |
@@ -2386,9 +2392,70 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 | `session_id` | Add new string property: `Backend session identifier for Sam conversations`, Used In: `Sam Session Started`, `Sam Session Ended` |
 | `job_location` | Add new string property (replaces `location`): `Job location extracted from JD (can be null)`, Used In: `Job Posting Draft Created`, `Screening Configuration Saved`, `Job Posting Verified`, `Job Posting Published` |
 
-### `docs/event-schema.md` — Standard Objects table
+**Boolean Properties — add new entries:**
 
-**Replace:**
+| Property | Type | Scope | Used In |
+|----------|------|-------|---------|
+| `job_verified` | boolean | event | `Job Posting Draft Created`, `Screening Configuration Saved`, `Job Posting Verified`, `Job Posting Published` |
+| `mic_enabled` | boolean | event | `Sam Session Started` (voice mode only) |
+
+**Enum Properties — remove orphaned row:**
+
+| Remove | Reason |
+|--------|--------|
+| `visibility` row (Used In: `Job Posting Published`) | Orphaned — old `Job Published` event used `visibility`, but `Job Posting Published` sends `job_visibility` instead. The `job_visibility` group property row already exists. |
+
+**Enum Properties — update `job_visibility` scope:**
+
+| Property | Change |
+|----------|--------|
+| `job_visibility` | Change scope from `group (job)` to `event, group (job)`. Update Used In to: `Job Posting Draft Created`, `Job Posting Published`, `All events in job group (group property)` |
+
+**Numeric Properties — update Used In:**
+
+| Property | Change |
+|----------|--------|
+| `ai_generated_questions_count` | Add `Job Posting Verified` to Used In |
+| `manual_questions_count` | Add `Job Posting Verified` to Used In |
+
+**Enum Properties — update Used In:**
+
+| Property | Change |
+|----------|--------|
+| `intake_mode` | Add `Job Posting Verified` to Used In |
+| `identity_verification_mode` | Add `Job Posting Verified` to Used In |
+
+**String Properties — update Used In:**
+
+| Property | Change |
+|----------|--------|
+| `company_name` | Add `Job Posting Verified` to Used In |
+
+### `docs/event-schema.md`
+
+**Code sample fix — `identifyUser()` (lines 157 and 300):**
+
+Both `posthog.identify()` code samples contain a broken placeholder `first_surface: ...`. `first_surface` was a draft property name that was replaced by `first_persona` before launch. Replace both occurrences:
+
+| Remove | Add |
+|--------|-----|
+| `{ account_created_at: user.createdAt, first_surface: ... }  // $set_once` | `{ account_created_at: user.createdAt }  // $set_once` |
+
+> Note: `first_persona` is set by `Account Created`, not by `identifyUser()`. The `$set_once` object in `identifyUser()` only needs `account_created_at`. Other `$set_once` properties (`entry_point`, `first_referrer`, `first_landing_url`) are set earlier on `Login Started`.
+
+**Property naming convention — update (line 49):**
+
+| Remove | Add |
+|--------|-----|
+| `For current_page_context and previous_page_context values, use underscores for hierarchy:` | `For current_page_context and previous_page_context values, use underscores (_) for hierarchy, not slashes (/):` |
+
+**Standard Event Properties note — replace:**
+
+| Remove | Add |
+|--------|-----|
+| `> **Note:** The user's active persona is tracked via the current_persona person property ($set), which is automatically available on all events. No need to pass persona per-event.` | `> **Note:** The user's active persona is tracked via the current_persona person property ($set). Backend events also include current_persona as an explicit event property to guarantee availability without $set propagation delay.` |
+
+**Standard Objects table — replace:**
 
 | Remove | Add |
 |--------|-----|
@@ -2422,6 +2489,10 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 | | `Creating a job (draft save) \| Job Post Wizard Job Details Completed \| Job Posting Draft Created \| Job Creation Failed` |
 | | `Publishing a job \| Job Post Wizard Verification Completed \| Job Posting Published \| --` |
 | | `Email verification \| Job Post Wizard Verification Completed \| Job Posting Verified \| --` |
+
+**Intent vs Outcome section — add note after the table:**
+
+> **Exception:** `Sam Session Started` carries optional failure properties (`mic_enabled`, `error_category`, `error_reason`) for voice setup failures instead of using a separate failure event. This allows analysts to build a single funnel (`Sam Session Started` → `Sam Session Ended`) and filter by `mic_enabled = false` for failures, rather than unioning two separate events.
 
 ### `docs/dashboards.md`
 
@@ -2457,4 +2528,5 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 |-----|-------------|----------|
 | `share_source` missing from `Share Button Clicked` | Catalog requires `share_source` (`success_screen`, `dashboard`, `overflow_menu`) but `JobList.tsx` does not send it. Cannot distinguish share origin. | Low — `component` partially covers this |
 | `mode_switched` lowercase event | Pre-existing event in `coachingStore.ts` — fires `mode_switched` (lowercase) instead of Proper Case. Not introduced by this plan. | Low — pre-existing, not in catalog |
+| `role` person property superseded by `current_persona` | `identifyUser()` sends both `role` (raw DB enum: `HIRING_MANAGER`, `PROFESSIONAL`) and `current_persona` (analytics-friendly: `hiring_manager`, `job_seeker`). `current_persona` is strictly better — snake_case, updates on persona switch and account creation (not just login), and uses user-facing labels. `role` should be removed from `identifyUser()` in a future Helix PR. Existing PostHog cohorts filtering on `role` will need migration to `current_persona`. | Low — pre-existing, no data loss |
 
