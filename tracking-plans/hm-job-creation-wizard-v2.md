@@ -16,7 +16,7 @@ All events are implemented and tested on Helix branch `posthog-hiring-manager-jo
 
 ### What was implemented
 
-**Frontend (13 files changed):**
+**Frontend (11 files changed):**
 - `frontend/src/lib/jobWizardAnalytics.ts` — NEW: 6 analytics helper functions, page context constants, step metadata
 - `frontend/src/lib/posthogEvents.ts` — ADD: 17 new event constants (wizard steps, Sam sessions, archive)
 - `frontend/src/components/common/JobInput.tsx` — ADD: Page Viewed, Wizard Started, Job Details Completed
@@ -28,8 +28,6 @@ All events are implemented and tested on Helix branch `posthog-hiring-manager-jo
 - `frontend/src/pages/interview/JobSuccess.tsx` — ADD: Page Viewed
 - `frontend/src/pages/recruiter/JobList.tsx` — MODIFY: Create Job Button Clicked (enriched), ADD: Archive Job Button Clicked
 - `frontend/src/stores/voiceStore.ts` — MODIFY: pass `lastSetupFailure` error info for Sam Session Started
-- `frontend/src/lib/livekitClient.ts` — MODIFY: pass error details via `onConnectionChange` callback
-- `frontend/src/main.tsx` — MODIFY: skip session restore for first-time visitors (noise reduction)
 
 **Backend (4 files changed):**
 - `backend/app/core/analytics.py` — NEW: `base_job_setup_properties()` and `build_job_setup_analytics_snapshot()` helpers
@@ -40,8 +38,9 @@ All events are implemented and tested on Helix branch `posthog-hiring-manager-jo
 **Noise reduction (frontend, 5 files):**
 - Removed 8 noisy events (widget_displayed, widget_interacted, voice_connected/disconnected, session_started/ended, intake_completed, Chat WebSocket Connected)
 - Gated `Career Coach Message Sent` to skip `HM_INTERVIEWER` agent type
-- Auth session restore skipped for first-time visitors (`main.tsx`)
-- Page Viewed dedup guards on Login, SignUp, RoleSelection pages
+- Page Viewed dedup guard on RoleSelection page (Login/SignUp deferred — see Deferred Items)
+
+> **Note:** `main.tsx` auth session restore noise reduction and `authStore.ts` `is_new_user` were deferred from PR 555. See Deferred Items section.
 
 ---
 
@@ -104,7 +103,7 @@ All backend events include `current_persona: get_current_persona(user.role)` fro
 | `Sam Session Started` | After `startEmbeddedHmSession()` succeeds | `input_mode`, `session_id`, voice: `mic_enabled`, `error_category`, `error_reason` | — |
 | `Sam Session Ended` | `intake_summary` widget appears (completed) OR user confirms "End Session" (user) | `input_mode`, `duration_seconds`, `ended_by: 'user' \| 'completed'`, `session_id` | `samSessionEnded.current` ref |
 
-**Voice failure flow:** `livekitClient.ts` detects mic/device errors → passes `{ category, reason }` via `onConnectionChange` → `voiceStore.ts` stores as `lastSetupFailure` → `EmbeddedSamSession.tsx` reads it and passes to `captureSamSessionStarted()` as `voiceStatus`.
+**Voice failure flow:** `voiceStore.ts` catches errors in `startVoice()` catch block → classifies them by checking error message (timeout → 'timeout', permission → 'hardware', else → 'unknown') → stores as `lastSetupFailure: { category, reason }` → `EmbeddedSamSession.tsx` reads it and passes to `captureSamSessionStarted()` as `voiceStatus`.
 
 #### `frontend/src/pages/interview/RoleRequirements.tsx` — Step 3
 
@@ -207,7 +206,7 @@ HM Job Postings page (home)
   │
   ├─ Step 2: Understanding the Role — choose Voice / Text / Skip
   │    → fires: Page Viewed (hm_job_creation_wizard_understanding_the_role)
-  │    → fires: Job Post Wizard Role Understanding Completed
+  │    → fires: Job Post Wizard Intake Mode Selected
   │
   ├─ Step 3: Role Requirements — review AI-drafted requirements
   │    → fires: Page Viewed (hm_job_creation_wizard_role_requirements)
@@ -508,7 +507,7 @@ posthog.capture('Job Post Wizard Job Details Completed', {
 ```
 
 **Notes:**
-- Each wizard step has its own event name (`Job Post Wizard Job Details Completed`, `Role Understanding Completed`, `Role Requirements Completed`, `Interview Questions Completed`, `Verification Completed`) — `step_number` and `step_name` properties are also included for programmatic filtering
+- Each wizard step has its own event name (`Job Post Wizard Job Details Completed`, `Intake Mode Selected`, `Role Requirements Completed`, `Interview Questions Completed`, `Verification Completed`) — `step_number` and `step_name` properties are also included for programmatic filtering
 - `step_name` values across wizard: `job_details`, `understanding_the_role`, `role_requirements`, `interview_questions`, `verify`
 - `job_id` is included from step 1 onwards — the draft is created on this Next click and the ID is available in the response. All subsequent steps carry the same `job_id`.
 
@@ -628,21 +627,21 @@ Understanding the Role page loads
   ├─ Page Viewed (hm_job_creation_wizard_understanding_the_role)
   │
   ├─ Path A: User selects Voice + clicks Next
-  │    → Job Post Wizard Role Understanding Completed (intake_mode: 'voice')
+  │    → Job Post Wizard Intake Mode Selected (intake_mode: 'voice')
   │    → Page Viewed (hm_job_creation_wizard_sam_voice_session)
   │    → Sam Session Started (input_mode: 'voice')
   │    → ... user talks with Sam ...
   │    → Sam Session Ended (input_mode: 'voice', duration_seconds, ended_by)
   │
   ├─ Path B: User selects Text + clicks Next
-  │    → Job Post Wizard Role Understanding Completed (intake_mode: 'text')
+  │    → Job Post Wizard Intake Mode Selected (intake_mode: 'text')
   │    → Page Viewed (hm_job_creation_wizard_sam_text_session)
   │    → Sam Session Started (input_mode: 'text')
   │    → ... user chats with Sam ...
   │    → Sam Session Ended (input_mode: 'text', duration_seconds, ended_by)
   │
   └─ Path C: User clicks "Skip and go to role requirements"
-       → Job Post Wizard Role Understanding Completed (intake_mode: 'skipped')
+       → Job Post Wizard Intake Mode Selected (intake_mode: 'skipped')
 ```
 
 #### 3a. Page Viewed (page load)
@@ -660,7 +659,7 @@ posthog.capture('Page Viewed', {
 
 ---
 
-#### 3b. Job Post Wizard Role Understanding Completed (user action — mode selection)
+#### 3b. Job Post Wizard Intake Mode Selected (user action — mode selection)
 
 User selects Voice/Text and clicks Next, or clicks Skip.
 
@@ -678,7 +677,7 @@ User selects Voice/Text and clicks Next, or clicks Skip.
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `action` | enum | `click` | Action type |
-| `action_value` | string | `next_button` or `skip_and_go_to_role_requirements_link` | Which button was clicked |
+| `action_value` | string | `next_button` or `skip_button` | Which button was clicked |
 | `current_page_context` | string | `hm_job_creation_wizard_understanding_the_role` | Step 2 page |
 | `previous_page_context` | string | snake_case page identifier | Previous page |
 | `entity_type` | string | `job` | Business object context |
@@ -691,9 +690,9 @@ User selects Voice/Text and clicks Next, or clicks Skip.
 **PostHog call:**
 
 ```javascript
-posthog.capture('Job Post Wizard Role Understanding Completed', {
+posthog.capture('Job Post Wizard Intake Mode Selected', {
   action: 'click',
-  action_value: 'next_button',  // or 'skip_and_go_to_role_requirements_link'
+  action_value: 'next_button',  // or 'skip_button'
   current_page_context: 'hm_job_creation_wizard_understanding_the_role',
   previous_page_context: getPreviousPageContext(),
   entity_type: 'job',
@@ -791,7 +790,7 @@ User confirms "End Session" in the confirmation modal, or Sam auto-ends the sess
 | `job_id` | UUID | job ID | Job identifier |
 | `input_mode` | enum | `voice`, `text` | Session type — reuses existing `input_mode` property from catalog |
 | `duration_seconds` | number | e.g., 180 | Time from session start to end confirmation |
-| `ended_by` | enum | `user`, `sam` | Who ended the session — carried over from `Voice Session Ended` |
+| `ended_by` | enum | `user`, `completed` | Who ended the session — user clicked "End Session" or intake auto-completed |
 | `session_id` | string | e.g., `session-abc` | Session identifier for backend correlation *(added in v2)* |
 
 **PostHog call:**
@@ -801,7 +800,7 @@ posthog.capture('Sam Session Ended', {
   job_id: jobId,
   input_mode: 'voice',  // or 'text'
   duration_seconds: sessionDuration,
-  ended_by: 'user',  // or 'sam'
+  ended_by: 'user',  // or 'completed'
   session_id: sessionId,  // from initSessionForJob response
 });
 ```
@@ -809,7 +808,7 @@ posthog.capture('Sam Session Ended', {
 **Notes:**
 - Fires on the confirmation modal "End Session" button, NOT on the first "End Session" / "End chat" click
 - Covers both voice and text sessions under one event name — `input_mode` differentiates
-- `ended_by` tracks whether the user ended the session or Sam auto-ended it
+- `ended_by` tracks whether the user ended the session or the intake auto-completed
 - After this fires, user moves to the Role Requirements page
 - Replaces `Voice Session Ended` from `docs/event-catalog.md` — see Catalog Cleanup section
 
@@ -834,7 +833,7 @@ Voice session fails to initialize due to mic permission denied or device unavail
 |---|---|---|---|
 | `job_id` | UUID | job ID | Job identifier |
 | `error_reason` | string | e.g., `mic_permission_denied`, `device_unavailable` | Specific error |
-| `error_category` | string | e.g., `permissions`, `hardware` | Error category |
+| `error_category` | string | `timeout`, `hardware`, `unknown` | Error category |
 
 **PostHog call:**
 
@@ -850,7 +849,7 @@ capture('Sam Voice Session Setup Failed', {
 - Voice-only event — text sessions have no hardware setup that can fail
 - Replaces `Voice Session Setup Failed` from `docs/event-catalog.md` — see Catalog Cleanup section
 - `error_reason` is never hardcoded — it comes from the browser/device error message (e.g., `"Permission denied"`, `"Requested device not found"`, `"Connection timed out"`)
-- `error_category` is determined by where in the code the error was caught: `hardware` (mic/device), `timeout`, or `connection`
+- `error_category` is determined by checking the error message in the `startVoice()` catch block: `timeout` (message includes 'timeout'), `hardware` (message includes 'permission'), or `unknown` (anything else)
 
 **Helix codebase changes:**
 
@@ -942,12 +941,14 @@ onConnectionChange: (connState, errorInfo) => {
     error_reason: e instanceof Error ? e.message : 'unknown',
     error_category: e instanceof Error && e.message.includes('timeout')
       ? 'timeout'
-      : 'connection',
+      : e instanceof Error && e.message.includes('permission')
+        ? 'hardware'
+        : 'unknown',
   });
 }
 ```
 
-> This catch block handles connection-level failures (backend call failures, room join failures, timeouts). The `error_reason` is the raw error message from the system; `error_category` is determined by which type of failure occurred.
+> This catch block handles all voice start failures (backend call failures, room join failures, timeouts, permission errors). The `error_reason` is the raw error message from the system; `error_category` is classified by checking the message text: 'timeout' → `timeout`, 'permission' → `hardware`, else → `unknown`.
 
 **Change 4 (optional): Add backend constant**
 
@@ -1612,7 +1613,7 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | `ended_by` | enum | `user`, `completed` | Who ended the Sam session |
 | `session_id` | string | e.g., `session-abc` | Session identifier for backend correlation |
 | `error_reason` | string | `mic_permission_denied`, `device_unavailable`, etc. | Specific error for setup failures |
-| `error_category` | string | `permissions`, `hardware`, `timeout`, `connection` | Error classification |
+| `error_category` | string | `timeout`, `hardware`, `unknown` | Error classification |
 | `questions_count` | number | e.g., `5` | Total screening questions |
 | `ai_generated_questions_count` | number | e.g., `3` | AI-generated screening questions |
 | `manual_questions_count` | number | e.g., `2` | Manually added screening questions |
@@ -1692,7 +1693,7 @@ captureSamSessionStarted(jobId, 'voice', sessionId, {
 | `input_mode` | enum | `voice`, `text` | Always | Session type |
 | `session_id` | string | LiveKit session ID | Voice only, when available | Session identifier for debugging |
 | `mic_enabled` | boolean | `true`, `false` | Voice only, when voiceStatus present | Whether mic access succeeded |
-| `error_category` | string | `hardware`, `timeout`, `connection` | Voice only, on failure | Error classification |
+| `error_category` | string | `timeout`, `hardware`, `unknown` | Voice only, on failure | Error classification |
 | `error_reason` | string | e.g., `Permission denied` | Voice only, on failure | Specific error from browser/device |
 | `$groups` | object | `{ job: jobId }` | Always | PostHog group association |
 
@@ -2202,6 +2203,21 @@ captureSamSessionEnded(
 
 ---
 
+### Deferred Items (not in Helix PR #555)
+
+The following items were in the original v2 tracking plan but were intentionally excluded from Helix PR #555. They remain unimplemented on `develop`:
+
+| Item | Reason deferred | Original tracking plan reference |
+|------|----------------|--------------------------------|
+| Login/SignUp Page Viewed dedup guards | PR 555 left Login/SignUp pages untouched due to ongoing Clerk integration churn | Implementation Status section, line "Page Viewed dedup guards on Login, SignUp, RoleSelection pages" |
+| `main.tsx` auth session restore noise reduction | Not included in PR 555 scope | Implementation Status section, line "Auth session restore skipped for first-time visitors" |
+| `authStore.ts` `is_new_user` on Auth Login Succeeded | Not included in PR 555 scope | Not in event catalog — was a v1 branch addition |
+| `livekitClient.ts` structured error forwarding | voiceStore handles error classification directly in catch block; livekitClient modification unnecessary | v2 Implementation Reference, voice failure flow |
+
+> **Note:** RoleSelection.tsx Page Viewed dedup guard (`if (previousPageContext === 'onboarding_role_selection') return`) WAS implemented in PR 555 — only Login/SignUp were excluded.
+
+---
+
 ## Catalog Cleanup: Replace Existing Events
 
 The following events in `docs/event-catalog.md` must be **removed** on merge — they are replaced by events in this tracking plan:
@@ -2280,4 +2296,165 @@ ACTING_JOB_SEEKER = "job_seeker"          # NEW — added for persona mapping
 - `CLAUDE.md`: Replace `acting_as required on all hiring surface events` with `Persona context on hiring events is captured via the current_persona person property ($set) — no per-event acting_as needed`
 - `scripts/validate-analytics-docs.py`: Remove `acting_as` check from `tp_rule_05` and update `rule_04` docstring
 - Validator Rule 4 errors for missing `acting_as` will resolve automatically
+
+---
+
+## Catalog & Schema Updates Required on `/merge-tracking-plan`
+
+This section documents all changes that must be applied to `docs/event-catalog.md`, `docs/event-schema.md`, and `docs/dashboards.md` when this tracking plan is merged via `/merge-tracking-plan`. These are precise instructions for the merge operation.
+
+### `docs/event-catalog.md` — Hiring Persona Events table
+
+**Replace existing events:**
+
+| Remove | Add | Notes |
+|--------|-----|-------|
+| `Create Job Button Clicked` (no properties) | `Create Job Button Clicked` with `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | Same event name, enriched properties |
+| `Job Created` | `Job Posting Draft Created` (Backend, Success) with `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility` | Renamed — draft created on step 1 "Next" |
+| `Job Creation Failed` (old properties) | `Job Creation Failed` with `current_persona`, `error_reason` | Enriched, group changed from `job` to `--` |
+| `Job Published` | `Job Posting Published` (Backend, Success) with full snapshot properties | Renamed + enriched |
+| `Job Wizard Started` | _(remove entirely — replaced by Job Post Wizard Started below)_ | |
+| `Job Wizard Step Completed` | _(remove entirely — replaced by per-step events below)_ | |
+| `Voice Session Started` | _(remove entirely — replaced by Sam Session Started below)_ | |
+| `Voice Session Ended` | _(remove entirely — replaced by Sam Session Ended below)_ | |
+| `Voice Session Setup Failed` | _(remove entirely — folded into Sam Session Started properties)_ | |
+
+**Add new events (insert after `Archive Job Button Clicked`, before `Share Button Clicked`):**
+
+| Event | Area | Type | Trigger | Source | Properties | Group | Status |
+|-------|------|------|---------|--------|------------|-------|--------|
+| `Job Post Wizard Started` | Hiring | Success | Wizard page mounts with router state isNewWizard=true | Frontend | `start_source`, `current_page_context` | -- | Not Started |
+| `Job Post Wizard Job Details Completed` | Hiring | -- | User clicks "Next" on Job Details step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | -- | Not Started |
+| `Job Post Wizard Intake Mode Selected` | Hiring | -- | User clicks "Next" (voice/text) or "Skip" on Understanding the Role step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode`, `$groups` | `job` | Not Started |
+| `Sam Session Started` | Hiring | -- | Sam session initializes after user selects voice or text | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `session_id`, `mic_enabled`\*, `error_category`\*, `error_reason`\*, `$groups` | `job` | Not Started |
+| `Sam Session Ended` | Hiring | -- | User clicks "End Session" or intake auto-completes | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `duration_seconds`, `ended_by`, `session_id`, `$groups` | `job` | Not Started |
+| `Job Post Wizard Role Requirements Completed` | Hiring | -- | User clicks "Next" on Role Requirements step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
+| `Requirement Add Button Clicked` | Hiring | -- | User clicks "+ Add" on Role Requirements step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
+| `Job Post Wizard Interview Questions Completed` | Hiring | -- | User clicks "Next" on Interview Questions step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `identity_verification_mode`, `$groups` | `job` | Not Started |
+| `Question Add Button Clicked` | Hiring | -- | User clicks "+ Add" on Interview Questions step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
+| `Screening Configuration Saved` | Hiring | -- | Backend saves screening config (core + jobflow endpoints) | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | Not Started |
+| `Job Verification Code Send Button Clicked` | Hiring | -- | User clicks "Send code" on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
+| `Job Post Wizard Verification Completed` | Hiring | -- | Email verified successfully on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
+| `Job Post Wizard Verification Skipped` | Hiring | -- | User clicks "Maybe later" on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
+| `Job Post Wizard Back Button Clicked` | Hiring | -- | User clicks "Back" on any wizard step (2–5) | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
+| `Job Posting Verified` | Hiring | Success | Backend verifies 6-digit code successfully | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | Not Started |
+| `Archive Job Button Clicked` | Hiring | Intent | User clicks "Archive" in job card overflow menu | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `current_persona` | -- | Not Started |
+| `Job Status Tab Clicked` | Hiring | -- | User clicks a status filter tab on job postings page | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | Not Started |
+
+\* `mic_enabled`, `error_category`, `error_reason` — voice mode only, when voiceStatus is present
+
+**Update existing events:**
+
+| Event | Change |
+|-------|--------|
+| `Share Button Clicked` | Update properties to: `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `context_object_type`, `context_object_id`, `current_persona`. Note: `share_source` is in catalog but NOT sent by `JobList.tsx` — analytics gap to address separately |
+| `Job Status Changed` | Add `current_persona` to properties |
+| `Team Member Invited` | Add `current_persona` to properties |
+| `Team Member Invite Failed` | Add `current_persona` to properties |
+| `Job Shared` | Add `current_persona` to properties |
+| `Job Share Failed` | Add `current_persona` to properties |
+
+**Retired Events table — add:**
+
+| Old Event | Replacement | Reason | Date |
+|-----------|-------------|--------|------|
+| `Job Created` | `Job Posting Draft Created` | Renamed — draft is created on step 1 "Next", not on final publish | May 2026 |
+| `Job Published` | `Job Posting Published` | Renamed + enriched with full job snapshot properties | May 2026 |
+| `Job Wizard Started` | `Job Post Wizard Started` | Renamed for clarity | May 2026 |
+| `Job Wizard Step Completed` | Per-step events (`Job Post Wizard * Completed`) | Umbrella event replaced by distinct per-step events | May 2026 |
+| `Voice Session Started` | `Sam Session Started` | Now covers both voice AND text sessions via `input_mode` | May 2026 |
+| `Voice Session Ended` | `Sam Session Ended` | Now covers both modalities; `ended_by` changed from `user`/`sam` to `user`/`completed` | May 2026 |
+| `Voice Session Setup Failed` | _(removed — properties on `Sam Session Started`)_ | Voice failure info captured as `mic_enabled`, `error_category`, `error_reason` | May 2026 |
+
+**Chat WebSocket Events table — update:**
+
+| Event | Change |
+|-------|--------|
+| `Chat WebSocket Connected` | Change Status from `Live` to `Removed`. Add note: "Removed as noise reduction in Helix PR #555 — capture call removed from `coachingSocket.ts`" |
+
+**Property Dictionary updates:**
+
+| Property | Change |
+|----------|--------|
+| `error_category` | Replace `connection` with `unknown` in Allowed Values |
+| `ended_by` | Change values from `user`, `sam` to `user`, `completed` |
+| `action` (user_action) | Add to Used In: `Job Status Tab Clicked`, `Job Post Wizard Intake Mode Selected`, all split events (Back Button, Add Button, Code Send, Verification Skipped), `Archive Job Button Clicked` |
+| `step_number` | Add to Used In: all new wizard step events |
+| `step_name` | Add to Used In: all new wizard step events |
+| `action_value` | Add to Used In: all new wizard step events, `Job Status Tab Clicked`, `Archive Job Button Clicked` |
+| `current_page_context` | Change description from `"/ hierarchy"` to `"_ hierarchy"` (reflects `pathnameToPageContext()` fix). Add to Used In: Sam Session Started, Sam Session Ended, all wizard events |
+| `session_id` | Add new string property: `Backend session identifier for Sam conversations`, Used In: `Sam Session Started`, `Sam Session Ended` |
+| `job_location` | Add new string property (replaces `location`): `Job location extracted from JD (can be null)`, Used In: `Job Posting Draft Created`, `Screening Configuration Saved`, `Job Posting Verified`, `Job Posting Published` |
+
+### `docs/event-schema.md` — Standard Objects table
+
+**Replace:**
+
+| Remove | Add |
+|--------|-----|
+| `Job Wizard` row | `Job Post Wizard` — events: Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Post Wizard Intake Mode Selected, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Post Wizard Back Button Clicked |
+| `Job Wizard Step` row | _(remove — merged into Job Post Wizard)_ |
+| `Voice Session` row | _(remove — replaced by Sam)_ |
+| `Sam Voice Session` row (if exists) | _(remove — folded into Sam Session Started)_ |
+
+**Add:**
+
+| Object | Entity | Example Events |
+|--------|--------|---------------|
+| `Job Posting` | Job posting lifecycle (draft, verified, published) | Job Posting Draft Created, Job Posting Verified, Job Posting Published |
+| `Sam` | AI hiring partner (Sam) conversation | Sam Session Started, Sam Session Ended |
+| `Job Verification Code` | Email verification code | Job Verification Code Send Button Clicked |
+| `Screening Configuration` | Job screening setup (questions, ID verification) | Screening Configuration Saved |
+
+**Consolidate existing:**
+
+| Object | Update |
+|--------|--------|
+| `Requirement` | Merge events: `Requirement Add Button Clicked, Requirement Modified` |
+| `Question` | Merge events: `Question Add Button Clicked, Question Modified` |
+| `Job` | Update example events: `Job Posting Draft Created, Job Shared` (was `Job Created, Job Shared`) |
+
+**Intent → Outcome table — replace:**
+
+| Remove | Add |
+|--------|-----|
+| `Creating a job \| Create Job Button Clicked \| Job Created \| Job Creation Failed` | `Creating a job (wizard start) \| Create Job Button Clicked \| Job Post Wizard Started \| --` |
+| | `Creating a job (draft save) \| Job Post Wizard Job Details Completed \| Job Posting Draft Created \| Job Creation Failed` |
+| | `Publishing a job \| Job Post Wizard Verification Completed \| Job Posting Published \| --` |
+| | `Email verification \| Job Post Wizard Verification Completed \| Job Posting Verified \| --` |
+
+### `docs/dashboards.md`
+
+**Growth Dashboard — update:**
+
+| Remove | Add |
+|--------|-----|
+| `Onboarding-to-job conversion: Account Created → Persona Selected → Job Wizard Started → Job Wizard Step Completed (step 1) → Job Created` | `Onboarding-to-job conversion: Account Created → Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Posting Draft Created → Job Posting Published` |
+
+**Hiring Dashboard — replace wizard/voice metrics:**
+
+| Remove | Add |
+|--------|-----|
+| `Job wizard completion funnel — ... (Job Wizard Started → Job Wizard Step Completed step 1 → 2 → 3 → 4 → Job Created)` | `Job post wizard completion funnel — step-by-step drop-off rates (Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Post Wizard Intake Mode Selected → Job Post Wizard Role Requirements Completed → Job Post Wizard Interview Questions Completed → Job Post Wizard Verification Completed → Job Posting Published)` |
+| | `Job post wizard abandonment — Step 1 drop-off rate (Job Post Wizard Started → Job Post Wizard Job Details Completed)` |
+| | `Sam session adoption — voice/text session completion rate (Job Post Wizard Intake Mode Selected → Sam Session Started → Sam Session Ended), broken down by input_mode` |
+| | `Sam voice setup failure rate — Sam Session Started where mic_enabled = false, error_category distribution (timeout / hardware / unknown)` |
+| `Voice session stats — completion rate (Voice Session Started → Voice Session Ended), avg duration_seconds` | `Voice session stats — completion rate (Sam Session Started → Sam Session Ended), avg duration_seconds` |
+| `AI content modification rate — ... counts vs Job Created` | `AI content modification rate — ... counts vs Job Posting Published` |
+
+**Platform Health Dashboard — replace/add:**
+
+| Remove | Add |
+|--------|-----|
+| `Job creation \| Create Job Button Clicked \| Job Created \| Job Creation Failed` | `Creating a job (wizard start) \| Create Job Button Clicked \| Job Post Wizard Started \| --` |
+| | `Creating a job (draft save) \| Job Post Wizard Job Details Completed \| Job Posting Draft Created \| Job Creation Failed` |
+| | `Publishing a job \| Job Post Wizard Verification Completed \| Job Posting Published \| --` |
+| | `Email verification \| Job Post Wizard Verification Completed \| Job Posting Verified \| --` |
+
+### Known analytics gaps (to address separately)
+
+| Gap | Description | Severity |
+|-----|-------------|----------|
+| `share_source` missing from `Share Button Clicked` | Catalog requires `share_source` (`success_screen`, `dashboard`, `overflow_menu`) but `JobList.tsx` does not send it. Cannot distinguish share origin. | Low — `component` partially covers this |
+| `mode_switched` lowercase event | Pre-existing event in `coachingStore.ts` — fires `mode_switched` (lowercase) instead of Proper Case. Not introduced by this plan. | Low — pre-existing, not in catalog |
 
