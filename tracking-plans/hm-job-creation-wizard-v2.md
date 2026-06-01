@@ -533,7 +533,7 @@ Server creates the job draft after JD evaluation on step 1. The job is persisted
 | `job_id` | UUID | `job.id` | The newly created job identifier |
 | `job_title` | string | `job.title` | Job title extracted from JD |
 | `company_name` | string | `job.company_name` | Company name extracted from JD (can be null) |
-| `location` | string | `job.location` | Location extracted from JD (can be null) |
+| `job_location` | string | `job.location` | Location extracted from JD (can be null) |
 | `job_status` | enum | `job.status` | Always `"draft"` at this point |
 
 **Property Updates:**
@@ -580,7 +580,7 @@ posthog_client.capture(
         "job_id": str(job.id),
         "job_title": job.title,
         "company_name": job.company_name,
-        "location": job.location,
+        "job_location": job.location,
         "job_status": job.status,  # "draft"
     },
     groups={GROUP_JOB: str(job.id)},
@@ -814,179 +814,7 @@ posthog.capture('Sam Session Ended', {
 
 ---
 
-#### 3f. Sam Voice Session Setup Failed
-
-Voice session fails to initialize due to mic permission denied or device unavailable. Replaces `Voice Session Setup Failed` from the event catalog.
-
-| Field | Value |
-|-------|-------|
-| **Area** | Hiring |
-| **Type** | Failure |
-| **Trigger** | Mic permission denied or device unavailable when starting voice session |
-| **Source** | Frontend |
-| **Group** | `job` |
-| **Status** | Not Started |
-
-**Properties:**
-
-| Property | Type | Values | Description |
-|---|---|---|---|
-| `job_id` | UUID | job ID | Job identifier |
-| `error_reason` | string | e.g., `mic_permission_denied`, `device_unavailable` | Specific error |
-| `error_category` | string | `timeout`, `hardware`, `unknown` | Error category |
-
-**PostHog call:**
-
-```javascript
-capture('Sam Voice Session Setup Failed', {
-  job_id: jobId,
-  error_reason: 'Permission denied',  // dynamic — from browser/device
-  error_category: 'hardware',         // determined by which code path caught the error
-});
-```
-
-**Notes:**
-- Voice-only event — text sessions have no hardware setup that can fail
-- Replaces `Voice Session Setup Failed` from `docs/event-catalog.md` — see Catalog Cleanup section
-- `error_reason` is never hardcoded — it comes from the browser/device error message (e.g., `"Permission denied"`, `"Requested device not found"`, `"Connection timed out"`)
-- `error_category` is determined by checking the error message in the `startVoice()` catch block: `timeout` (message includes 'timeout'), `hardware` (message includes 'permission'), or `unknown` (anything else)
-
-**Helix codebase changes:**
-
-There is NO existing PostHog event for voice setup failures. The error handling infrastructure exists but isn't wired to PostHog. The app already tracks `voice_connected` and `voice_disconnected` — this adds the missing failure counterpart.
-
-**Architecture note:** LiveKitClient (the audio specialist) detects mic/device errors but has no knowledge of `job_id` or PostHog. voiceStore (the coordinator) has `job_id` and PostHog access. So the approach is: LiveKitClient passes the error details up to voiceStore via the existing `onConnectionChange` callback, and voiceStore fires the PostHog event.
-
-**Change 1: Add event constant**
-
-**Edit** `frontend/src/lib/posthogEvents.ts` — add:
-
-```typescript
-export const SAM_VOICE_SESSION_SETUP_FAILED = 'Sam Voice Session Setup Failed';
-```
-
-**Change 2: Expand LiveKitClient callback to include error details**
-
-**Edit** `frontend/src/lib/livekitClient.ts` — in the `RoomEvent.MediaDevicesError` handler (inside the `join()` method, where the room event listeners are set up), pass the error reason and category through the existing `onConnectionChange` callback:
-
-```typescript
-// BEFORE (current code):
-room.on(RoomEvent.MediaDevicesError, () => {
-  logger.error(TAG, 'Media devices error');
-  this.handlers?.onConnectionChange('error');
-});
-
-// AFTER:
-room.on(RoomEvent.MediaDevicesError, (error) => {
-  logger.error(TAG, 'Media devices error', error);
-  this.handlers?.onConnectionChange('error', {
-    reason: error?.message || 'device_unavailable',
-    category: 'hardware',
-  });
-});
-```
-
-> LiveKitClient doesn't fire PostHog itself — it just passes the error details to voiceStore via the callback. The `error` object comes from the browser (e.g., `"Permission denied"` when mic is blocked). `category: 'hardware'` is not hardcoded guesswork — this handler ONLY fires for mic/device issues, so the category is always `hardware`.
-
-**Change 3: voiceStore fires PostHog event for all voice failures**
-
-**Edit** `frontend/src/stores/voiceStore.ts` — two changes in this file:
-
-**(a)** Update the `onConnectionChange` callback (inside the `startVoice()` method, where `LiveKitClient` handlers are configured) to handle error details from LiveKitClient:
-
-```typescript
-// BEFORE (current code):
-onConnectionChange: (connState) => {
-  set({ connectionState: connState });
-},
-
-// AFTER:
-onConnectionChange: (connState, errorInfo) => {
-  set({ connectionState: connState });
-  if (connState === 'error' && errorInfo) {
-    capture(SAM_VOICE_SESSION_SETUP_FAILED, {
-      job_id: jobId,
-      error_reason: errorInfo.reason,
-      error_category: errorInfo.category,
-    });
-  }
-},
-```
-
-> This handles mic/device errors that LiveKitClient detects after the connection is established.
-
-**(b)** In the `startVoice()` catch block (the `} catch (e) {` at the end of the method, after the `createdClient.join()` call), add PostHog capture after the existing error handling:
-
-```typescript
-// EXISTING code — no changes to lines 192-212:
-} catch (e) {
-  if (backendStarted) {
-    try { await api.stopVoice(sessionId); } catch { }
-  }
-  client?.destroy();
-  client = null;
-
-  const msg = e instanceof Error
-    ? e.message.includes('timeout')
-      ? 'Connection timed out. Please try again.'
-      : e.message
-    : 'Voice connection failed. Please try again.';
-
-  set({ connectionState: 'error', error: msg });
-  logger.error(TAG, 'Voice connection failed', e);
-
-  // ADD — track voice setup failure in PostHog
-  capture(SAM_VOICE_SESSION_SETUP_FAILED, {
-    job_id: jobId,
-    error_reason: e instanceof Error ? e.message : 'unknown',
-    error_category: e instanceof Error && e.message.includes('timeout')
-      ? 'timeout'
-      : e instanceof Error && e.message.includes('permission')
-        ? 'hardware'
-        : 'unknown',
-  });
-}
-```
-
-> This catch block handles all voice start failures (backend call failures, room join failures, timeouts, permission errors). The `error_reason` is the raw error message from the system; `error_category` is classified by checking the message text: 'timeout' → `timeout`, 'permission' → `hardware`, else → `unknown`.
-
-**Change 4 (optional): Add backend constant**
-
-**Edit** `backend/app/shared/posthog_events.py` — add:
-
-```python
-SAM_VOICE_SESSION_SETUP_FAILED = "Sam Voice Session Setup Failed"
-```
-
-> Optional — this event is frontend-only, but adding the constant keeps the backend event registry complete.
-
-**How it all flows together:**
-
-```
-Scenario A: Mic permission denied
-  Browser → LiveKitClient (MediaDevicesError handler)
-    → passes { reason: "Permission denied", category: "hardware" } to voiceStore
-    → voiceStore fires PostHog event with job_id + error details
-
-Scenario B: Network timeout during connection
-  Browser → voiceStore (startVoice catch block)
-    → voiceStore fires PostHog event directly with job_id + error details
-
-Scenario C: Backend call fails
-  Backend → voiceStore (startVoice catch block)
-    → voiceStore fires PostHog event directly with job_id + error details
-```
-
-All three scenarios are captured. All PostHog events fire from voiceStore (the coordinator that has `job_id`). LiveKitClient never calls PostHog directly.
-
-**Files to modify:**
-
-| File | Change |
-|---|---|
-| `frontend/src/lib/posthogEvents.ts` | Add constant |
-| `frontend/src/lib/livekitClient.ts` (`RoomEvent.MediaDevicesError` handler in `join()`) | Pass error details through `onConnectionChange` callback |
-| `frontend/src/stores/voiceStore.ts` (`onConnectionChange` callback + `startVoice()` catch block) | Receive error details and fire PostHog event |
-| `backend/app/shared/posthog_events.py` | Add constant (optional) |
+> **Section 3f removed.** The original `Sam Voice Session Setup Failed` event was removed during implementation (Delta 2). Voice setup failure info is now captured as optional properties (`mic_enabled`, `error_category`, `error_reason`) on `Sam Session Started` instead. This consolidation allows analysts to build a single funnel (`Sam Session Started` → `Sam Session Ended`) and filter by `mic_enabled = false` for failures, rather than unioning two separate events. See Delta 2 for full rationale and property details.
 
 ---
 
@@ -1152,7 +980,7 @@ Backend saves the screening config when user clicks Next on step 4. Captures the
 | `job_id` | UUID | `job.id` | Job identifier |
 | `job_title` | string | `job.title` | Job posting title |
 | `company_name` | string | `job.company_name` | Company name (AI-extracted from JD) |
-| `location` | string | `job.location` | Job location |
+| `job_location` | string | `job.location` | Job location |
 | `questions_count` | number | `len(assessment_questions)` | Total screening questions (`InterviewAssessmentQuestion` where `is_deleted=False`) |
 | `ai_generated_questions_count` | number | count where `source == "ai_generated"` | AI-generated questions |
 | `manual_questions_count` | number | count where `source == "manual"` | Manually added questions |
@@ -1205,22 +1033,14 @@ posthog_client.capture(
         "job_id": str(job.id),
         "job_title": job.title,
         "company_name": job.company_name,
-        "location": job.location,
+        "job_location": job.location,
         "questions_count": len(questions),
         "ai_generated_questions_count": ai_count,
         "manual_questions_count": manual_count,
         "identity_verification_mode": id_verify_mode,
+        "intake_mode": intake_meeting.mode if intake_meeting else None,
     },
     groups={GROUP_JOB: str(job.id)},
-)
-
-posthog_client.group_identify(
-    group_type=GROUP_JOB,
-    group_key=str(job.id),
-    properties={
-        "questions_count": len(questions),
-        "identity_verification_mode": id_verify_mode,
-    },
 )
 ```
 
@@ -1350,7 +1170,7 @@ Backend confirms the 6-digit code is correct and the hiring manager's email is v
 |---|---|---|---|
 | `job_id` | UUID | `job.id` | Job identifier |
 | `job_title` | string | `job.title` | Job posting title |
-| `is_verified` | boolean | `true` | Email verified — always true on this event |
+| `job_verified` | boolean | `true` | Email verified — always true on this event |
 
 **Helix codebase change — add to `core/router.py` → `confirm_job_verification()` (POST /api/v1/core/job/{job_id}/verify/confirm):**
 
@@ -1362,7 +1182,7 @@ posthog_client.capture(
     properties={
         "job_id": str(job.id),
         "job_title": job.title,
-        "is_verified": True,
+        "job_verified": True,
     },
     groups={GROUP_JOB: str(job.id)},
 )
@@ -1370,7 +1190,7 @@ posthog_client.capture(
 posthog_client.group_identify(
     group_type=GROUP_JOB,
     group_key=str(job.id),
-    properties={"is_verified": True},
+    properties={"job_verified": True},
 )
 ```
 
@@ -1424,10 +1244,10 @@ Backend publishes the job — it's now live and visible to candidates. This is t
 | `job_id` | UUID | `job.id` | Job identifier |
 | `job_title` | string | `job.title` | Job posting title |
 | `company_name` | string | `job.company_name` | Company name (can be null) |
-| `location` | string | `job.location` | Job location (can be null) |
+| `job_location` | string | `job.location` | Job location (can be null) |
 | `job_status` | enum | `job.status` | `"published"` |
-| `is_verified` | boolean | `job.is_verified` | Whether the HM verified their email |
-| `visibility` | string | `job.visibility` | `"private"` or `"public"` |
+| `job_verified` | boolean | `job.is_verified` | Whether the HM verified their email |
+| `job_visibility` | string | `job.visibility` | `"private"` or `"public"` |
 | `questions_count` | number | queried from DB | Total screening questions |
 | `identity_verification_mode` | enum | from `interview.interview_options` | `'require'` or `'off'` |
 | `intake_mode` | string | from `IntakeMeeting.mode` | `'ai_copilot'`, `'hm_solo'`, `'manual'` or null |
@@ -1496,11 +1316,13 @@ posthog_client.capture(
         "job_id": str(job.id),
         "job_title": job.title,
         "company_name": job.company_name,
-        "location": job.location,
+        "job_location": job.location,
         "job_status": job.status,
-        "is_verified": job.is_verified,
-        "visibility": job.visibility,
+        "job_verified": job.is_verified,
+        "job_visibility": job.visibility,
         "questions_count": len(questions),
+        "ai_generated_questions_count": len([q for q in questions if q.source == "ai_generated"]),
+        "manual_questions_count": len([q for q in questions if q.source == "manual"]),
         "identity_verification_mode": id_verify_mode,
         "intake_mode": intake_meeting.mode if intake_meeting else None,
     },
@@ -1512,7 +1334,7 @@ posthog_client.group_identify(
     group_key=str(job.id),
     properties={
         "job_status": job.status,
-        "is_verified": job.is_verified,
+        "job_verified": job.is_verified,
         "job_visibility": job.visibility,
     },
 )
@@ -1553,13 +1375,13 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | Requirement Add Button Clicked | Hiring | User clicks "+ Add" on Role Requirements step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Job Post Wizard Interview Questions Completed | Hiring | User clicks "Next" on Interview Questions step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `identity_verification_mode`, `$groups` | `job` | -- |
 | Question Add Button Clicked | Hiring | User clicks "+ Add" on Interview Questions step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
-| Screening Configuration Saved | Hiring | Backend saves screening config (2 endpoints — see Delta 12) | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): questions_count, identity_verification_mode` |
+| Screening Configuration Saved | Hiring | Backend saves screening config (2 endpoints — see Delta 12) | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | -- |
 | Job Verification Code Send Button Clicked | Hiring | User clicks "Send code" on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Job Post Wizard Verification Completed | Hiring | Email verified successfully on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Job Post Wizard Verification Skipped | Hiring | User clicks "Maybe later" on Verify step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Job Post Wizard Back Button Clicked | Hiring | User clicks "Back" on any wizard step (2–5) | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
-| Job Posting Verified | Hiring | Backend verifies 6-digit code successfully | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `identity_verification_mode`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `intake_mode` | `job` | `group(job): is_verified` |
-| Job Posting Published | Hiring | Backend publishes the job (2 endpoints — see Delta 12) | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): job_status, is_verified, job_visibility` |
+| Job Posting Verified | Hiring | Backend verifies 6-digit code successfully | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `identity_verification_mode`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `intake_mode` | `job` | `group(job): job_verified` |
+| Job Posting Published | Hiring | Backend publishes the job (2 endpoints — see Delta 12) | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | `group(job): job_status, job_verified, job_visibility` |
 | Archive Job Button Clicked | Hiring | User clicks "Archive" in job card overflow menu | Frontend | `action`, `action_value: 'archive_job_menu_item'`, `current_page_context`, `previous_page_context`, `entity_type`, `component: 'job_card_overflow_menu'`, `job_id`, `current_persona` | -- | -- |
 | Job Status Changed | Hiring | Job archived or unarchived (core + jobflow endpoints) | Backend | `current_persona`, `job_id`, `from_status`, `to_status` | `job` | `group(job): job_status` |
 | Share Button Clicked | Hiring | User clicks share button on job card | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `component`, `context_object_type`, `context_object_id`, `current_persona` | -- | -- |
@@ -1585,9 +1407,11 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | Flow | Intent Event | Success Event | Failure Event |
 |---|---|---|---|
 | Job Creation | Create Job Button Clicked | Job Post Wizard Started | -- |
-| Job Draft Save | Job Post Wizard Job Details Completed | Job Posting Draft Created | -- |
-| Job Publish | Job Post Wizard Verification Completed | Job Posting Published | -- |
-| Email Verification | Job Post Wizard Verification Completed | Job Posting Verified | -- |
+| Job Draft Save | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
+| Email Verification | Job Verification Code Send Button Clicked | Job Posting Verified | -- |
+| Job Publish | Job Post Wizard Verification Completed / Job Post Wizard Verification Skipped | Job Posting Published | -- |
+
+> **Note on Job Publish:** The intent is either successful email verification (`Verification Completed`) or skipping it (`Verification Skipped`) — both lead to the backend publishing the job. `Verification Completed` is itself the *outcome* of the email verification flow, but acts as the *intent* for the publish flow. This two-step chain is: Send Code (intent) → Verified (outcome/intent) → Published (outcome).
 
 ---
 
@@ -1620,11 +1444,11 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | `identity_verification_mode` | enum | `require`, `off` | Whether ID verification is enabled |
 | `entry_context` | enum | `new`, `resume_draft`, `edit_published` | Why the user entered the wizard |
 | `company_name` | string | e.g., `Acme Corp` | Company name extracted from JD (can be null) |
-| `location` | string | e.g., `San Francisco, CA` | Job location extracted from JD (can be null) |
-| `is_verified` | boolean | `true`, `false` | Whether hiring manager verified their email |
+| `job_location` | string | e.g., `San Francisco, CA` | Job location extracted from JD (can be null) |
+| `job_verified` | boolean | `true`, `false` | Whether hiring manager verified their email |
 | `job_title` | string | e.g., `Senior Engineer` | Job posting title |
 | `job_status` | enum | `draft`, `published` | Current job status |
-| `visibility` | enum | `private`, `public` | Job posting visibility |
+| `job_visibility` | enum | `private`, `public` | Job posting visibility |
 | `job_id` | UUID | e.g., `abc-123` | Job identifier |
 
 ---
@@ -2026,7 +1850,7 @@ The following events were added during implementation. They're part of the broad
 ### Delta 15: Page context slashes fixed
 
 **Original:** Not specified
-**Implemented as:** The `pathnameToPageContext()` helper was updated to handle leading slashes correctly. Previously, URLs like `/interview/job-details` could produce `_interview_job_details` (leading underscore). Now correctly produces `interview/job_details`.
+**Implemented as:** The `pathnameToPageContext()` helper was updated to handle leading slashes correctly. Previously, URLs like `/interview/job-details` could produce `_interview_job_details` (leading underscore). Now correctly produces `interview_job_details` (segments joined with `_`, not `/`).
 
 **Helix commit:** `8baba215` — "fix(analytics): replace acting_as with current_persona and fix page context slashes"
 
@@ -2405,6 +2229,8 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 | Remove | Reason |
 |--------|--------|
 | `visibility` row (Used In: `Job Posting Published`) | Orphaned — old `Job Published` event used `visibility`, but `Job Posting Published` sends `job_visibility` instead. The `job_visibility` group property row already exists. |
+| `resume_requirement` row (Used In: `Job Created`) | Orphaned — `Job Created` is retired and replaced by `Job Posting Draft Created`, which does not send `resume_requirement`. |
+| `voice_session_completed` row (Used In: `Job Created`) | Orphaned — `Job Created` is retired and replaced by `Job Posting Draft Created`, which does not send `voice_session_completed`. |
 
 **Enum Properties — update `job_visibility` scope:**
 
@@ -2488,8 +2314,8 @@ Both `posthog.identify()` code samples contain a broken placeholder `first_surfa
 |--------|-----|
 | `Creating a job \| Create Job Button Clicked \| Job Created \| Job Creation Failed` | `Creating a job (wizard start) \| Create Job Button Clicked \| Job Post Wizard Started \| --` |
 | | `Creating a job (draft save) \| Job Post Wizard Job Details Completed \| Job Posting Draft Created \| Job Creation Failed` |
-| | `Publishing a job \| Job Post Wizard Verification Completed \| Job Posting Published \| --` |
-| | `Email verification \| Job Post Wizard Verification Completed \| Job Posting Verified \| --` |
+| | `Email verification \| Job Verification Code Send Button Clicked \| Job Posting Verified \| --` |
+| | `Publishing a job \| Job Post Wizard Verification Completed / Job Post Wizard Verification Skipped \| Job Posting Published \| --` |
 
 **Intent vs Outcome section — add note after the table:**
 
