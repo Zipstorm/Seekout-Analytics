@@ -2346,8 +2346,8 @@ Both `posthog.identify()` code samples contain a broken placeholder `first_surfa
 |--------|-----|
 | `Job creation \| Create Job Button Clicked \| Job Created \| Job Creation Failed` | `Creating a job (wizard start) \| Create Job Button Clicked \| Job Post Wizard Started \| --` |
 | | `Creating a job (draft save) \| Job Post Wizard Job Details Completed \| Job Posting Draft Created \| Job Creation Failed` |
-| | `Publishing a job \| Job Post Wizard Verification Completed \| Job Posting Published \| --` |
-| | `Email verification \| Job Post Wizard Verification Completed \| Job Posting Verified \| --` |
+| | `Email verification \| Job Verification Code Send Button Clicked \| Job Posting Verified \| --` |
+| | `Publishing a job \| Job Post Wizard Verification Completed / Job Post Wizard Verification Skipped \| Job Posting Published \| --` |
 
 ### Known analytics gaps (to address separately)
 
