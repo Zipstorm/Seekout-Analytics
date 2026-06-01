@@ -162,7 +162,7 @@ The `autoSkipping` ref prevents `Verification Skipped` from firing during these 
 | Event | Endpoint | Trigger Condition | Key Properties |
 |-------|----------|-------------------|----------------|
 | `Job Posting Draft Created` | `POST /api/v1/core/job` | `create_job()` succeeds | `base_job_setup_properties(job)` + `current_persona` |
-| `Job Creation Failed` | `POST /api/v1/core/job` | `create_job()` raises exception | `current_persona`, `error_reason`, `error_category` |
+| `Job Creation Failed` | `POST /api/v1/core/job` | `create_job()` raises exception | `current_persona`, `error_reason` |
 | `Screening Configuration Saved` | `PATCH /api/v1/core/job/{job_id}` | `update_job()` transitions wizard_step to verify/COMPLETED from non-verify/COMPLETED, non-ATS only | Full `build_job_setup_analytics_snapshot` |
 | `Job Posting Published` | `PATCH /api/v1/core/job/{job_id}` | `update_job()` transitions status to active/published + wizard_step to COMPLETED, non-ATS, first time only | Full snapshot |
 | `Job Posting Published` | `POST /api/v1/core/job/{job_id}/finalize` | `finalize_job_setup()` transitions to published/active+COMPLETED | Full snapshot |
@@ -1545,7 +1545,7 @@ Events introduced by this feature. All follow Object-Action, Proper Case. **This
 | Job Post Wizard Started | Hiring | Wizard page mounts with router state isNewWizard=true | Frontend | `start_source`, `current_page_context` | -- | -- |
 | Job Post Wizard Job Details Completed | Hiring | User clicks "Next" on Job Details step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | -- |
 | Job Posting Draft Created | Hiring | Server creates job draft via POST /api/v1/core/job | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility` | `job` | `group(job): job_title, job_status, created_by_user_id, created_at` |
-| Job Creation Failed | Hiring | Backend exception during POST /api/v1/core/job | Backend | `current_persona`, `error_reason`, `error_category` | -- | -- |
+| Job Creation Failed | Hiring | Backend exception during POST /api/v1/core/job | Backend | `current_persona`, `error_reason` | -- | -- |
 | Job Post Wizard Intake Mode Selected | Hiring | User clicks "Next" (voice/text) or "Skip" on Understanding the Role step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode`, `$groups` | `job` | -- |
 | Sam Session Started | Hiring | Sam session initializes after user selects voice or text | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `session_id`, `mic_enabled`*, `error_category`*, `error_reason`*, `$groups` | `job` | -- |
 | Sam Session Ended | Hiring | User clicks "End Session" or intake auto-completes | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `duration_seconds`, `ended_by` (`user`/`completed`), `session_id`, `$groups` | `job` | -- |
@@ -1958,9 +1958,9 @@ The following events were added during implementation. They're part of the broad
 |---|---|
 | **Trigger** | Backend exception during `POST /api/v1/core/job` |
 | **Source** | Backend |
-| **Properties** | `current_persona`, `error_reason`, `error_category` |
+| **Properties** | `current_persona`, `error_reason` |
 | **Group** | -- (no job_id — creation failed) |
-| **Note** | Original plan said "not yet covered" — now implemented. `error_category` classifies the failure (`server` for unhandled exceptions, `validation` for input errors). Helix code needs updating to send `error_category` — currently only sends `error_reason`. |
+| **Note** | Original plan said "not yet covered" — now implemented. `error_category` intentionally omitted — Helix backend only sends `error_reason` (the raw exception message). If error classification is needed later, it can be added as a follow-up. |
 
 #### Job Status Changed
 
@@ -2317,7 +2317,7 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 |--------|-----|-------|
 | `Create Job Button Clicked` (no properties) | `Create Job Button Clicked` with `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | Same event name, enriched properties |
 | `Job Created` | `Job Posting Draft Created` (Backend, Success) with `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility` | Renamed — draft created on step 1 "Next" |
-| `Job Creation Failed` (old properties) | `Job Creation Failed` with `current_persona`, `error_reason`, `error_category` | Enriched, group changed from `job` to `--` (job_id may not exist when creation fails before draft is persisted) |
+| `Job Creation Failed` (old properties) | `Job Creation Failed` with `current_persona`, `error_reason` | Enriched, group changed from `job` to `--` (job_id may not exist when creation fails before draft is persisted) |
 | `Job Published` | `Job Posting Published` (Backend, Success) with full snapshot properties | Renamed + enriched |
 | `Job Wizard Started` | _(remove entirely — replaced by Job Post Wizard Started below)_ | |
 | `Job Wizard Step Completed` | _(remove entirely — replaced by per-step events below)_ | |
