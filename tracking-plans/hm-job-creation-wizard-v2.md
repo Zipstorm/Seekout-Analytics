@@ -2320,12 +2320,12 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 | `Job Creation Failed` (old properties) | `Job Creation Failed` with `current_persona`, `error_reason` | Enriched, group changed from `job` to `--` (job_id may not exist when creation fails before draft is persisted) |
 | `Job Published` | `Job Posting Published` (Backend, Success) with full snapshot properties | Renamed + enriched |
 | `Job Wizard Started` | _(remove entirely — replaced by Job Post Wizard Started below)_ | |
-
-> **Note:** For full row details (Area, Type, Trigger, Source, Properties, Group, Property Updates, Status) of replaced events (`Job Posting Draft Created`, `Job Creation Failed`, `Job Posting Published`), refer to the **New Events Summary** table in the "New Events" section above.
 | `Job Wizard Step Completed` | _(remove entirely — replaced by per-step events below)_ | |
 | `Voice Session Started` | _(remove entirely — replaced by Sam Session Started below)_ | |
 | `Voice Session Ended` | _(remove entirely — replaced by Sam Session Ended below)_ | |
 | `Voice Session Setup Failed` | _(remove entirely — folded into Sam Session Started properties)_ | |
+
+> **Note:** For full row details (Area, Type, Trigger, Source, Properties, Group, Property Updates, Status) of replaced events (`Job Posting Draft Created`, `Job Creation Failed`, `Job Posting Published`), refer to the **New Events Summary** table in the "New Events" section above.
 
 **Add new events (insert after `Archive Job Button Clicked`, before `Share Button Clicked`):**
 
@@ -2354,7 +2354,7 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 
 | Event | Change |
 |-------|--------|
-| `Share Button Clicked` | Update properties to: `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `context_object_type`, `context_object_id`, `current_persona`. Note: `share_source` is in catalog but NOT sent by `JobList.tsx` — analytics gap to address separately |
+| `Share Button Clicked` | Update properties to: `action`, `action_value`, `current_page_context`, `previous_page_context`, `component`, `context_object_type`, `context_object_id`, `current_persona`. Note: `share_source` is in catalog but NOT sent by `JobList.tsx` — analytics gap to address separately |
 | `Job Status Changed` | Add `current_persona` to properties |
 | `Team Member Invited` | Add `current_persona` to properties |
 | `Team Member Invite Failed` | Add `current_persona` to properties |
