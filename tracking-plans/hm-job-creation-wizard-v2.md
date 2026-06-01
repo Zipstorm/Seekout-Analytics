@@ -2320,6 +2320,8 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 | `Job Creation Failed` (old properties) | `Job Creation Failed` with `current_persona`, `error_reason` | Enriched, group changed from `job` to `--` (job_id may not exist when creation fails before draft is persisted) |
 | `Job Published` | `Job Posting Published` (Backend, Success) with full snapshot properties | Renamed + enriched |
 | `Job Wizard Started` | _(remove entirely — replaced by Job Post Wizard Started below)_ | |
+
+> **Note:** For full row details (Area, Type, Trigger, Source, Properties, Group, Property Updates, Status) of replaced events (`Job Posting Draft Created`, `Job Creation Failed`, `Job Posting Published`), refer to the **New Events Summary** table in the "New Events" section above.
 | `Job Wizard Step Completed` | _(remove entirely — replaced by per-step events below)_ | |
 | `Voice Session Started` | _(remove entirely — replaced by Sam Session Started below)_ | |
 | `Voice Session Ended` | _(remove entirely — replaced by Sam Session Ended below)_ | |
@@ -2330,7 +2332,7 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 | Event | Area | Type | Trigger | Source | Properties | Group | Status |
 |-------|------|------|---------|--------|------------|-------|--------|
 | `Job Post Wizard Started` | Hiring | Success | Wizard page mounts with router state isNewWizard=true | Frontend | `start_source`, `current_page_context` | -- | Not Started |
-| `Job Post Wizard Job Details Completed` | Hiring | -- | User clicks "Next" on Job Details step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | -- | Not Started |
+| `Job Post Wizard Job Details Completed` | Hiring | -- | User clicks "Next" on Job Details step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
 | `Job Post Wizard Intake Mode Selected` | Hiring | -- | User clicks "Next" (voice/text) or "Skip" on Understanding the Role step | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `intake_mode`, `$groups` | `job` | Not Started |
 | `Sam Session Started` | Hiring | -- | Sam session initializes after user selects voice or text | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `session_id`, `mic_enabled`\*, `error_category`\*, `error_reason`\*, `$groups` | `job` | Not Started |
 | `Sam Session Ended` | Hiring | -- | User clicks "End Session" or intake auto-completes | Frontend | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_mode`, `duration_seconds`, `ended_by`, `session_id`, `$groups` | `job` | Not Started |
@@ -2345,7 +2347,6 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 | `Job Post Wizard Back Button Clicked` | Hiring | -- | User clicks "Back" on any wizard step (2–5) | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `step_number`, `step_name`, `$groups` | `job` | Not Started |
 | `Job Posting Verified` | Hiring | Success | Backend verifies 6-digit code successfully | Backend | `current_persona`, `job_id`, `job_title`, `company_name`, `job_location`, `job_status`, `job_verified`, `job_visibility`, `questions_count`, `ai_generated_questions_count`, `manual_questions_count`, `identity_verification_mode`, `intake_mode` | `job` | Not Started |
 | `Archive Job Button Clicked` | Hiring | Intent | User clicks "Archive" in job card overflow menu | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `job_id`, `current_persona` | -- | Not Started |
-| `Job Status Tab Clicked` | Hiring | -- | User clicks a status filter tab on job postings page | Frontend | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `current_persona` | -- | Not Started |
 
 \* `mic_enabled`, `error_category`, `error_reason` — voice mode only, when voiceStatus is present
 
@@ -2382,12 +2383,12 @@ This section documents all changes that must be applied to `docs/event-catalog.m
 
 | Property | Change |
 |----------|--------|
-| `error_category` | Replace `connection` with `unknown` in Allowed Values. The Helix frontend code (`voiceStore.ts`) classifies errors as `timeout`, `hardware`, or `unknown` — `connection` is not used anywhere. |
+| `error_category` | Add `hardware` and `unknown` to Allowed Values (new: `network`, `permission`, `validation`, `server`, `timeout`, `hardware`, `unknown`). Sam Session Started voice failures use `timeout`, `hardware`, `unknown` per `voiceStore.ts`. |
 | `ended_by` | Change values from `user`, `sam` to `user`, `completed` |
-| `action` (user_action) | Add to Used In: `Job Status Tab Clicked`, `Job Post Wizard Intake Mode Selected`, all split events (Back Button, Add Button, Code Send, Verification Skipped), `Archive Job Button Clicked` |
-| `step_number` | Add to Used In: all new wizard step events |
-| `step_name` | Add to Used In: all new wizard step events |
-| `action_value` | Add to Used In: all new wizard step events, `Job Status Tab Clicked`, `Archive Job Button Clicked` |
+| `action` (user_action) | Add to Used In: `Job Post Wizard Intake Mode Selected`, all split events (Back Button, Add Button, Code Send, Verification Skipped), `Archive Job Button Clicked` |
+| `step_number` | Change description from `Wizard step (1–4)` to `Wizard step (1–5)`. Add to Used In: all new wizard step events |
+| `step_name` | Add `verify` to Allowed Values (new: `job_details`, `understanding_the_role`, `role_requirements`, `interview_questions`, `verify`). Add to Used In: all new wizard step events |
+| `action_value` | Add to Used In: all new wizard step events, `Archive Job Button Clicked` |
 | `current_page_context` | Change description from `"/ hierarchy"` to `"_ hierarchy"` (reflects `pathnameToPageContext()` fix). Add to Used In: Sam Session Started, Sam Session Ended, all wizard events |
 | `session_id` | Add new string property: `Backend session identifier for Sam conversations`, Used In: `Sam Session Started`, `Sam Session Ended` |
 | `job_location` | Add new string property (replaces `location`): `Job location extracted from JD (can be null)`, Used In: `Job Posting Draft Created`, `Screening Configuration Saved`, `Job Posting Verified`, `Job Posting Published` |
