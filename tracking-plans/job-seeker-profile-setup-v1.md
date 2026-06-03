@@ -4,7 +4,6 @@
 **Feature:** Job seeker profile setup — resume upload, photo, links, AI profile generation (`/candidate/create-profile`)
 **Date:** 2026-06-02 (drafted) · 2026-06-03 (updated to match implementation)
 **Related PRD:** —
-**Helix PR:** Zipstorm/helix#578
 **Scope:** v1 — Create Profile page events only. Editor (B) and Dashboard (C) events deferred to v2.
 **Status:** Implementation complete — pending tracking plan merge
 
