@@ -191,8 +191,8 @@ PERSONA_UPDATE_FAILED = "Persona Update Failed"
 - Fires from `users/router.py` after `service.update_user()` + `db.commit()` succeeds
 - Only fires when `dto.role` is set AND differs from `current_user.role`
 - `user.role` is a `UserRole` enum (`HIRING_MANAGER`, `RECRUITER`, `PROFESSIONAL`) — mapped to persona strings via `ROLE_TO_PERSONA`
-- No `current_persona` or `activated_personas` columns in DB — these are purely PostHog person properties
-- `activated_personas` note: since this isn't stored in DB, on first switch the array may be `None`; the `or []` handles this. Consider seeding it on Account Created (see catalog changes below)
+- `activated_personas` is stored as a JSONB column on the `users` table (added via Alembic migration `6617a6ad20a5`). The service layer (`users/service.py`) appends the new persona on every role change, so the DB array accumulates over time. The router reads it from `current_user.activated_personas` and sends it to PostHog via `$set`.
+- `current_persona` is NOT stored in DB — it is derived from `ROLE_TO_PERSONA` at event-capture time and set as a PostHog person property only
 
 ---
 
