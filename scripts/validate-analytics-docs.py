@@ -911,7 +911,7 @@ def tp_rule_04(tp_events, prop_dict, tp_prop_dict):
 
 
 def tp_rule_05(tp_events, schema_evt_props):
-    """Standard property compliance: acting_as, job_id, surface, referrer_user_id."""
+    """Standard property compliance: acting_as, job_id, referrer_user_id."""
     errors, warnings = [], []
     acting_as_when = schema_evt_props.get("acting_as", {}).get("when", "")
     acting_as_exceptions = _parse_exceptions(acting_as_when)
@@ -919,10 +919,6 @@ def tp_rule_05(tp_events, schema_evt_props):
         area = ev["area"].lower()
         props = ev["properties"]
         group = ev["group"].strip("`")
-
-        # surface required on all events
-        if "surface" not in props:
-            errors.append(f'Event "{name}" missing standard property `surface`')
 
         # acting_as required on hiring events
         if (
@@ -968,14 +964,18 @@ def tp_rule_06(tp_intent_outcome, tp_events, catalog_events):
 
 
 def tp_rule_07(tp_events, schema_objects):
-    """Event object prefix must match a recognized Standard Object."""
+    """Event object prefix must match a recognized Standard Object.
+
+    Emits warnings (not errors) because tracking plans are expected to introduce
+    new Standard Objects that will be added to the schema during /merge-tracking-plan.
+    """
     errors, warnings = [], []
     for name in tp_events:
         obj = _object_prefix(name, schema_objects)
         if not obj and name.endswith("Button Clicked"):
             obj = _object_for_intent_event(name, schema_objects)
         if not obj and not name.endswith("Button Clicked"):
-            errors.append(
+            warnings.append(
                 f'Event "{name}" uses an object prefix not in Standard Objects table'
             )
     return errors, warnings
