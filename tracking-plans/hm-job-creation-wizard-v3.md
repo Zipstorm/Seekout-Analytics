@@ -54,6 +54,17 @@ HM Job Posting Wizard — Step 1: Job Details
 
 ---
 
+## New Standard Objects
+
+| Object | Entity | Example Events |
+|---|---|---|
+| Job Description | Job description content | Job Description Evaluated, Job Description Evaluation Failed, Job Description Details Toggled, Job Description Field Edited |
+| Sam | AI hiring partner (Sam) | Sam Session Setup Failed |
+| Screening Question | Interview screening question | Screening Question Deleted, Screening Question Edited, Screening Question Added |
+| Job Share | Job sharing action | Success Page Share Button Clicked, Job Share Message AI Refined, Job Share Message Copied, Job Share Channel Clicked |
+| Team Member | Job team member | Invite Teammates Button Clicked, Team Member Invite Sent |
+| Job Posting | Job posting page | Go To Job Posting Page Clicked |
+
 ## New Events
 
 ### 1. Job Description Evaluated
