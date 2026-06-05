@@ -27,6 +27,27 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 |---|---|---|---|---|---|
 | [Object Action] | Account / Prospect / Hiring / Viral Loop | [When this fires] | `property_1`, `property_2` | `job` / -- | `$set_once: prop`, `group(job): prop` / -- |
 
+<!--
+## New Standard Objects
+
+Use this section when new events introduce an object that is not yet in
+docs/event-schema.md. Rows use the same shape as the schema table so
+/merge-tracking-plan can append them directly.
+
+| Object | Entity | Example Events |
+|---|---|---|
+| [Object Name] | [Entity represented] | [Object Action], [Object Action] |
+
+## Removed Standard Objects
+
+Use this section when this tracking plan removes or replaces an existing
+Standard Object. Reason is optional reviewer context.
+
+| Object | Reason |
+|---|---|
+| [Object Name] | [Why it is removed or replaced] |
+-->
+
 ---
 
 ## Intent vs Outcome
