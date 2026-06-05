@@ -212,6 +212,15 @@ After all surface references were removed from capture calls, the `SURFACE_PROSP
 
 ---
 
+## New Standard Objects
+
+| Object | Entity | Example Events |
+|---|---|---|
+| Resume | Prospect resume document | Resume Uploaded, Resume Upload Failed, Resume Removed, Resume Upload Button Clicked |
+| Profile Photo | Prospect profile photo | Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Add Profile Photo Button Clicked |
+| Candidate Profile | AI-generated candidate profile | Candidate Profile Created, Candidate Profile Creation Failed, Build Profile Button Clicked, Profile Build Snapshot |
+| LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Clicked |
+
 ## New Events
 
 ### 1. Page Viewed (new page context)
