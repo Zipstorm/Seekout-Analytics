@@ -9,7 +9,7 @@ confluence:
 
 **Product:** Helix (SeekOut.ai)  
 **Analytics Platform:** PostHog  
-**Last Updated:** April 2026
+**Last Updated:** June 2026
 
 For the event catalog and implementation status, see [Helix Analytics Events Tracker](./event-catalog.md).
 For dashboards and funnel mappings, see [Helix Analytics Dashboards & Funnels](./dashboards.md).
@@ -46,7 +46,7 @@ Every event follows the pattern: **Object Action**
 
 All event and person properties use `snake_case`: `job_id`, `current_persona`, `signup_context`, `share_channel`. No Proper Case or camelCase for properties.
 
-For `current_page_context` and `previous_page_context` values, use underscores for hierarchy: `hm_job_creation_wizard_interview_questions`, `onboarding_role_selection`. URL paths must be transformed to snake_case — strip the leading `/`, replace `/` and `-` with `_` (e.g., `/onboarding/role-selection` → `onboarding_role_selection`).
+For `current_page_context` and `previous_page_context` values, use underscores (_) for hierarchy, not slashes (/): `hm_job_creation_wizard_interview_questions`, `onboarding_role_selection`. URL paths must be transformed to snake_case — strip the leading `/`, replace `/` and `-` with `_` (e.g., `/onboarding/role-selection` → `onboarding_role_selection`).
 
 ### Standard Objects
 
@@ -60,7 +60,7 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Account | User (account-level actions) | Account Created, Account Activated |
 | Intro | Onboarding intro screen | Intro Completed |
 | Profile | Prospect's career profile | Profile Created, Profile Section Updated |
-| Job | Job posting | Job Created, Job Shared |
+| Job | Job posting | Job Posting Draft Created, Job Shared |
 | Interest | Expression of Interest | Interest Expressed, Interest Reviewed |
 | Review | Interest Review | Review Decision Made |
 | Team Member | JobTeamMember | Team Member Invited, Team Member Joined |
@@ -69,13 +69,15 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Persona | User persona (hiring_manager, recruiter, job_seeker) | Switch Persona Button Clicked, Persona Updated |
 | Job Link | Shared job posting link viewed by anonymous visitors | Job Link Viewed, Job Link Engaged |
 | Profile Link | Prospect's shareable profile link viewed by visitors | Profile Link Viewed, Profile Link Engaged |
-| Job Wizard | Job creation wizard session | Job Wizard Started |
-| Job Wizard Step | Job creation wizard step | Job Wizard Step Completed |
-| Voice Session | AI hiring partner conversation | Voice Session Started, Voice Session Ended, Voice Session Setup Failed |
+| Job Post Wizard | Job creation wizard session | Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Post Wizard Intake Mode Selected, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Post Wizard Back Button Clicked |
+| Job Posting | Job posting lifecycle (draft, verified, published) | Job Posting Draft Created, Job Posting Verified, Job Posting Published |
+| Sam | AI hiring partner (Sam) conversation | Sam Session Started, Sam Session Ended |
+| Job Verification Code | Email verification code | Job Verification Code Send Button Clicked |
+| Screening Configuration | Job screening setup | Screening Configuration Saved |
 | Intro Video | HM intro video recording | Intro Video Created, Intro Video Deleted |
 | Candidate | Candidate in review pipeline | Candidate Viewed, Candidate Tab Viewed, Candidate Recording Played |
-| Requirement | AI-generated role requirement | Requirement Modified |
-| Question | AI-generated interview question | Question Modified |
+| Requirement | AI-generated role requirement | Requirement Add Button Clicked, Requirement Modified |
+| Question | AI-generated interview question | Question Add Button Clicked, Question Modified |
 | Intro Script | Intro video script | Intro Script Updated |
 | Chat | Chat/WebSocket connection for messaging | Chat WebSocket Connected, Chat WebSocket Error |
 
@@ -152,7 +154,7 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
 posthog.identify(user.id,
   { email: user.email, name: user.name, role: user.role, org_id: user.orgId, current_persona: currentPersona },  // $set
-  { account_created_at: user.createdAt, first_surface: ... }  // $set_once
+  { account_created_at: user.createdAt }  // $set_once
 );
 ```
 
@@ -214,7 +216,7 @@ Include on every event where applicable.
 | `component` | string | snake_case UI container identifier | All `user_action` events |
 | `job_id` | UUID | alphanumeric or number | All job-related events |
 
-> **Note:** The user's active persona is tracked via the `current_persona` person property (`$set`), which is automatically available on all events. No need to pass persona per-event.
+> **Note:** The user's active persona is tracked via the `current_persona` person property (`$set`). Backend events also include `current_persona` as an explicit event property to guarantee availability without `$set` propagation delay.
 
 ---
 
@@ -295,7 +297,7 @@ posthog.capture('Intro Completed', {
 const currentPersona = user.role ? (ROLE_TO_PERSONA[user.role] ?? 'unknown') : null;
 posthog.identify(user.id,
   { email: user.email, name: user.name, role: user.role, org_id: user.orgId, current_persona: currentPersona },  // $set
-  { account_created_at: user.createdAt, first_surface: ... }  // $set_once
+  { account_created_at: user.createdAt }  // $set_once
 );
 ```
 
@@ -396,9 +398,15 @@ For critical flows, track the UI interaction (intent) and the server-confirmed r
 | Sharing a job | Share Button Clicked | Job Shared | Job Share Failed |
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
-| Creating a job | Create Job Button Clicked | Job Created | Job Creation Failed |
+| Creating a job (wizard start) | Create Job Button Clicked | Job Post Wizard Started | -- |
+| Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
+| Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- |
+| Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- |
+| Publishing a job (skipped) | Job Post Wizard Verification Skipped | Job Posting Published | -- |
 | Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed |
 | Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed |
 | Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
+
+> **Exception:** `Sam Session Started` carries optional failure properties (`mic_enabled`, `error_category`, `error_reason`) for voice setup failures instead of using a separate failure event. This allows analysts to build a single funnel (`Sam Session Started` → `Sam Session Ended`) and filter by `mic_enabled = false` for failures, rather than unioning two separate events.
