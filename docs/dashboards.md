@@ -9,7 +9,7 @@ confluence:
 
 **Product:** Helix (SeekOut.ai)  
 **Analytics Platform:** PostHog  
-**Last Updated:** March 2026
+**Last Updated:** June 2026
 
 For event definitions and properties, see [Helix Analytics Events Tracker](./event-catalog.md).
 For naming conventions and PostHog setup, see [Helix Analytics Events Schema](./event-schema.md).
@@ -61,7 +61,7 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - K-factor per viral loop (job sharing, profile sharing)
 - Conversion funnel: Job Link Viewed → Job Link Engaged → Signup Started → Account Created → Activated
 - Activation rate by signup context
-- Onboarding-to-job conversion: Account Created → Persona Selected → Job Wizard Started → Job Wizard Step Completed (step 1) → Job Created
+- Onboarding-to-job conversion: Account Created → Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Posting Draft Created → Job Posting Published
 - Retention: WAU, MAU, D7/D30 return rates
 
 ### Prospect Dashboard (Prospect Team)
@@ -74,16 +74,19 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 
 ### Hiring Dashboard (HM/Recruiter Team)
 - Jobs created and published per user
-- Jobs published: public vs. private split (`visibility`)
+- Jobs published: public vs. private split (`job_visibility`)
 - Job status transitions (`from_status` → `to_status` from Job Status Changed)
 - Shares per job by channel (`share_channel` from Job Shared)
 - Team members invited per job, by `invited_role_label` and `invite_method`
 - Time from Interest Expressed → first Interest Reviewed (`time_to_review_seconds`)
 - Review decision distribution (shortlisted / declined / needs_discussion)
 - Interests per job (using job group analytics)
-- Job wizard completion funnel — step-by-step drop-off rates (Job Wizard Started → Job Wizard Step Completed step 1 → 2 → 3 → 4 → Job Created). Note: Step 4 completion fires both Job Wizard Step Completed (step 4) and the Create Job Button Clicked → Job Created intent/outcome pair.
-- Voice session stats — completion rate (Voice Session Started → Voice Session Ended), avg `duration_seconds`
-- AI content modification rate — % of jobs where requirements/questions were modified (Requirement Modified / Question Modified counts vs Job Created)
+- Job post wizard completion funnel — step-by-step drop-off rates (Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Post Wizard Intake Mode Selected → Job Post Wizard Role Requirements Completed → Job Post Wizard Interview Questions Completed → Job Post Wizard Verification Completed → Job Posting Published)
+- Job post wizard abandonment — Step 1 drop-off rate (Job Post Wizard Started → Job Post Wizard Job Details Completed)
+- Sam session adoption — voice/text session completion rate (Job Post Wizard Intake Mode Selected → Sam Session Started → Sam Session Ended), broken down by `input_mode`
+- Sam voice setup failure rate — Sam Session Started where `mic_enabled` = false, `error_category` distribution (timeout / hardware / unknown)
+- Voice session stats — completion rate (Sam Session Started → Sam Session Ended), avg `duration_seconds`
+- AI content modification rate — % of jobs where requirements/questions were modified (Requirement Modified / Question Modified counts vs Job Posting Published)
 - Intro video adoption — % of jobs with intro video (`has_intro_video`), recording completion rate (Record Video Button Clicked → Intro Video Created)
 - Candidate review depth — avg tabs viewed per candidate, % of candidates where recording was played. Time-to-decision: median seconds from Candidate Viewed timestamp to Review Decision Made timestamp (computed per-candidate, not a funnel).
 
@@ -99,7 +102,7 @@ Tracks failure rates across the five Intent → Success / Failure triplets defin
 
 | Flow | Intent Event | Success Event | Failure Event |
 |------|-------------|---------------|---------------|
-| Job creation | Create Job Button Clicked | Job Created | Job Creation Failed |
+| Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
 | Job sharing | Share Button Clicked | Job Shared | Job Share Failed |
 | Interest expression | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Team invite | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
