@@ -314,13 +314,13 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
 ## Removed Standard Objects
 | Object |
 |---|
-| Voice Session |
+| Auth |
 """
         )
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("Voice Session blocks: Voice Session Started", result.stdout)
+        self.assertIn("Auth blocks: Auth Login Succeeded", result.stdout)
         self.assertEqual(result.stderr, "")
 
     def test_no_removed_section_is_noop(self):
@@ -364,14 +364,14 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
 ## Removed Standard Objects
 | Object |
 |---|
-| Voice Session |
+| Auth |
 | Object With No References |
 """
         )
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("Voice Session blocks:", result.stdout)
+        self.assertIn("Auth blocks:", result.stdout)
         self.assertNotIn("Object With No References blocks:", result.stdout)
 
 

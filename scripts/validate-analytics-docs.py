@@ -1128,7 +1128,7 @@ def tp_rule_04(tp_events, prop_dict, tp_prop_dict):
 
 
 def tp_rule_05(tp_events, schema_evt_props):
-    """Standard property compliance: acting_as, job_id, surface, referrer_user_id."""
+    """Standard property compliance: acting_as, job_id, referrer_user_id."""
     errors, warnings = [], []
     acting_as_when = schema_evt_props.get("acting_as", {}).get("when", "")
     acting_as_exceptions = _parse_exceptions(acting_as_when)
@@ -1136,10 +1136,6 @@ def tp_rule_05(tp_events, schema_evt_props):
         area = ev["area"].lower()
         props = ev["properties"]
         group = ev["group"].strip("`")
-
-        # surface required on all events
-        if "surface" not in props:
-            errors.append(f'Event "{name}" missing standard property `surface`')
 
         # acting_as required on hiring events
         if (
