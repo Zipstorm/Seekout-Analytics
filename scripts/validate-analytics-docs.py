@@ -11,8 +11,9 @@ Exit: 0 = all clear, 1 = errors found, 2 = parse failure
 
 import re
 import sys
-from pathlib import Path
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_DIR = REPO_ROOT / "docs"
@@ -40,6 +41,7 @@ RULE_NAMES = {
 }
 
 TP_RULE_NAMES = {
+    "TP0": "Standard Object declarations",
     "TP1": "Event naming conventions",
     "TP2": "Property naming conventions",
     "TP3": "No duplicate events vs catalog",
@@ -50,6 +52,20 @@ TP_RULE_NAMES = {
     "TP8": "Funnel event validity",
     "TP9": "Inline enum consistency",
 }
+
+NEW_OBJECTS_SECTION = "New Standard Objects"
+REMOVED_OBJECTS_SECTION = "Removed Standard Objects"
+
+
+@dataclass
+class TrackingPlanData:
+    events: dict = field(default_factory=dict)
+    intent_outcome: list = field(default_factory=list)
+    funnels: dict = field(default_factory=dict)
+    prop_dict: dict = field(default_factory=dict)
+    added_objects: dict = field(default_factory=dict)
+    removed_objects: dict = field(default_factory=dict)
+    declaration_errors: list = field(default_factory=list)
 
 # ── Markdown Parsing ─────────────────────────────────────────────────────────
 
@@ -113,6 +129,154 @@ def _find_table(tables, pattern):
         if pattern.lower() in h.lower():
             return header, rows
     return None, None
+
+
+def _is_table_separator(line):
+    s = line.strip()
+    if not (s.startswith("|") and s.endswith("|")):
+        return False
+    sep_cells = s.split("|")[1:-1]
+    return bool(sep_cells) and all(
+        re.match(r"^[\s:-]+$", c) for c in sep_cells if c.strip()
+    )
+
+
+def _heading_match(line):
+    return re.match(r"^\s*(#{1,6})\s+(.+?)\s*$", line)
+
+
+def _malformed_section_message(section_name):
+    if section_name == NEW_OBJECTS_SECTION:
+        return (
+            'Tracking plan section "New Standard Objects" must use columns: '
+            "Object | Entity | Example Events."
+        )
+    return (
+        'Tracking plan section "Removed Standard Objects" must use columns: '
+        "Object, optionally followed by Reason."
+    )
+
+
+def _empty_object_message(section_name):
+    if section_name == NEW_OBJECTS_SECTION:
+        return (
+            "## New Standard Objects has a row with an empty Object cell. "
+            "Every declaration row must name an object."
+        )
+    return (
+        "## Removed Standard Objects has a row with an empty Object cell. "
+        "Every removal row must name an object."
+    )
+
+
+def _find_heading_sections(lines, section_name):
+    matches = []
+    for i, line in enumerate(lines):
+        hm = _heading_match(line)
+        if not hm or hm.group(2).strip().lower() != section_name.lower():
+            continue
+        end = len(lines)
+        for j in range(i + 1, len(lines)):
+            if _heading_match(lines[j]):
+                end = j
+                break
+        matches.append((i + 1, end))
+    return matches
+
+
+def _parse_object_declaration_section(lines, section_name):
+    entries = {}
+    errors = []
+    nonblank = [(i, line.strip()) for i, line in enumerate(lines) if line.strip()]
+    if not nonblank:
+        return entries, errors
+
+    first_idx, first = nonblank[0]
+    if not (first.startswith("|") and first.endswith("|")):
+        errors.append(_malformed_section_message(section_name))
+        return entries, errors
+
+    if first_idx + 1 >= len(lines) or not _is_table_separator(lines[first_idx + 1]):
+        errors.append(_malformed_section_message(section_name))
+        return entries, errors
+
+    header = _split_row(first)
+    if section_name == NEW_OBJECTS_SECTION:
+        expected = ["Object", "Entity", "Example Events"]
+        if header != expected:
+            errors.append(_malformed_section_message(section_name))
+            return entries, errors
+    else:
+        if header not in (["Object"], ["Object", "Reason"]):
+            errors.append(_malformed_section_message(section_name))
+            return entries, errors
+
+    row_len = len(header)
+    i = first_idx + 2
+    while i < len(lines):
+        s = lines[i].strip()
+        if not s:
+            i += 1
+            continue
+        if not (s.startswith("|") and s.endswith("|")):
+            errors.append(_malformed_section_message(section_name))
+            i += 1
+            continue
+        row = _split_row(s)
+        if len(row) != row_len:
+            errors.append(_malformed_section_message(section_name))
+            i += 1
+            continue
+        obj = row[0].strip()
+        if not obj:
+            errors.append(_empty_object_message(section_name))
+            i += 1
+            continue
+        if obj in entries:
+            errors.append(
+                f'## {section_name} declares "{obj}" more than once. '
+                "Keep a single row per object."
+            )
+            i += 1
+            continue
+        if section_name == NEW_OBJECTS_SECTION:
+            examples = [e.strip() for e in row[2].split(",") if e.strip()]
+            entries[obj] = dict(entity=row[1].strip(), example_events=examples)
+        else:
+            reason = row[1].strip() if row_len == 2 else ""
+            entries[obj] = dict(reason=reason)
+        i += 1
+
+    return entries, list(dict.fromkeys(errors))
+
+
+def _parse_object_declarations(text):
+    declaration_text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    lines = declaration_text.splitlines()
+    all_errors = []
+    parsed = {}
+
+    for section_name in (NEW_OBJECTS_SECTION, REMOVED_OBJECTS_SECTION):
+        sections = _find_heading_sections(lines, section_name)
+        if len(sections) > 1:
+            all_errors.append(
+                f'Tracking plan section "{section_name}" appears more than once.'
+            )
+        if not sections:
+            parsed[section_name] = {}
+            continue
+        start, end = sections[0]
+        entries, errors = _parse_object_declaration_section(
+            lines[start:end], section_name
+        )
+        parsed[section_name] = entries
+        all_errors.extend(errors)
+
+    return (
+        parsed.get(NEW_OBJECTS_SECTION, {}),
+        parsed.get(REMOVED_OBJECTS_SECTION, {}),
+        all_errors,
+    )
 
 
 # ── Cell-Level Parsing ───────────────────────────────────────────────────────
@@ -398,13 +562,14 @@ def parse_tracking_plan(path):
     Parse a tracking plan markdown file.
 
     Returns:
-      tp_events        – dict[name, {area, properties, inline_enums, group, person_props, group_props}]
-      tp_intent_outcome – list[{flow, intent, success, failure}]
-      tp_funnels       – dict[name, list[event_name]]
-      tp_prop_dict     – dict[prop_name, {type, values}]
+      TrackingPlanData with events, intent/outcome rows, funnels, property
+      details, object declarations, and declaration parse errors.
     """
     text = strip_frontmatter(path.read_text())
     tables = parse_tables(text)
+    added_objects, removed_objects, declaration_errors = _parse_object_declarations(
+        text
+    )
 
     # ── New Events table ──
     tp_events = {}
@@ -479,7 +644,15 @@ def parse_tracking_plan(path):
             values = [v.strip() for v in row[2].split("/") if v.strip()] if row[2].strip() else []
             tp_prop_dict[prop] = dict(type=ptype, values=values)
 
-    return tp_events, tp_intent_outcome, tp_funnels, tp_prop_dict
+    return TrackingPlanData(
+        events=tp_events,
+        intent_outcome=tp_intent_outcome,
+        funnels=tp_funnels,
+        prop_dict=tp_prop_dict,
+        added_objects=added_objects,
+        removed_objects=removed_objects,
+        declaration_errors=declaration_errors,
+    )
 
 
 # ── Validation Rules ─────────────────────────────────────────────────────────
@@ -518,6 +691,45 @@ def _object_for_intent_event(event_name, known_objects):
         if f" {obj} " in f" {event_name} ":
             return obj
     return None
+
+
+def _extract_object(event_name):
+    """Strict TP object extraction: event name minus final whitespace token."""
+    name = event_name.strip()
+    if " " not in name:
+        return None
+    return name.rsplit(" ", 1)[0]
+
+
+def validate_object_declarations(added_objects, removed_objects, schema_objects, parse_errors=None):
+    errors = list(parse_errors or [])
+    warnings = []
+    schema_names = set(schema_objects)
+    added_names = set(added_objects)
+    removed_names = set(removed_objects)
+
+    for obj in sorted(added_names & removed_names):
+        errors.append(
+            f'Tracking plan declares "{obj}" in both ## New Standard Objects '
+            f"and ## Removed Standard Objects. Remove the duplicate or pick one section."
+        )
+
+    for obj in sorted(removed_names):
+        if obj not in schema_names and obj not in added_names:
+            warnings.append(
+                f'## Removed Standard Objects lists "{obj}", which is not in '
+                f"docs/event-schema.md Standard Objects nor declared in "
+                f"## New Standard Objects. Removal has no effect."
+            )
+
+    for obj in sorted(added_names):
+        if obj in schema_names:
+            warnings.append(
+                f'## New Standard Objects lists "{obj}", which already exists in '
+                f"docs/event-schema.md Standard Objects. Declaration is redundant."
+            )
+
+    return errors, warnings
 
 
 def rule_01(catalog_events, schema_objects):
@@ -842,6 +1054,11 @@ def rule_14(duplicate_events, prop_dict):
 # ── Tracking Plan Validation Rules ────────────────────────────────────────────
 
 
+def tp_rule_00(declaration_errors, declaration_warnings):
+    """Validate New/Removed Standard Object declarations."""
+    return list(declaration_errors), list(declaration_warnings)
+
+
 def tp_rule_01(tp_events):
     """Event names must be Proper Case and Object-Action (2+ words)."""
     errors, warnings = [], []
@@ -967,16 +1184,28 @@ def tp_rule_06(tp_intent_outcome, tp_events, catalog_events):
     return errors, warnings
 
 
-def tp_rule_07(tp_events, schema_objects):
-    """Event object prefix must match a recognized Standard Object."""
+def tp_rule_07(tp_events, schema_objects, added_objects=None, removed_objects=None):
+    """Event object must match effective Standard Objects using strict TP parsing."""
     errors, warnings = [], []
+    added = set(added_objects or {})
+    removed = set(removed_objects or {})
+    known = set(schema_objects) | added
     for name in tp_events:
-        obj = _object_prefix(name, schema_objects)
-        if not obj and name.endswith("Button Clicked"):
-            obj = _object_for_intent_event(name, schema_objects)
-        if not obj and not name.endswith("Button Clicked"):
+        obj = _extract_object(name)
+        if not obj:
+            errors.append(f'Event "{name}": Event name must follow Object-Action format')
+        elif obj in removed:
             errors.append(
-                f'Event "{name}" uses an object prefix not in Standard Objects table'
+                f'Event "{name}": object "{obj}" is listed in '
+                f"## Removed Standard Objects. Rename the event, or remove "
+                f'"{obj}" from the removal list.'
+            )
+        elif obj not in known:
+            errors.append(
+                f'Event "{name}": object "{obj}" is not in '
+                f"docs/event-schema.md Standard Objects or this plan's "
+                f'## New Standard Objects section. Either rename the event to use '
+                f'a registered object, or declare "{obj}" in ## New Standard Objects.'
             )
     return errors, warnings
 
@@ -1168,6 +1397,76 @@ def _run_rules(rules, known, rule_names, mode_label=None):
     sys.exit(1 if ec else 0)
 
 
+def _resolve_tracking_plan_path(arg):
+    candidate = Path(arg)
+    if candidate.exists():
+        return candidate
+    for alt in (
+        REPO_ROOT / "tracking-plans" / f"{arg}.md",
+        REPO_ROOT / "tracking-plans" / arg,
+        REPO_ROOT / arg,
+    ):
+        if alt.exists():
+            return alt
+    return candidate
+
+
+def _catalog_object_for_event(event_name, schema_objects):
+    obj = _object_prefix(event_name, schema_objects)
+    if not obj and event_name.endswith("Button Clicked"):
+        obj = _object_for_intent_event(event_name, schema_objects)
+    return obj
+
+
+def removal_safety_blockers(removed_objects, catalog_events, schema_objects):
+    blockers = []
+    removed = set(removed_objects)
+    if not removed:
+        return blockers
+    for event_name in catalog_events:
+        obj = _catalog_object_for_event(event_name, schema_objects)
+        if obj in removed:
+            blockers.append((obj, event_name))
+    return sorted(blockers)
+
+
+def check_removal_safety(tp_path):
+    if not tp_path.exists():
+        print(f"ERROR: Tracking plan not found: {tp_path}", file=sys.stderr)
+        return 2
+    if not tp_path.is_file() or tp_path.suffix.lower() != ".md":
+        print(f"ERROR: Tracking plan must be a markdown file: {tp_path}", file=sys.stderr)
+        return 2
+
+    for p in (CATALOG_PATH, SCHEMA_PATH):
+        if not p.exists():
+            print(f"ERROR: File not found: {p}", file=sys.stderr)
+            return 2
+
+    catalog_events, _, _ = parse_catalog(CATALOG_PATH)
+    schema_objects, _, _, _ = parse_schema(SCHEMA_PATH)
+    tp_data = parse_tracking_plan(tp_path)
+    declaration_errors, declaration_warnings = validate_object_declarations(
+        tp_data.added_objects,
+        tp_data.removed_objects,
+        schema_objects,
+        tp_data.declaration_errors,
+    )
+    if declaration_errors:
+        for error in declaration_errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        return 2
+    for warning in declaration_warnings:
+        print(f"WARNING: {warning}", file=sys.stderr)
+
+    blockers = removal_safety_blockers(
+        tp_data.removed_objects, catalog_events, schema_objects
+    )
+    for obj, event_name in blockers:
+        print(f"{obj} blocks: {event_name}")
+    return 1 if blockers else 0
+
+
 def validate_catalog():
     """Validate consistency across the 3 source-of-truth docs."""
     for p in (CATALOG_PATH, SCHEMA_PATH, DASHBOARD_PATH):
@@ -1220,25 +1519,41 @@ def validate_tracking_plan(tp_path):
 
     catalog_events, prop_dict, _ = parse_catalog(CATALOG_PATH)
     schema_objects, _, schema_evt_props, _ = parse_schema(SCHEMA_PATH)
-    tp_events, tp_io, tp_funnels, tp_prop_dict = parse_tracking_plan(tp_path)
+    tp_data = parse_tracking_plan(tp_path)
 
-    if not tp_events:
+    if not tp_data.events:
         print("ERROR: No events parsed from tracking plan", file=sys.stderr)
         sys.exit(2)
 
     known = load_known_warnings(LOG_PATH)
     plan_name = tp_path.stem
+    declaration_errors, declaration_warnings = validate_object_declarations(
+        tp_data.added_objects,
+        tp_data.removed_objects,
+        schema_objects,
+        tp_data.declaration_errors,
+    )
 
     rules = [
-        ("TP1", tp_rule_01, (tp_events,)),
-        ("TP2", tp_rule_02, (tp_events, tp_prop_dict)),
-        ("TP3", tp_rule_03, (tp_events, catalog_events)),
-        ("TP4", tp_rule_04, (tp_events, prop_dict, tp_prop_dict)),
-        ("TP5", tp_rule_05, (tp_events, schema_evt_props)),
-        ("TP6", tp_rule_06, (tp_io, tp_events, catalog_events)),
-        ("TP7", tp_rule_07, (tp_events, schema_objects)),
-        ("TP8", tp_rule_08, (tp_funnels, tp_events, catalog_events)),
-        ("TP9", tp_rule_09, (tp_events, prop_dict)),
+        ("TP0", tp_rule_00, (declaration_errors, declaration_warnings)),
+        ("TP1", tp_rule_01, (tp_data.events,)),
+        ("TP2", tp_rule_02, (tp_data.events, tp_data.prop_dict)),
+        ("TP3", tp_rule_03, (tp_data.events, catalog_events)),
+        ("TP4", tp_rule_04, (tp_data.events, prop_dict, tp_data.prop_dict)),
+        ("TP5", tp_rule_05, (tp_data.events, schema_evt_props)),
+        ("TP6", tp_rule_06, (tp_data.intent_outcome, tp_data.events, catalog_events)),
+        (
+            "TP7",
+            tp_rule_07,
+            (
+                tp_data.events,
+                schema_objects,
+                tp_data.added_objects,
+                tp_data.removed_objects,
+            ),
+        ),
+        ("TP8", tp_rule_08, (tp_data.funnels, tp_data.events, catalog_events)),
+        ("TP9", tp_rule_09, (tp_data.events, prop_dict)),
     ]
 
     _run_rules(rules, known, TP_RULE_NAMES, mode_label=f"Tracking Plan: {plan_name}")
@@ -1246,15 +1561,16 @@ def validate_tracking_plan(tp_path):
 
 def main():
     if len(sys.argv) > 1:
-        arg = sys.argv[1]
-        candidate = Path(arg)
-        if not candidate.exists():
-            candidate = REPO_ROOT / "tracking-plans" / f"{arg}.md"
-        if not candidate.exists():
-            candidate = REPO_ROOT / "tracking-plans" / arg
-        if not candidate.exists():
-            candidate = REPO_ROOT / arg
-        validate_tracking_plan(candidate)
+        if sys.argv[1] == "--check-removal-safety":
+            if len(sys.argv) != 3:
+                print(
+                    "ERROR: Usage: validate-analytics-docs.py "
+                    "--check-removal-safety <tp-path>",
+                    file=sys.stderr,
+                )
+                sys.exit(2)
+            sys.exit(check_removal_safety(_resolve_tracking_plan_path(sys.argv[2])))
+        validate_tracking_plan(_resolve_tracking_plan_path(sys.argv[1]))
     else:
         validate_catalog()
 

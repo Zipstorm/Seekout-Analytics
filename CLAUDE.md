@@ -7,6 +7,7 @@ Analytics instrumentation, event taxonomy, metric frameworks, and dashboards for
 - `docs/` — Source-of-truth analytics documents (event catalog, schema, dashboards, metrics)
 - `context/` — Product context dependencies (entity model, network model, product overview)
 - `tracking-plans/` — Per-feature tracking plans (working documents). `INDEX.md` tracks PRD links and status. `archived/` holds completed plans.
+- `plans/` — Design docs for PRs with follow-up status tracking. Update statuses as follow-ups are completed.
 - `scripts/` — Validation tooling
 - `templates/` — Reusable templates
 - `logs/` — Validator run history
