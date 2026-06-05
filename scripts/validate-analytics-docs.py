@@ -232,6 +232,13 @@ def _parse_object_declaration_section(lines, section_name):
             errors.append(_empty_object_message(section_name))
             i += 1
             continue
+        if obj in entries:
+            errors.append(
+                f'## {section_name} declares "{obj}" more than once. '
+                "Keep a single row per object."
+            )
+            i += 1
+            continue
         if section_name == NEW_OBJECTS_SECTION:
             examples = [e.strip() for e in row[2].split(",") if e.strip()]
             entries[obj] = dict(entity=row[1].strip(), example_events=examples)
@@ -240,7 +247,7 @@ def _parse_object_declaration_section(lines, section_name):
             entries[obj] = dict(reason=reason)
         i += 1
 
-    return entries, errors
+    return entries, list(dict.fromkeys(errors))
 
 
 def _parse_object_declarations(text):
@@ -1439,7 +1446,7 @@ def check_removal_safety(tp_path):
     catalog_events, _, _ = parse_catalog(CATALOG_PATH)
     schema_objects, _, _, _ = parse_schema(SCHEMA_PATH)
     tp_data = parse_tracking_plan(tp_path)
-    declaration_errors, _ = validate_object_declarations(
+    declaration_errors, declaration_warnings = validate_object_declarations(
         tp_data.added_objects,
         tp_data.removed_objects,
         schema_objects,
@@ -1449,6 +1456,8 @@ def check_removal_safety(tp_path):
         for error in declaration_errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 2
+    for warning in declaration_warnings:
+        print(f"WARNING: {warning}", file=sys.stderr)
 
     blockers = removal_safety_blockers(
         tp_data.removed_objects, catalog_events, schema_objects

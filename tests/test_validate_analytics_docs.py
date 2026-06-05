@@ -244,6 +244,25 @@ This should be a table.
             validator.parse_tracking_plan(duplicate).declaration_errors[0],
         )
 
+    def test_duplicate_object_in_section_errors(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Standard Objects
+| Object | Entity | Example Events |
+|---|---|---|
+| Sam Session | Sam | Sam Session Started |
+| Sam Session | User | Sam Session Ended |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.declaration_errors), 1)
+        self.assertIn("more than once", data.declaration_errors[0])
+        self.assertIn("Sam Session", data.declaration_errors[0])
+        # First declaration is preserved, duplicate is skipped
+        self.assertEqual(data.added_objects["Sam Session"]["entity"], "Sam")
+
     def test_commented_template_sections_are_ignored(self):
         path = write_tmp_md(
             """# Test
@@ -312,7 +331,10 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
 
     def test_missing_file_reports_stderr_only(self):
-        missing = Path(tempfile.gettempdir()) / "missing-tracking-plan-analytics.md"
+        fd, tmp_path = tempfile.mkstemp(suffix=".md")
+        os.close(fd)
+        missing = Path(tmp_path)
+        missing.unlink()
         result = run_removal_safety(missing)
         self.assertEqual(result.returncode, 2)
         self.assertEqual(result.stdout, "")
