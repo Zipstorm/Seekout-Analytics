@@ -67,13 +67,6 @@ class TrackingPlanData:
     removed_objects: dict = field(default_factory=dict)
     declaration_errors: list = field(default_factory=list)
 
-    def __iter__(self):
-        """Back-compat for older code unpacking the original four return values."""
-        yield self.events
-        yield self.intent_outcome
-        yield self.funnels
-        yield self.prop_dict
-
 # ── Markdown Parsing ─────────────────────────────────────────────────────────
 
 
@@ -227,11 +220,13 @@ def _parse_object_declaration_section(lines, section_name):
             continue
         if not (s.startswith("|") and s.endswith("|")):
             errors.append(_malformed_section_message(section_name))
-            return entries, errors
+            i += 1
+            continue
         row = _split_row(s)
         if len(row) != row_len:
             errors.append(_malformed_section_message(section_name))
-            return entries, errors
+            i += 1
+            continue
         obj = row[0].strip()
         if not obj:
             errors.append(_empty_object_message(section_name))
@@ -1421,7 +1416,7 @@ def removal_safety_blockers(removed_objects, catalog_events, schema_objects):
     removed = set(removed_objects)
     if not removed:
         return blockers
-    for event_name in sorted(catalog_events):
+    for event_name in catalog_events:
         obj = _catalog_object_for_event(event_name, schema_objects)
         if obj in removed:
             blockers.append((obj, event_name))

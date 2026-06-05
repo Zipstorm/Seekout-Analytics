@@ -141,7 +141,11 @@ When `/validate-analytics` runs against `tracking-plans/hm-job-creation-wizard-v
 
 ## Follow-Ups
 
-- v2 TP cleanup: declare compound objects in `tracking-plans/hm-job-creation-wizard-v2.md` or rename affected events so it passes strict TP validation.
-- Catalog migration: register compound objects such as `Auth Login`, `Auth Session Restore`, `Profile Section`, and `Voice Session Setup` so Rule 1 can later adopt strict decomposition.
-- Separate catalog cleanup PR: backfill `Share Button`, `Invite Button`, and `Record Video Button` as Standard Objects, then remove the `Button Clicked` carve-out in catalog Rule 1.
-- Separate schema-consistency PR: verify each Standard Object row's example events resolve back to that object.
+> Last updated: 2026-06-05
+
+| Follow-Up | Status |
+|---|---|
+| v2 TP cleanup: declare compound objects in `tracking-plans/hm-job-creation-wizard-v2.md` or rename affected events so it passes strict TP validation. | Pending |
+| Catalog migration: register compound objects such as `Auth Login`, `Auth Session Restore`, `Profile Section`, and `Voice Session Setup` so Rule 1 can later adopt strict decomposition. | Pending |
+| Separate catalog cleanup PR: backfill `Share Button`, `Invite Button`, and `Record Video Button` as Standard Objects, then remove the `Button Clicked` carve-out in catalog Rule 1. | Pending |
+| Separate schema-consistency PR: verify each Standard Object row's example events resolve back to that object. | Pending |

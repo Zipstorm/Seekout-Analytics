@@ -300,7 +300,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         )
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
-        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.returncode, 1)
         self.assertIn("Voice Session blocks: Voice Session Started", result.stdout)
         self.assertEqual(result.stderr, "")
 
@@ -314,7 +314,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
     def test_missing_file_reports_stderr_only(self):
         missing = Path(tempfile.gettempdir()) / "missing-tracking-plan-analytics.md"
         result = run_removal_safety(missing)
-        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.returncode, 2)
         self.assertEqual(result.stdout, "")
         self.assertIn("Tracking plan not found", result.stderr)
 
@@ -330,7 +330,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         )
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
-        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.returncode, 2)
         self.assertEqual(result.stdout, "")
         self.assertIn("New Standard Objects", result.stderr)
         self.assertIn("must use columns", result.stderr)
@@ -348,7 +348,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         )
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
-        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.returncode, 1)
         self.assertIn("Voice Session blocks:", result.stdout)
         self.assertNotIn("Object With No References blocks:", result.stdout)
 
