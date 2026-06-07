@@ -60,6 +60,7 @@ HM Job Posting Wizard — Step 1: Job Details
 |---|---|---|
 | Job Description | Job description content | Job Description Evaluated, Job Description Evaluation Failed, Job Description Details Toggled, Job Description Field Edited |
 | Sam | AI hiring partner (Sam) | Sam Session Setup Failed |
+| Role Requirement | Role requirement question | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added |
 | Screening Question | Interview screening question | Screening Question Deleted, Screening Question Edited, Screening Question Added |
 | Job Share | Job sharing action | Success Page Share Button Clicked, Job Share Message AI Refined, Job Share Message Copied, Job Share Channel Clicked |
 | Team Member | Job team member | Invite Teammates Button Clicked, Team Member Invite Sent |
@@ -79,7 +80,7 @@ AI evaluation of a pasted job description completes successfully and populates t
 | **Trigger** | `analyzeJobDescription()` API returns a meaningful result and extracted fields are populated in the UI |
 | **Source** | Frontend |
 | **Group** | `job` (when job_id is available) |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -163,7 +164,7 @@ AI evaluation fails — either the API returns an empty/non-meaningful result or
 | **Trigger** | `analyzeJobDescription()` returns empty result for meaningful input, or throws an exception |
 | **Source** | Frontend |
 | **Group** | `job` (when job_id is available) |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -237,7 +238,7 @@ User clicks "View full details" or "View less" on the "Job description evaluated
 | **Trigger** | User clicks "View full details" or "View less" on the evaluation card |
 | **Source** | Frontend |
 | **Group** | `job` (when job_id is available) |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -307,7 +308,7 @@ User modifies one of the three AI-extracted editable fields (Job title, Location
 | **Trigger** | User changes a field value and blurs (leaves the input), AND the new value differs from the AI-extracted original |
 | **Source** | Frontend |
 | **Group** | `job` (when job_id is available) |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -319,7 +320,6 @@ User modifies one of the three AI-extracted editable fields (Job title, Location
 | `field_name` | enum | `job_title`, `job_location`, `company_name` | Which field was edited |
 | `job_id` | string or null | UUID | Job ID if draft already exists |
 | `new_value` | string | e.g., `Product Manager` | Value after edit |
-| `original_value` | string or null | e.g., `Product Manager, Data Movement` | AI-extracted value before edit |
 | `previous_page_context` | string | snake_case or null | Previous page |
 | `step_name` | string | `job_details` | Wizard step name |
 | `step_number` | number | `1` | Wizard step number |
@@ -348,7 +348,6 @@ import { JOB_WIZARD_PAGE_CONTEXTS, JOB_WIZARD_STEPS } from '@/lib/jobWizardAnaly
         field_name: 'job_title',
         ...(jobId ? { job_id: jobId, $groups: { job: jobId } } : {}),
         new_value: title,
-        original_value: originalTitle ?? null,
         previous_page_context: getPreviousPageContext(),
         step_name: JOB_WIZARD_STEPS.jobDetails.stepName,
         step_number: JOB_WIZARD_STEPS.jobDetails.stepNumber,
@@ -433,7 +432,7 @@ captureSamSessionStarted(jobId, selectedMode, sessionId, voiceStatus);
 | **Trigger** | Voice setup fails — timeout, hardware error, or permission denied |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -537,19 +536,19 @@ export const SAM_SESSION_SETUP_FAILED = 'Sam Session Setup Failed';
 
 ---
 
-### 6. Requirement Deleted
+### 6. Role Requirement Deleted
 
 User clicks the trash icon to delete a role requirement question. Captures which question was removed and its metadata.
 
 | Field | Value |
 |-------|-------|
-| **Event** | `Requirement Deleted` |
+| **Event** | `Role Requirement Deleted` |
 | **Area** | Hiring |
 | **Type** | user_action |
 | **Trigger** | User clicks the delete (trash) icon on a role requirement question card |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -576,13 +575,13 @@ User clicks the trash icon to delete a role requirement question. Captures which
 
 ```typescript
 import { capture } from '@/lib/posthog';
-import { REQUIREMENT_DELETED, getPreviousPageContext } from '@/lib/posthogEvents';
+import { ROLE_REQUIREMENT_DELETED, getPreviousPageContext } from '@/lib/posthogEvents';
 import { JOB_WIZARD_PAGE_CONTEXTS, JOB_WIZARD_STEPS } from '@/lib/jobWizardAnalytics';
 
 const deleteQuestion = (questionId: string) => {
   const question = roleRequirementQuestions.find((q) => q.id === questionId);
   if (question) {
-    capture(REQUIREMENT_DELETED, {
+    capture(ROLE_REQUIREMENT_DELETED, {
       action: 'click',
       action_value: 'delete_question_button',
       category: question.requirement_category ?? 'other',
@@ -605,24 +604,24 @@ const deleteQuestion = (questionId: string) => {
 **Constant:**
 ```typescript
 // frontend/src/lib/posthogEvents.ts
-export const REQUIREMENT_DELETED = 'Requirement Deleted';
+export const ROLE_REQUIREMENT_DELETED = 'Role Requirement Deleted';
 ```
 
 ---
 
-### 7. Requirement Edited
+### 7. Role Requirement Edited
 
 User edits a question's text and clicks the tick (save). **Only fires if the text changed from the original.**
 
 | Field | Value |
 |-------|-------|
-| **Event** | `Requirement Edited` |
+| **Event** | `Role Requirement Edited` |
 | **Area** | Hiring |
 | **Type** | user_action |
 | **Trigger** | User modifies question text and clicks save (tick), AND the new text differs from the original |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -647,12 +646,12 @@ User edits a question's text and clicks the tick (save). **Only fires if the tex
 **Location:** `confirmQuestionEdit()` (line 376), after text comparison passes
 
 ```typescript
-import { REQUIREMENT_EDITED } from '@/lib/posthogEvents';
+import { ROLE_REQUIREMENT_EDITED } from '@/lib/posthogEvents';
 
 // Inside confirmQuestionEdit, after nextText is computed:
 const originalText = question.seed_question_text ?? question.question;
 if (nextText !== originalText.trim()) {
-  capture(REQUIREMENT_EDITED, {
+  capture(ROLE_REQUIREMENT_EDITED, {
     category: question.requirement_category ?? 'other',
     component: 'role_requirements_question_card',
     current_page_context: JOB_WIZARD_PAGE_CONTEXTS.roleRequirements,
@@ -674,24 +673,24 @@ if (nextText !== originalText.trim()) {
 **Constant:**
 ```typescript
 // frontend/src/lib/posthogEvents.ts
-export const REQUIREMENT_EDITED = 'Requirement Edited';
+export const ROLE_REQUIREMENT_EDITED = 'Role Requirement Edited';
 ```
 
 ---
 
-### 8. Requirement Added
+### 8. Role Requirement Added
 
 User fills the add question form (Type + Category + Question text) and clicks "Save question". This is the **outcome** event — the intent is already captured by `Requirement Add Button Clicked` (Live).
 
 | Field | Value |
 |-------|-------|
-| **Event** | `Requirement Added` |
+| **Event** | `Role Requirement Added` |
 | **Area** | Hiring |
 | **Type** | Success (for Requirement Add Button Clicked) |
 | **Trigger** | User fills Type, Category, Question text and clicks "Save question", and the API confirms creation |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -714,11 +713,11 @@ User fills the add question form (Type + Category + Question text) and clicks "S
 **Location:** `confirmQuestionEditor()` (line 514), after `createRoleRequirementQuestion()` API succeeds
 
 ```typescript
-import { REQUIREMENT_ADDED } from '@/lib/posthogEvents';
+import { ROLE_REQUIREMENT_ADDED } from '@/lib/posthogEvents';
 
 // Inside confirmQuestionEditor, after API returns the new question:
 const newQuestion = await interviewApi.createRoleRequirementQuestion(jobId, payload);
-capture(REQUIREMENT_ADDED, {
+capture(ROLE_REQUIREMENT_ADDED, {
   category: payload.category,
   component: 'role_requirements_add_question_form',
   current_page_context: JOB_WIZARD_PAGE_CONTEXTS.roleRequirements,
@@ -735,7 +734,7 @@ capture(REQUIREMENT_ADDED, {
 **Constant:**
 ```typescript
 // frontend/src/lib/posthogEvents.ts
-export const REQUIREMENT_ADDED = 'Requirement Added';
+export const ROLE_REQUIREMENT_ADDED = 'Role Requirement Added';
 ```
 
 ---
@@ -746,7 +745,7 @@ export const REQUIREMENT_ADDED = 'Requirement Added';
 
 | Old Event | Replaced By | Why |
 |-----------|-------------|-----|
-| Requirement Modified | Requirement Deleted, Requirement Edited, Requirement Added | Generic `modification_type` replaced by specific events with richer properties (question text, category, type, source, before/after for edits) |
+| Requirement Modified | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added | Generic `modification_type` replaced by specific events with richer properties (question text, category, type, source, before/after for edits) |
 
 ---
 
@@ -762,7 +761,7 @@ User clicks the trash icon to delete a screening question on the Interview Quest
 | **Trigger** | User clicks the delete (trash) icon on a screening question card |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -835,7 +834,7 @@ User edits a screening question's text and clicks the tick (save), OR uses "Refi
 | **Trigger** | User modifies question text and clicks save (tick) or uses "Refine with AI", AND the new text differs from the original |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -849,6 +848,7 @@ User edits a screening question's text and clicks the tick (save), OR uses "Refi
 | `new_text` | string | Edited question text | Text after save |
 | `original_text` | string | Original question text | Text before edit |
 | `previous_page_context` | string | snake_case or null | Previous page |
+| `question_number` | number | e.g., `2` | Position in the list (from `sort_order`) |
 | `question_source` | enum | `ai_generated`, `manual` | Whether AI or user originally created it |
 | `step_name` | string | `interview_questions` | Wizard step |
 | `step_number` | number | `4` | Wizard step number |
@@ -937,7 +937,7 @@ User adds a new screening question — either by typing text and clicking save, 
 | **Trigger** | User saves a new question (manual text or AI-created), and the API confirms creation |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -1056,15 +1056,15 @@ User clicks "Share →" button on the success page, opening the share modal. Int
 | **Trigger** | User clicks "Share →" on the success page |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `action` | enum | `click` | Action type |
-| `action_value` | string | `share_button` | Button text |
-| `component` | string | `success_page_share_cta` | Share section on success page |
+| `action_value` | string | `share_interview_button` | Button text |
+| `component` | string | `success_page_share_card` | Share section on success page |
 | `current_page_context` | string | `hm_job_creation_wizard_success` | Success page |
 | `entity_type` | string | `job` | Business object |
 | `job_id` | string | UUID | Job identifier |
@@ -1083,8 +1083,8 @@ import { JOB_WIZARD_PAGE_CONTEXTS } from '@/lib/jobWizardAnalytics';
 onClick={() => {
   capture(SUCCESS_PAGE_SHARE_BUTTON_CLICKED, {
     action: 'click',
-    action_value: 'share_button',
-    component: 'success_page_share_cta',
+    action_value: 'share_interview_button',
+    component: 'success_page_share_card',
     current_page_context: JOB_WIZARD_PAGE_CONTEXTS.success,
     entity_type: 'job',
     ...(jobId ? { job_id: jobId, $groups: { job: jobId } } : {}),
@@ -1113,17 +1113,20 @@ User clicks "Refine with AI" in the share modal and generates a new message.
 | **Trigger** | User enters instruction and clicks "Generate message" in the Refine with AI popover |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `component` | string | `success_page_share_modal` | Share modal |
+| `action` | enum | `click` | Action type |
+| `action_value` | string | `generate_message_button` | Button text |
+| `component` | string | `share_interview_modal` | Share modal |
 | `current_page_context` | string | `hm_job_creation_wizard_success` | Success page |
 | `entity_type` | string | `job` | Business object |
 | `job_id` | string | UUID | Job identifier |
 | `previous_page_context` | string | snake_case or null | Previous page |
+| `refined_message_length` | number | e.g., `280` | Character count of the AI-refined message |
 
 **Implementation:**
 
@@ -1138,11 +1141,14 @@ const handleGeneratePost = async () => {
   // ... existing logic ...
   const result = await interviewApi.refineJobSocialPost(jobId, postText, instruction, shareUrl);
   capture(JOB_SHARE_MESSAGE_AI_REFINED, {
-    component: 'success_page_share_modal',
-    current_page_context: 'hm_job_creation_wizard_success',
+    action: 'click',
+    action_value: 'generate_message_button',
+    component: 'share_interview_modal',
+    current_page_context: JOB_WIZARD_PAGE_CONTEXTS.success,
     entity_type: 'job',
-    ...(jobId ? { job_id: jobId, $groups: { job: jobId } } : {}),
+    ...(jobId ? jobGroup(jobId) : {}),
     previous_page_context: getPreviousPageContext(),
+    refined_message_length: result.post.length,
   });
   // ... rest of existing logic ...
 };
@@ -1167,7 +1173,7 @@ User clicks "Copy message" in the share modal.
 | **Trigger** | User clicks "Copy message" button in the share modal |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -1175,10 +1181,11 @@ User clicks "Copy message" in the share modal.
 |---|---|---|---|
 | `action` | enum | `click` | Action type |
 | `action_value` | string | `copy_message_button` | Button text |
-| `component` | string | `success_page_share_modal` | Share modal |
+| `component` | string | `share_interview_modal` | Share modal |
 | `current_page_context` | string | `hm_job_creation_wizard_success` | Success page |
 | `entity_type` | string | `job` | Business object |
 | `job_id` | string | UUID | Job identifier |
+| `message_length` | number | e.g., `180` | Character count of the copied message |
 | `previous_page_context` | string | snake_case or null | Previous page |
 
 **Implementation:**
@@ -1194,10 +1201,11 @@ const handleCopy = () => {
   capture(JOB_SHARE_MESSAGE_COPIED, {
     action: 'click',
     action_value: 'copy_message_button',
-    component: 'success_page_share_modal',
-    current_page_context: 'hm_job_creation_wizard_success',
+    component: 'share_interview_modal',
+    current_page_context: JOB_WIZARD_PAGE_CONTEXTS.success,
     entity_type: 'job',
-    ...(jobId ? { job_id: jobId, $groups: { job: jobId } } : {}),
+    ...(jobId ? jobGroup(jobId) : {}),
+    message_length: postText.length,
     previous_page_context: getPreviousPageContext(),
   });
   setCopied(true);
@@ -1225,7 +1233,7 @@ User clicks LinkedIn, X, or Email button in the share modal to distribute the jo
 | **Trigger** | User clicks a share platform button (LinkedIn, X, Email) in the share modal |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -1233,7 +1241,7 @@ User clicks LinkedIn, X, or Email button in the share modal to distribute the jo
 |---|---|---|---|
 | `action` | enum | `click` | Action type |
 | `action_value` | string | `share_to_linkedin` / `share_to_x` / `share_to_email` | Which channel button |
-| `component` | string | `success_page_share_modal` | Share modal |
+| `component` | string | `share_interview_modal` | Share modal |
 | `current_page_context` | string | `hm_job_creation_wizard_success` | Success page |
 | `entity_type` | string | `job` | Business object |
 | `job_id` | string | UUID | Job identifier |
@@ -1253,7 +1261,7 @@ const handlePlatformShare = (getUrl: PlatformUrlFn) => {
   capture(JOB_SHARE_CHANNEL_CLICKED, {
     action: 'click',
     action_value: `share_to_${platform.id}`,
-    component: 'success_page_share_modal',
+    component: 'share_interview_modal',
     current_page_context: 'hm_job_creation_wizard_success',
     entity_type: 'job',
     ...(jobId ? { job_id: jobId, $groups: { job: jobId } } : {}),
@@ -1286,7 +1294,7 @@ User clicks "Invite teammates" on the success page, opening the invite modal.
 | **Trigger** | User clicks "Invite teammates" button on the success page |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -1294,7 +1302,7 @@ User clicks "Invite teammates" on the success page, opening the invite modal.
 |---|---|---|---|
 | `action` | enum | `click` | Action type |
 | `action_value` | string | `invite_teammates_button` | Button text |
-| `component` | string | `success_page_invite_cta` | Invite section |
+| `component` | string | `success_page_invite_card` | Invite section |
 | `current_page_context` | string | `hm_job_creation_wizard_success` | Success page |
 | `entity_type` | string | `job` | Business object |
 | `job_id` | string | UUID | Job identifier |
@@ -1312,7 +1320,7 @@ onClick={() => {
   capture(INVITE_TEAMMATES_BUTTON_CLICKED, {
     action: 'click',
     action_value: 'invite_teammates_button',
-    component: 'success_page_invite_cta',
+    component: 'success_page_invite_card',
     current_page_context: JOB_WIZARD_PAGE_CONTEXTS.success,
     entity_type: 'job',
     ...(jobId ? { job_id: jobId, $groups: { job: jobId } } : {}),
@@ -1341,7 +1349,7 @@ User fills the invite form (email, role) and clicks "Send invite". Captures the 
 | **Trigger** | User clicks "Send invite" in the invite modal |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -1352,7 +1360,7 @@ User fills the invite form (email, role) and clicks "Send invite". Captures the 
 | `component` | string | `success_page_invite_modal` | Invite modal |
 | `current_page_context` | string | `hm_job_creation_wizard_success` | Success page |
 | `entity_type` | string | `job` | Business object |
-| `invite_count` | number | e.g., `2` | Number of email addresses entered |
+| `invite_count` | number | `1` | Always 1 — current implementation supports single invite per send |
 | `invite_role` | enum | `recruiter` / `other` | Selected role for the invitee |
 | `job_id` | string | UUID | Job identifier |
 | `previous_page_context` | string | snake_case or null | Previous page |
@@ -1368,16 +1376,15 @@ import { TEAM_MEMBER_INVITE_SENT, getPreviousPageContext } from '@/lib/posthogEv
 
 const handleSendInvite = () => {
   if (!email) return;
-  const emailList = email.split(',').map((e) => e.trim()).filter(Boolean);
   capture(TEAM_MEMBER_INVITE_SENT, {
     action: 'click',
     action_value: 'send_invite_button',
     component: 'success_page_invite_modal',
-    current_page_context: 'hm_job_creation_wizard_success',
+    current_page_context: JOB_WIZARD_PAGE_CONTEXTS.success,
     entity_type: 'job',
-    invite_count: emailList.length,
+    invite_count: 1,
     invite_role: role,
-    ...(jobId ? { job_id: jobId, $groups: { job: jobId } } : {}),
+    ...(jobId ? jobGroup(jobId) : {}),
     previous_page_context: getPreviousPageContext(),
   });
   const subject = encodeURIComponent(`You're invited to review candidates for ${jobTitle}`);
@@ -1407,7 +1414,7 @@ User clicks "Go to job posting page" link at the bottom of the success page.
 | **Trigger** | User clicks "Go to job posting page" link on the success page |
 | **Source** | Frontend |
 | **Group** | `job` |
-| **Status** | Not Started |
+| **Status** | Implemented |
 
 **Properties:**
 
@@ -1457,17 +1464,17 @@ export const GO_TO_JOB_POSTING_PAGE_CLICKED = 'Go To Job Posting Page Clicked';
 | Job Description Evaluated | Hiring | AI analysis returns meaningful result | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_length`, `job_title`, `company_name`, `job_location`, `skills_count`, `requirements_count`, `responsibilities_count`, `has_compensation`, `has_benefits`, `seniority_level`, `work_type`, `employment_type`, `step_number`, `step_name` | `job` | -- |
 | Job Description Evaluation Failed | Hiring | AI analysis fails or returns empty | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `input_length`, `error_reason`, `step_number`, `step_name` | `job` | -- |
 | Job Description Details Toggled | Hiring | User clicks "View full details" or "View less" | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `action`, `action_value`, `component`, `expanded`, `step_number`, `step_name` | `job` | -- |
-| Job Description Field Edited | Hiring | User edits an AI-extracted field and blurs | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `field_name`, `original_value`, `new_value`, `component`, `step_number`, `step_name` | `job` | -- |
+| Job Description Field Edited | Hiring | User edits an AI-extracted field and blurs | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `field_name`, `new_value`, `component`, `step_number`, `step_name` | `job` | -- |
 | Sam Session Setup Failed | Hiring | Voice session setup fails (timeout, hardware, permission) | `current_page_context`, `entity_type`, `error_category`, `error_reason`, `input_mode`, `job_id`, `mic_enabled`, `previous_page_context`, `session_id` | `job` | -- |
-| Requirement Deleted | Hiring | User clicks trash icon on a role requirement | `action`, `action_value`, `category`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `question_source`, `question_text`, `question_type`, `step_name`, `step_number` | `job` | -- |
-| Requirement Edited | Hiring | User edits question text and saves (only if changed) | `category`, `component`, `current_page_context`, `entity_type`, `job_id`, `new_text`, `original_text`, `previous_page_context`, `question_source`, `question_type`, `step_name`, `step_number` | `job` | -- |
-| Requirement Added | Hiring | User fills add form and clicks "Save question" | `category`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `question_text`, `question_type`, `step_name`, `step_number` | `job` | -- |
+| Role Requirement Deleted | Hiring | User clicks trash icon on a role requirement | `action`, `action_value`, `category`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `question_source`, `question_text`, `question_type`, `step_name`, `step_number` | `job` | -- |
+| Role Requirement Edited | Hiring | User edits question text and saves (only if changed) | `category`, `component`, `current_page_context`, `entity_type`, `job_id`, `new_text`, `original_text`, `previous_page_context`, `question_source`, `question_type`, `step_name`, `step_number` | `job` | -- |
+| Role Requirement Added | Hiring | User fills add form and clicks "Save question" | `category`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `question_text`, `question_type`, `step_name`, `step_number` | `job` | -- |
 | Screening Question Deleted | Hiring | User clicks trash icon on a screening question | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `question_number`, `question_source`, `question_text`, `step_name`, `step_number` | `job` | -- |
-| Screening Question Edited | Hiring | User edits question text and saves (only if changed) | `ai_refined`, `component`, `current_page_context`, `entity_type`, `job_id`, `new_text`, `original_text`, `previous_page_context`, `question_source`, `step_name`, `step_number` | `job` | -- |
+| Screening Question Edited | Hiring | User edits question text and saves (only if changed) | `ai_refined`, `component`, `current_page_context`, `entity_type`, `job_id`, `new_text`, `original_text`, `previous_page_context`, `question_number`, `question_source`, `step_name`, `step_number` | `job` | -- |
 | Screening Question Added | Hiring | User saves a new screening question | `ai_created`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `question_text`, `step_name`, `step_number` | `job` | -- |
 | Success Page Share Button Clicked | Hiring | User clicks "Share →" on success page | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context` | `job` | -- |
-| Job Share Message AI Refined | Hiring | User refines share message with AI | `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context` | `job` | -- |
-| Job Share Message Copied | Hiring | User clicks "Copy message" in share modal | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context` | `job` | -- |
+| Job Share Message AI Refined | Hiring | User refines share message with AI | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `refined_message_length` | `job` | -- |
+| Job Share Message Copied | Hiring | User clicks "Copy message" in share modal | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `message_length`, `previous_page_context` | `job` | -- |
 | Job Share Channel Clicked | Hiring | User clicks LinkedIn/X/Email in share modal | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `share_channel` | `job` | -- |
 | Invite Teammates Button Clicked | Hiring | User clicks "Invite teammates" on success page | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context` | `job` | -- |
 | Team Member Invite Sent | Hiring | User clicks "Send invite" in invite modal | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `invite_count`, `invite_role`, `job_id`, `previous_page_context` | `job` | -- |
@@ -1489,7 +1496,7 @@ The Sam session split is a modification of an existing event (not a new flow). `
 |---|---|---|
 | JD Evaluation → Step Completion | Job Description Evaluated → Job Post Wizard Job Details Completed | % of users who get a successful evaluation and proceed to step 2. Note: `Job Post Wizard Job Details Completed` is a v2 event — ensure v2 is merged first. |
 | Evaluation Success Rate | Job Description Evaluated | Single-event insight. Compare count of `Job Description Evaluated` vs `Job Description Evaluation Failed` to measure AI evaluation reliability. |
-| Requirement Add Conversion | Requirement Add Button Clicked → Requirement Added | % of add-button clicks that result in a saved requirement |
+| Requirement Add Conversion | Requirement Add Button Clicked → Role Requirement Added | % of add-button clicks that result in a saved requirement |
 | Screening Question Add Conversion | Question Add Button Clicked → Screening Question Added | % of add-button clicks that result in a saved screening question |
 
 ---
@@ -1512,7 +1519,6 @@ The Sam session split is a modification of an existing event (not a new flow). `
 | `employment_type` | string | -- | AI-extracted employment type (e.g., Full-time, Contract) |
 | `expanded` | boolean | true / false | Whether user expanded or collapsed the details card |
 | `field_name` | enum | job_title / job_location / company_name | Which AI-extracted field was edited |
-| `original_value` | string | -- | AI-extracted value before user edit |
 | `new_value` | string | -- | Value after user edit |
 | `mic_enabled` | boolean | true / false | Whether microphone was accessible at time of voice setup failure |
 | `session_id` | string | UUID | Sam session identifier |
@@ -1526,7 +1532,9 @@ The Sam session split is a modification of an existing event (not a new flow). `
 | `ai_refined` | boolean | true / false | Whether "Refine with AI" was used during edit |
 | `ai_created` | boolean | true / false | Whether "Create with AI" was used to generate the question |
 | `share_channel` | enum | linkedin / x / email | Distribution channel in share modal |
-| `invite_count` | number | -- | Number of email addresses entered in invite form |
+| `refined_message_length` | number | -- | Character count of AI-refined share message |
+| `message_length` | number | -- | Character count of copied share message |
+| `invite_count` | number | 1 | Always 1 — current implementation supports single invite per send |
 | `invite_role` | enum | recruiter / other | Selected role for the invited team member |
 
 > **Note:** `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `step_number`, `step_name`, `error_reason`, `error_category`, `action`, `action_value`, `component`, and `input_mode` are existing catalog properties — not listed here.
@@ -1542,9 +1550,9 @@ export const JOB_DESCRIPTION_EVALUATION_FAILED = 'Job Description Evaluation Fai
 export const JOB_DESCRIPTION_DETAILS_TOGGLED = 'Job Description Details Toggled';
 export const JOB_DESCRIPTION_FIELD_EDITED = 'Job Description Field Edited';
 export const SAM_SESSION_SETUP_FAILED = 'Sam Session Setup Failed';
-export const REQUIREMENT_DELETED = 'Requirement Deleted';
-export const REQUIREMENT_EDITED = 'Requirement Edited';
-export const REQUIREMENT_ADDED = 'Requirement Added';
+export const ROLE_REQUIREMENT_DELETED = 'Role Requirement Deleted';
+export const ROLE_REQUIREMENT_EDITED = 'Role Requirement Edited';
+export const ROLE_REQUIREMENT_ADDED = 'Role Requirement Added';
 export const SCREENING_QUESTION_DELETED = 'Screening Question Deleted';
 export const SCREENING_QUESTION_EDITED = 'Screening Question Edited';
 export const SCREENING_QUESTION_ADDED = 'Screening Question Added';
@@ -1567,14 +1575,14 @@ export const GO_TO_JOB_POSTING_PAGE_CLICKED = 'Go To Job Posting Page Clicked';
 
 All 18 new events should be inserted into the Hiring Persona Events section. Additionally:
 - Update the existing `Sam Session Started` row to remove `error_category`, `error_reason`, and `mic_enabled` from its properties (those now belong to `Sam Session Setup Failed` only).
-- Remove the existing `Requirement Modified` row (replaced by Requirement Deleted, Requirement Edited, Requirement Added).
+- Remove the existing `Requirement Modified` row (replaced by Role Requirement Deleted, Role Requirement Edited, Role Requirement Added).
 - Remove the existing `Question Modified` row (replaced by Screening Question Deleted, Screening Question Edited, Screening Question Added).
 
 **Removed Events table — add:**
 
 | Old Event | Replaced By | Why | Removed Date |
 |-----------|-------------|-----|--------------|
-| Requirement Modified | Requirement Deleted, Requirement Edited, Requirement Added | Generic `modification_type` replaced by specific events with richer properties (question text, category, type, source, before/after for edits) | June 2026 |
+| Requirement Modified | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added | Generic `modification_type` replaced by specific events with richer properties (question text, category, type, source, before/after for edits) | June 2026 |
 | Question Modified | Screening Question Deleted, Screening Question Edited, Screening Question Added | Generic `modification_type` replaced by specific events with richer properties (question text, source, AI usage, before/after for edits) | June 2026 |
 
 **Property Dictionary updates:**
@@ -1598,15 +1606,16 @@ All 18 new events should be inserted into the Hiring Persona Events section. Add
 | Enum | `share_channel` | Already exists. Append to Used In: `Job Share Channel Clicked` |
 | Numeric | `invite_count` | New property. Used In: `Team Member Invite Sent` |
 | Enum | `invite_role` | New property. Values: `recruiter`, `other`. Used In: `Team Member Invite Sent` |
-| String | `question_text` | New property. Used In: `Requirement Deleted`, `Requirement Added`, `Screening Question Deleted`, `Screening Question Added` |
-| String | `original_text` | New property. Used In: `Requirement Edited`, `Screening Question Edited` |
-| String | `new_text` | New property. Used In: `Requirement Edited`, `Screening Question Edited` |
-| Enum | `question_type` | New property. Values: `yes_no`, `multiple_choice`, `free_text`. Used In: `Requirement Deleted`, `Requirement Edited`, `Requirement Added` |
-| Enum | `question_source` | New property. Values: `ai_generated`, `manual`. Used In: `Requirement Deleted`, `Requirement Edited`, `Screening Question Deleted`, `Screening Question Edited` |
-| Enum | `category` (requirement) | New property. Values: `compensation`, `work_arrangement`, `visa_authorization`, `security_clearance`, `licensing`, `background_check`, `physical_requirements`, `travel`, `other`. Used In: `Requirement Deleted`, `Requirement Edited`, `Requirement Added` |
+| String | `question_text` | New property. Used In: `Role Requirement Deleted`, `Role Requirement Added`, `Screening Question Deleted`, `Screening Question Added` |
+| String | `original_text` | New property. Used In: `Role Requirement Edited`, `Screening Question Edited` |
+| String | `new_text` | New property. Used In: `Role Requirement Edited`, `Screening Question Edited` |
+| Enum | `question_type` | New property. Values: `yes_no`, `multiple_choice`, `free_text`. Used In: `Role Requirement Deleted`, `Role Requirement Edited`, `Role Requirement Added` |
+| Enum | `question_source` | New property. Values: `ai_generated`, `manual`. Used In: `Role Requirement Deleted`, `Role Requirement Edited`, `Screening Question Deleted`, `Screening Question Edited` |
+| Enum | `category` (requirement) | New property. Values: `compensation`, `work_arrangement`, `visa_authorization`, `security_clearance`, `licensing`, `background_check`, `physical_requirements`, `travel`, `other`. Used In: `Role Requirement Deleted`, `Role Requirement Edited`, `Role Requirement Added` |
 | Enum | `field_name` | New property. Values: `job_title`, `job_location`, `company_name`. Used In: `Job Description Field Edited` |
-| String | `original_value` | New property. Used In: `Job Description Field Edited` |
 | String | `new_value` | New property. Used In: `Job Description Field Edited` |
+| Numeric | `refined_message_length` | New property. Used In: `Job Share Message AI Refined` |
+| Numeric | `message_length` | New property. Used In: `Job Share Message Copied` |
 
 **Property Dictionary — update "Used In" for existing properties:**
 
@@ -1619,14 +1628,14 @@ All 18 new events should be inserted into the Hiring Persona Events section. Add
 | `action_value` | Job Description Details Toggled |
 | `component` | Job Description Details Toggled, Job Description Field Edited |
 | `error_reason` | Job Description Evaluation Failed |
-| `action` (user_action) | Requirement Deleted, Screening Question Deleted |
-| `action_value` | Requirement Deleted, Screening Question Deleted |
-| `component` | Requirement Deleted, Requirement Edited, Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
-| `current_page_context` | Requirement Deleted, Requirement Edited, Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
-| `previous_page_context` | Requirement Deleted, Requirement Edited, Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
-| `entity_type` | Requirement Deleted, Requirement Edited, Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added, all success page events |
-| `step_number` | Requirement Deleted, Requirement Edited, Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
-| `step_name` | Requirement Deleted, Requirement Edited, Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
+| `action` (user_action) | Role Requirement Deleted, Screening Question Deleted |
+| `action_value` | Role Requirement Deleted, Screening Question Deleted |
+| `component` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
+| `current_page_context` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
+| `previous_page_context` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
+| `entity_type` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added, all success page events |
+| `step_number` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
+| `step_name` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
 | `current_page_context` | all success page events (Success Page Share Button Clicked, Job Share Message AI Refined, Job Share Message Copied, Job Share Channel Clicked, Invite Teammates Button Clicked, Team Member Invite Sent, Go To Job Posting Page Clicked) |
 | `previous_page_context` | all success page events |
 
@@ -1639,9 +1648,9 @@ All 18 new events should be inserted into the Hiring Persona Events section. Add
 | Object | Change |
 |--------|--------|
 | Job Wizard | Append to example events: `Job Description Evaluated, Job Description Evaluation Failed, Job Description Details Toggled, Job Description Field Edited` |
-| Voice Session | Update example events: replace `Voice Session Setup Failed` with `Sam Session Setup Failed` (if present). Append `Sam Session Setup Failed` if not listed. |
+| Sam | Append to example events: `Sam Session Setup Failed` |
 
-No new Standard Objects needed — "Job Description" events match the existing "Job" prefix object via the validator's prefix matching. However, semantically they belong to the "Job Wizard" object family.
+**New Standard Objects** declared in this tracking plan's `## New Standard Objects` section will be added automatically by `/merge-tracking-plan`: Job Description, Sam (already exists — will be skipped), Role Requirement, Screening Question, Job Share, Team Member (already exists — will be skipped), Job Posting (already exists — will be skipped).
 
 ### `docs/dashboards.md`
 
@@ -1658,7 +1667,7 @@ No dashboard changes needed — the Hiring Dashboard already tracks the wizard f
 | `frontend/src/components/common/JobDescriptionAnalysisCard.tsx` | Add capture in toggle button `onClick`. Add `onBlur` handlers to 3 editable inputs with value-change guard. Thread `jobId` and original analysis values as new props. | Job Description Details Toggled, Job Description Field Edited |
 | `frontend/src/lib/jobWizardAnalytics.ts` | Split `captureSamSessionStarted()` into success-only version + new `captureSamSessionSetupFailed()` function. Remove `voiceStatus` param from `captureSamSessionStarted`. | Sam Session Started (modified), Sam Session Setup Failed |
 | `frontend/src/pages/interview/EmbeddedSamSession.tsx` | Update `handleStart()` to conditionally call `captureSamSessionStarted` or `captureSamSessionSetupFailed` based on `voiceState.lastSetupFailure` | Sam Session Started (modified), Sam Session Setup Failed |
-| `frontend/src/pages/interview/RoleRequirements.tsx` | Add capture in `deleteQuestion()` before state removal. Add capture in `confirmQuestionEdit()` with text-change guard. Add capture in `confirmQuestionEditor()` after API success. | Requirement Deleted, Requirement Edited, Requirement Added |
+| `frontend/src/pages/interview/RoleRequirements.tsx` | Add capture in `deleteQuestion()` before state removal. Add capture in `confirmQuestionEdit()` with text-change guard. Add capture in `confirmQuestionEditor()` after API success. | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added |
 | `frontend/src/pages/interview/InterviewQuestions.tsx` | Add capture in `handleDelete()` before API call. Add capture in `handleSaveEdit()` and `handleAIRefine()` with text-change guard. Add capture in `handleAdd()` and `handleAICreate()` after API success. | Screening Question Deleted, Screening Question Edited, Screening Question Added |
 | `frontend/src/pages/interview/JobSuccess.tsx` | Add captures for Share, Invite teammates, and Go to job posting page buttons. | Success Page Share Button Clicked, Invite Teammates Button Clicked, Go To Job Posting Page Clicked |
 | `frontend/src/components/interview/ShareInterviewModal.tsx` | Add captures in `handleGeneratePost()`, `handleCopy()`, and `handlePlatformShare()`. Thread `jobId` as prop. | Job Share Message AI Refined, Job Share Message Copied, Job Share Channel Clicked |
