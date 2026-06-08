@@ -7,7 +7,7 @@
 | Persona Switching v2 | — | Merged | [archived/persona-switching-v2.md](./archived/persona-switching-v2.md) | 2026-05-20 |
 | HM Job Post Wizard v1 | — | Reverted | [archived/hm-job-creation-wizard-v1.md](./archived/hm-job-creation-wizard-v1.md) | 2026-05-11 |
 | HM Job Post Wizard v2 | — | Merged | [archived/hm-job-creation-wizard-v2.md](./archived/hm-job-creation-wizard-v2.md) | 2026-05-28 |
-| HM Job Creation Wizard v3 | — | Review | [hm-job-creation-wizard-v3.md](./hm-job-creation-wizard-v3.md) | 2026-06-05 |
+| HM Job Creation Wizard v3 | — | Merged | [archived/hm-job-creation-wizard-v3.md](./archived/hm-job-creation-wizard-v3.md) | 2026-06-05 |
 
 ### Status Legend
 
