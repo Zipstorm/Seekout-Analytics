@@ -11,171 +11,8 @@ Reviewed and suppressed. Remove a line to re-surface it.
   Reason: job_id doesn't exist for jobs not created yet | Approved: 2026-03-02
 - [4] Job-grouped failure event "Job Creation Failed" missing `job_id` (may be intentional for creation flow)
   Reason: job_id doesn't exist for jobs not created yet | Approved: 2026-03-02
-
----
-
-## Run: 2026-04-17 11:33:29 UTC
-
-**Result: 12 errors, 6 warnings**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
-
-### Warnings
-
-- **[Rule 3]** Person property `email` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_id` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_domain` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `current_persona` ($set) defined in Schema but no catalog event sets it via Property Updates
-
-*(1 known warning suppressed)*
-
-
----
-
-## Run: 2026-04-17 11:33:37 UTC
-
-**Result: 12 errors, 6 warnings**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
-
-### Warnings
-
-- **[Rule 3]** Person property `email` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_id` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_domain` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `current_persona` ($set) defined in Schema but no catalog event sets it via Property Updates
-
-*(1 known warning suppressed)*
-
-
----
-
-## Run: 2026-05-11 13:28:22 UTC
-
-**Result: 13 errors, 5 warnings**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Schema Intent-Outcome row (Switch Persona Button Clicked / Persona Updated / Persona Update Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
-
-### Warnings
-
-- **[Rule 3]** Person property `email` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_id` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_domain` ($set) defined in Schema but no catalog event sets it via Property Updates
-
-*(1 known warning suppressed)*
-
-
----
-
-## Run: 2026-05-14 09:26:20 UTC
-
-**Result: 13 errors, 5 warnings**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Switch Persona Button Clicked / Persona Updated / Persona Update Failed) not in Dashboard Platform Health table
-
-### Warnings
-
-- **[Rule 3]** Person property `email` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_id` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_domain` ($set) defined in Schema but no catalog event sets it via Property Updates
-
-*(1 known warning suppressed)*
-
-
----
-
-## Run: 2026-05-18 11:59:47 UTC
-
-**Result: 13 errors, 5 warnings**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Switch Persona Button Clicked / Persona Updated / Persona Update Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
-
-### Warnings
-
-- **[Rule 3]** Person property `email` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_id` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_name` ($set) defined in Schema but no catalog event sets it via Property Updates
-- **[Rule 3]** Person property `org_domain` ($set) defined in Schema but no catalog event sets it via Property Updates
-
-*(1 known warning suppressed)*
-
+- [TP7] Event "Sam Session Setup Failed" uses an object prefix not in Standard Objects table
+  Reason: "Sam" events belong to the existing "Voice Session" Standard Object family; prefix mismatch is a validator limitation | Approved: 2026-06-05
 
 ---
 
@@ -734,4 +571,150 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
 
 *(1 known warning suppressed)*
+
+
+---
+
+## Run: 2026-06-05 06:50:02 UTC — Tracking Plan: hm-job-creation-wizard-v3
+
+**Result: 16 errors**
+
+### Errors
+
+- **[Rule TP4]** "Sam Session Setup Failed": property `mic_enabled` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sam Session Setup Failed": property `session_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP5]** Event "Job Description Evaluated" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Evaluated" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Evaluation Failed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Evaluation Failed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Details Toggled" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Details Toggled" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Field Edited" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Field Edited" missing standard property `acting_as`
+- **[Rule TP5]** Event "Sam Session Setup Failed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Sam Session Setup Failed" missing standard property `acting_as`
+- **[Rule TP6]** Intent vs Outcome: "Text paste (debounced)" (intent for "Job description AI evaluation") not found in catalog or tracking plan
+- **[Rule TP7]** Event "Sam Session Setup Failed" uses an object prefix not in Standard Objects table
+- **[Rule TP8]** Funnel "JD Evaluation → Step Completion": step "Job Post Wizard Job Details Completed" not found in catalog or tracking plan
+- **[Rule TP8]** Funnel "Evaluation Success Rate": step "Job Description Evaluated / (Job Description Evaluated + Job Description Evaluation Failed)" not found in catalog or tracking plan
+
+
+---
+
+## Run: 2026-06-05 06:53:49 UTC — Tracking Plan: hm-job-creation-wizard-v3
+
+**Result: 13 errors**
+
+### Errors
+
+- **[Rule TP5]** Event "Job Description Evaluated" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Evaluated" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Evaluation Failed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Evaluation Failed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Details Toggled" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Details Toggled" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Field Edited" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Field Edited" missing standard property `acting_as`
+- **[Rule TP5]** Event "Sam Session Setup Failed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Sam Session Setup Failed" missing standard property `acting_as`
+- **[Rule TP6]** Intent vs Outcome: "Sam Session Started" (intent for "Sam voice session") not found in catalog or tracking plan
+- **[Rule TP7]** Event "Sam Session Setup Failed" uses an object prefix not in Standard Objects table
+- **[Rule TP8]** Funnel "JD Evaluation → Step Completion": step "Job Post Wizard Job Details Completed" not found in catalog or tracking plan
+
+
+---
+
+## Run: 2026-06-05 06:54:49 UTC — Tracking Plan: hm-job-creation-wizard-v3
+
+**Result: 12 errors**
+
+### Errors
+
+- **[Rule TP5]** Event "Job Description Evaluated" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Evaluated" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Evaluation Failed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Evaluation Failed" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Details Toggled" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Details Toggled" missing standard property `acting_as`
+- **[Rule TP5]** Event "Job Description Field Edited" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Job Description Field Edited" missing standard property `acting_as`
+- **[Rule TP5]** Event "Sam Session Setup Failed" missing standard property `surface`
+- **[Rule TP5]** Hiring event "Sam Session Setup Failed" missing standard property `acting_as`
+- **[Rule TP7]** Event "Sam Session Setup Failed" uses an object prefix not in Standard Objects table
+- **[Rule TP8]** Funnel "JD Evaluation → Step Completion": step "Job Post Wizard Job Details Completed" not found in catalog or tracking plan
+
+
+---
+
+## Run: 2026-06-05 07:09:08 UTC
+
+**Result: 35 errors, 1 warning**
+
+### Errors
+
+- **[Rule 2]** Intent-Outcome table: "Job Post Wizard Verification Completed / Job Post Wizard Verification Skipped" (intent for "Publishing a job") not found in Event Catalog
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 7]** Hiring Dashboard (HM/Recruiter Team): references `visibility` not found in Property Dictionary
+- **[Rule 9]** Platform Health row (Create Job Button Clicked / Job Post Wizard Started / --) not in Schema Intent-Outcome table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Intent-Outcome table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Intent-Outcome table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 10]** `action` is used in "Create Job Button Clicked" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action` is used in "Job Post Wizard Interview Questions Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action` is used in "Job Post Wizard Job Details Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action` is used in "Job Post Wizard Role Requirements Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action` is used in "Job Post Wizard Verification Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action` is used in "Share Button Clicked" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `share_source` lists "Share Button Clicked" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mic_enabled` is used in "Sam Session Started" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `mic_enabled` lists "Sam Session Started (voice mode only)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `requirements_count` lists "Job Posting Published" in "Used In" but that event does not reference this property
+- **[Rule 10]** `requirements_count` lists "Job Posting Verified" in "Used In" but that event does not reference this property
+- **[Rule 10]** `requirements_count` lists "Screening Configuration Saved" in "Used In" but that event does not reference this property
+- **[Rule 10]** `action_value` is used in "Create Job Button Clicked" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action_value` is used in "Job Post Wizard Interview Questions Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action_value` is used in "Job Post Wizard Job Details Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action_value` is used in "Job Post Wizard Role Requirements Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action_value` is used in "Job Post Wizard Verification Completed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `action_value` is used in "Share Button Clicked" but not listed in Property Dictionary "Used In"
+
+### Warnings
+
+- **[Rule 4]** Job-grouped intent event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+
+
+---
+
+## Run: 2026-06-05 07:10:49 UTC
+
+**Result: 12 errors, 1 warning**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
+- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
+
+### Warnings
+
+- **[Rule 4]** Job-grouped intent event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
 
