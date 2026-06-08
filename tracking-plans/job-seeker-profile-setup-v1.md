@@ -525,6 +525,7 @@ User clicks "Remove" to delete their uploaded resume.
 | `resume_id` | string or null | UUID | Which resume was removed (resolved from state or API) |
 | `resume_file_type` | string or null | `pdf`, `doc`, `docx`, `txt` | Format of removed file |
 | `current_page_context` | string | `candidate_create_profile` | Page |
+| `previous_page_context` | string | snake_case or null | Previous page |
 | `component` | string | `create_profile_resume_section` | Section location |
 | `entity_type` | string | `candidate_profile` | Business object context |
 
@@ -535,7 +536,7 @@ User clicks "Remove" to delete their uploaded resume.
 
 ```typescript
 import { capture } from '@/lib/posthog';
-import { RESUME_REMOVED } from '@/lib/posthogEvents';
+import { RESUME_REMOVED, getPreviousPageContext } from '@/lib/posthogEvents';
 
 const handleRemoveResume = async () => {
   let effectiveResumeId = resumeId;
@@ -553,6 +554,7 @@ const handleRemoveResume = async () => {
     resume_id: effectiveResumeId,
     resume_file_type: resumeFileName?.split('.').pop()?.toLowerCase() ?? null,
     current_page_context: 'candidate_create_profile',
+    previous_page_context: getPreviousPageContext(),
     component: 'create_profile_resume_section',
     entity_type: 'candidate_profile',
   });
@@ -722,6 +724,7 @@ Photo successfully uploaded and stored (via camera capture or file upload).
 | `file_type` | string | `jpg`, `png`, `gif`, `webp` | Image format |
 | `file_size_bytes` | number | e.g., `120000` | Image file size |
 | `current_page_context` | string | `candidate_create_profile` | Page |
+| `previous_page_context` | string | snake_case or null | Previous page |
 | `entity_type` | string | `candidate_profile` | Business object context |
 
 **Implementation:**
@@ -731,7 +734,7 @@ Photo successfully uploaded and stored (via camera capture or file upload).
 
 ```typescript
 import { capture } from '@/lib/posthog';
-import { PROFILE_PHOTO_ADDED } from '@/lib/posthogEvents';
+import { PROFILE_PHOTO_ADDED, getPreviousPageContext } from '@/lib/posthogEvents';
 
 const handleFile = useCallback(async (file: File, method: 'take_photo' | 'upload' = 'upload') => {
   // ... validation ...
@@ -743,6 +746,7 @@ const handleFile = useCallback(async (file: File, method: 'take_photo' | 'upload
       file_type: ext,
       file_size_bytes: file.size,
       current_page_context: 'candidate_create_profile',
+      previous_page_context: getPreviousPageContext(),
       entity_type: 'candidate_profile',
     });
     onUploadMethodChange?.(method);  // propagates to CreateProfile for snapshot
@@ -794,6 +798,8 @@ Photo upload rejected by frontend validation.
 | `error_reason` | string | Error message | What went wrong |
 | `error_category` | enum | `size_limit`, `unsupported_format` | Classification |
 | `current_page_context` | string | `candidate_create_profile` | Page |
+| `previous_page_context` | string | snake_case or null | Previous page |
+| `entity_type` | string | `candidate_profile` | Business object context |
 
 **Validation points and error messages:**
 
@@ -809,7 +815,7 @@ Photo upload rejected by frontend validation.
 
 ```typescript
 import { capture } from '@/lib/posthog';
-import { PROFILE_PHOTO_UPLOAD_FAILED } from '@/lib/posthogEvents';
+import { PROFILE_PHOTO_UPLOAD_FAILED, getPreviousPageContext } from '@/lib/posthogEvents';
 
 const handleFile = useCallback(async (file: File, method: 'take_photo' | 'upload' = 'upload') => {
   const ext = file.name.toLowerCase().split('.').pop();
@@ -821,6 +827,8 @@ const handleFile = useCallback(async (file: File, method: 'take_photo' | 'upload
       error_reason: errorMsg,
       error_category: 'unsupported_format',
       current_page_context: 'candidate_create_profile',
+      previous_page_context: getPreviousPageContext(),
+      entity_type: 'candidate_profile',
     });
     setUploadError(errorMsg);
     return false;
@@ -833,6 +841,8 @@ const handleFile = useCallback(async (file: File, method: 'take_photo' | 'upload
       error_reason: errorMsg,
       error_category: 'size_limit',
       current_page_context: 'candidate_create_profile',
+      previous_page_context: getPreviousPageContext(),
+      entity_type: 'candidate_profile',
     });
     setUploadError(errorMsg);
     return false;
@@ -874,6 +884,7 @@ User removes their profile photo.
 | `action` | enum | `click` | Action type |
 | `action_value` | string | `remove_profile_photo` | Button text in snake_case |
 | `current_page_context` | string | `candidate_create_profile` | Page |
+| `previous_page_context` | string | snake_case or null | Previous page |
 | `component` | string | `create_profile_photo_section` | UI location |
 | `entity_type` | string | `candidate_profile` | Business object context |
 
@@ -884,13 +895,14 @@ User removes their profile photo.
 
 ```typescript
 import { capture } from '@/lib/posthog';
-import { PROFILE_PHOTO_REMOVED } from '@/lib/posthogEvents';
+import { PROFILE_PHOTO_REMOVED, getPreviousPageContext } from '@/lib/posthogEvents';
 
 const handleRemove = async () => {
   capture(PROFILE_PHOTO_REMOVED, {
     action: 'click',
     action_value: 'remove_profile_photo',
     current_page_context: 'candidate_create_profile',
+    previous_page_context: getPreviousPageContext(),
     component: 'create_profile_photo_section',
     entity_type: 'candidate_profile',
   });
@@ -1006,8 +1018,10 @@ Captures the full state of what the user provided before AI profile generation s
 | `has_photo` | boolean | `true`/`false` | Did the user add a profile photo? |
 | `photo_upload_method` | enum or null | `take_photo`, `upload` | How the photo was added (null if no photo) |
 | `links_count` | number | e.g., `2` | Total links added |
-| `link_types` | array | `['github', 'linkedin']` | All platform types of added links |
+| `link_types` | array | `['github', 'linkedin']` | All platform types of added links. Allowed values: `github`, `linkedin`, `portfolio`, `personal_website`, `other`. |
 | `current_page_context` | string | `candidate_create_profile` | Page |
+| `previous_page_context` | string | snake_case or null | Previous page |
+| `entity_type` | string | `candidate_profile` | Business object context |
 
 **Implementation:**
 
@@ -1016,7 +1030,7 @@ Captures the full state of what the user provided before AI profile generation s
 
 ```typescript
 import { capture } from '@/lib/posthog';
-import { BUILD_PROFILE_SNAPSHOT } from '@/lib/posthogEvents';
+import { BUILD_PROFILE_SNAPSHOT, getPreviousPageContext } from '@/lib/posthogEvents';
 
 // State tracked across the component:
 const [photoUploadMethod, setPhotoUploadMethod] = useState<'take_photo' | 'upload' | null>(null);
@@ -1033,6 +1047,8 @@ capture(BUILD_PROFILE_SNAPSHOT, {
   links_count: allLinks.length,
   link_types: allLinks.map((l) => l.linkType),
   current_page_context: 'candidate_create_profile',
+  previous_page_context: getPreviousPageContext(),
+  entity_type: 'candidate_profile',
 });
 
 const linkIds = allLinks.length > 0 ? allLinks.map((l) => l.id) : undefined;
@@ -1079,7 +1095,7 @@ Backend successfully generates the AI profile from the resume. **Replaces** the 
 | `has_resume` | boolean | `true`/`false` | Was a resume used? |
 | `has_photo` | boolean | `true`/`false` | Did the user have a profile photo at creation time? |
 | `links_count` | number | e.g., `2` | Total external links on the user's profile |
-| `link_types` | array | `['github', 'linkedin']` | Platform types of user's links |
+| `link_types` | array | `['github', 'linkedin']` | Platform types of user's links. Allowed values: `github`, `linkedin`, `portfolio`, `personal_website`, `other`. |
 
 **Implementation:**
 
@@ -1328,14 +1344,14 @@ const [photoUploadMethod, setPhotoUploadMethod] = useState<'take_photo' | 'uploa
 | Resume Upload Button Clicked | Prospect | User clicks resume upload area | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
 | Resume Uploaded | Prospect | Backend confirms resume stored | `resume_id`, `resume_name`, `resume_file_type`, `resume_size_bytes`, `page_count` | -- | -- |
 | Resume Upload Failed | Prospect | Backend rejects resume | `resume_file_type`, `resume_size_bytes`, `error_reason`, `error_category` | -- | -- |
-| Resume Removed | Prospect | User clicks Remove on resume | `action`, `action_value`, `resume_id`, `resume_file_type`, `current_page_context`, `component`, `entity_type` | -- | -- |
+| Resume Removed | Prospect | User clicks Remove on resume | `action`, `action_value`, `resume_id`, `resume_file_type`, `current_page_context`, `previous_page_context`, `component`, `entity_type` | -- | -- |
 | LinkedIn Export Learn How Clicked | Prospect | User clicks "Learn how" link | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
 | Add Profile Photo Button Clicked | Prospect | User opens photo action menu | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
-| Profile Photo Added | Prospect | Photo saved successfully | `upload_method`, `file_type`, `file_size_bytes`, `current_page_context`, `entity_type` | -- | -- |
-| Profile Photo Upload Failed | Prospect | Photo rejected (size/format) | `upload_method`, `file_size_bytes`, `error_reason`, `error_category`, `current_page_context` | -- | -- |
-| Profile Photo Removed | Prospect | User clicks Remove on photo | `action`, `action_value`, `current_page_context`, `component`, `entity_type` | -- | -- |
+| Profile Photo Added | Prospect | Photo saved successfully | `upload_method`, `file_type`, `file_size_bytes`, `current_page_context`, `previous_page_context`, `entity_type` | -- | -- |
+| Profile Photo Upload Failed | Prospect | Photo rejected (size/format) | `upload_method`, `file_size_bytes`, `error_reason`, `error_category`, `current_page_context`, `previous_page_context`, `entity_type` | -- | -- |
+| Profile Photo Removed | Prospect | User clicks Remove on photo | `action`, `action_value`, `current_page_context`, `previous_page_context`, `component`, `entity_type` | -- | -- |
 | Build Profile Button Clicked | Prospect | User clicks "Build my AI profile" | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
-| Build Profile Snapshot | Prospect | State capture before AI generation | `has_resume`, `resume_id`, `resume_file_type`, `resume_page_count`, `has_photo`, `photo_upload_method`, `links_count`, `link_types`, `current_page_context` | -- | -- |
+| Build Profile Snapshot | Prospect | State capture before AI generation | `has_resume`, `resume_id`, `resume_file_type`, `resume_page_count`, `has_photo`, `photo_upload_method`, `links_count`, `link_types`, `current_page_context`, `previous_page_context`, `entity_type` | -- | -- |
 | Candidate Profile Created | Prospect | Backend generates portfolio | `portfolio_id`, `resume_id`, `input_method`, `has_resume`, `has_photo`, `links_count`, `link_types` | -- | -- |
 | Candidate Profile Creation Failed | Prospect | Backend portfolio generation fails | `resume_id`, `error_reason`, `error_category` | -- | -- |
 
@@ -1379,7 +1395,7 @@ const [photoUploadMethod, setPhotoUploadMethod] = useState<'take_photo' | 'uploa
 | `has_resume` | boolean | true / false | Whether user uploaded a resume |
 | `has_photo` | boolean | true / false | Whether user added a profile photo |
 | `links_count` | number | -- | Total external links |
-| `link_types` | array | -- | Platform types of added links |
+| `link_types` | array | github / linkedin / portfolio / personal_website / other | Platform types of added links |
 | `portfolio_id` | string | UUID | Generated portfolio identifier |
 | `input_method` | enum | resume_upload | How the profile was created |
 | `error_reason` | string | -- | What went wrong (truncated to 256 chars on backend) |
@@ -1480,7 +1496,7 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | String | `resume_id` | New property. Used In: `Resume Uploaded`, `Resume Removed`, `Build Profile Snapshot`, `Candidate Profile Created`, `Candidate Profile Creation Failed` |
 | String | `resume_name` | New property. Used In: `Resume Uploaded` |
 | String | `portfolio_id` | New property. Used In: `Candidate Profile Created` |
-| String | `link_type` | New property. Used In: `Custom Link Added`. |
+| Enum | `link_type` | New property. Values: `general`, `job_specific`. Used In: `Custom Link Added`. |
 | String | `link_name` | Existing property. Replace Used In: `Custom Link Created` → `Custom Link Added`. |
 | String | `target_job_title` | Existing property. Replace Used In: `Custom Link Created` → `Custom Link Added`. |
 | String | `target_company` | Existing property. Replace Used In: `Custom Link Created` → `Custom Link Added`. |
@@ -1489,7 +1505,7 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | Numeric | `page_count` | New property. Description: `Page count (PDF native, DOCX via page breaks, TXT estimated; null for .doc or on error)`. Used In: `Resume Uploaded` |
 | Numeric | `links_count` | New property. Used In: `Build Profile Snapshot`, `Candidate Profile Created` |
 | Numeric | `resume_page_count` | New property. Description: `Resume page count in Build Profile Snapshot`. Used In: `Build Profile Snapshot` |
-| Array | `link_types` | New property. Description: `Platform types of added links`. Used In: `Build Profile Snapshot`, `Candidate Profile Created` |
+| Array | `link_types` | New property. Values: `github`, `linkedin`, `portfolio`, `personal_website`, `other`. Description: `Platform types of added links`. Used In: `Build Profile Snapshot`, `Candidate Profile Created` |
 | Enum | `photo_upload_method` | New property. Values: `take_photo`, `upload`. Description: `How photo was added (null if no photo) — snapshot only`. Used In: `Build Profile Snapshot` |
 
 **Property Dictionary — update "Used In" for existing properties:**
@@ -1499,8 +1515,8 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | `action` (user_action) | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
 | `action_value` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
 | `current_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
-| `previous_page_context` | Resume Upload Button Clicked, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Build Profile Button Clicked |
-| `entity_type` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Removed, Build Profile Button Clicked |
+| `previous_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
+| `entity_type` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
 | `current_persona` | Custom Link Added |
 | `component` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
 | `error_reason` | Resume Upload Failed, Profile Photo Upload Failed, Candidate Profile Creation Failed |
