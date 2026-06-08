@@ -58,13 +58,18 @@ HM Job Posting Wizard — Step 1: Job Details
 
 | Object | Entity | Example Events |
 |---|---|---|
-| Job Description | Job description content | Job Description Evaluated, Job Description Evaluation Failed, Job Description Details Toggled, Job Description Field Edited |
-| Sam | AI hiring partner (Sam) | Sam Session Setup Failed |
+| Job Description | Job description content | Job Description Evaluated, Job Description Evaluation Failed |
+| Job Description Details | Extracted job description details card | Job Description Details Toggled |
+| Job Description Field | Editable AI-extracted field | Job Description Field Edited |
+| Sam Session | AI hiring partner session lifecycle | Sam Session Setup Failed |
 | Role Requirement | Role requirement question | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added |
 | Screening Question | Interview screening question | Screening Question Deleted, Screening Question Edited, Screening Question Added |
-| Job Share | Job sharing action | Success Page Share Button Clicked, Job Share Message AI Refined, Job Share Message Copied, Job Share Channel Clicked |
-| Team Member | Job team member | Invite Teammates Button Clicked, Team Member Invite Sent |
-| Job Posting | Job posting page | Go To Job Posting Page Clicked |
+| Success Page Share | Share section on wizard success page | Success Page Share Button Clicked |
+| Job Share Message | Share message content | Job Share Message AI Refined, Job Share Message Copied |
+| Job Share Channel | Share distribution channel | Job Share Channel Clicked |
+| Invite Teammates | Invite teammates action on success page | Invite Teammates Button Clicked |
+| Team Member Invite | Team member invitation | Team Member Invite Sent |
+| Job Posting Page | Job posting detail page link | Job Posting Page Link Clicked |
 
 ## New Events
 
@@ -1402,13 +1407,13 @@ export const TEAM_MEMBER_INVITE_SENT = 'Team Member Invite Sent';
 
 ---
 
-### 18. Go To Job Posting Page Clicked
+### 18. Job Posting Page Link Clicked
 
 User clicks "Go to job posting page" link at the bottom of the success page.
 
 | Field | Value |
 |-------|-------|
-| **Event** | `Go To Job Posting Page Clicked` |
+| **Event** | `Job Posting Page Link Clicked` |
 | **Area** | Hiring |
 | **Type** | user_action |
 | **Trigger** | User clicks "Go to job posting page" link on the success page |
@@ -1421,7 +1426,7 @@ User clicks "Go to job posting page" link at the bottom of the success page.
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `action` | enum | `click` | Action type |
-| `action_value` | string | `go_to_job_posting_page` | Link text |
+| `action_value` | string | `go_to_job_posting_page_link` | Link text in snake_case |
 | `component` | string | `success_page_footer` | Footer area |
 | `current_page_context` | string | `hm_job_creation_wizard_success` | Success page |
 | `entity_type` | string | `job` | Business object |
@@ -1431,15 +1436,15 @@ User clicks "Go to job posting page" link at the bottom of the success page.
 **Implementation:**
 
 **File:** `frontend/src/pages/interview/JobSuccess.tsx`
-**Location:** "Go to job posting page" button `onClick` handler (line 355)
+**Location:** "Go to job posting page" link `onClick` handler (line 355)
 
 ```typescript
-import { GO_TO_JOB_POSTING_PAGE_CLICKED } from '@/lib/posthogEvents';
+import { JOB_POSTING_PAGE_LINK_CLICKED } from '@/lib/posthogEvents';
 
 onClick={() => {
-  capture(GO_TO_JOB_POSTING_PAGE_CLICKED, {
+  capture(JOB_POSTING_PAGE_LINK_CLICKED, {
     action: 'click',
-    action_value: 'go_to_job_posting_page',
+    action_value: 'go_to_job_posting_page_link',
     component: 'success_page_footer',
     current_page_context: JOB_WIZARD_PAGE_CONTEXTS.success,
     entity_type: 'job',
@@ -1452,7 +1457,7 @@ onClick={() => {
 
 **Constant:**
 ```typescript
-export const GO_TO_JOB_POSTING_PAGE_CLICKED = 'Go To Job Posting Page Clicked';
+export const JOB_POSTING_PAGE_LINK_CLICKED = 'Job Posting Page Link Clicked';
 ```
 
 ---
@@ -1478,7 +1483,7 @@ export const GO_TO_JOB_POSTING_PAGE_CLICKED = 'Go To Job Posting Page Clicked';
 | Job Share Channel Clicked | Hiring | User clicks LinkedIn/X/Email in share modal | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context`, `share_channel` | `job` | -- |
 | Invite Teammates Button Clicked | Hiring | User clicks "Invite teammates" on success page | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context` | `job` | -- |
 | Team Member Invite Sent | Hiring | User clicks "Send invite" in invite modal | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `invite_count`, `invite_role`, `job_id`, `previous_page_context` | `job` | -- |
-| Go To Job Posting Page Clicked | Hiring | User clicks "Go to job posting page" link | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context` | `job` | -- |
+| Job Posting Page Link Clicked | Hiring | User clicks "Go to job posting page" link | `action`, `action_value`, `component`, `current_page_context`, `entity_type`, `job_id`, `previous_page_context` | `job` | -- |
 
 ---
 
@@ -1562,7 +1567,7 @@ export const JOB_SHARE_MESSAGE_COPIED = 'Job Share Message Copied';
 export const JOB_SHARE_CHANNEL_CLICKED = 'Job Share Channel Clicked';
 export const INVITE_TEAMMATES_BUTTON_CLICKED = 'Invite Teammates Button Clicked';
 export const TEAM_MEMBER_INVITE_SENT = 'Team Member Invite Sent';
-export const GO_TO_JOB_POSTING_PAGE_CLICKED = 'Go To Job Posting Page Clicked';
+export const JOB_POSTING_PAGE_LINK_CLICKED = 'Job Posting Page Link Clicked';
 ```
 
 ---
@@ -1636,7 +1641,7 @@ All 18 new events should be inserted into the Hiring Persona Events section. Add
 | `entity_type` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added, all success page events |
 | `step_number` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
 | `step_name` | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added, Screening Question Deleted, Screening Question Edited, Screening Question Added |
-| `current_page_context` | all success page events (Success Page Share Button Clicked, Job Share Message AI Refined, Job Share Message Copied, Job Share Channel Clicked, Invite Teammates Button Clicked, Team Member Invite Sent, Go To Job Posting Page Clicked) |
+| `current_page_context` | all success page events (Success Page Share Button Clicked, Job Share Message AI Refined, Job Share Message Copied, Job Share Channel Clicked, Invite Teammates Button Clicked, Team Member Invite Sent, Job Posting Page Link Clicked) |
 | `previous_page_context` | all success page events |
 
 > **Note:** `job_title`, `company_name`, `job_location`, `job_id`, `step_number`, `step_name` already exist in the catalog from v2 wizard events — update their "Used In" lists to include `Job Description Evaluated`.
@@ -1650,7 +1655,7 @@ All 18 new events should be inserted into the Hiring Persona Events section. Add
 | Job Wizard | Append to example events: `Job Description Evaluated, Job Description Evaluation Failed, Job Description Details Toggled, Job Description Field Edited` |
 | Sam | Append to example events: `Sam Session Setup Failed` |
 
-**New Standard Objects** declared in this tracking plan's `## New Standard Objects` section will be added automatically by `/merge-tracking-plan`: Job Description, Sam (already exists — will be skipped), Role Requirement, Screening Question, Job Share, Team Member (already exists — will be skipped), Job Posting (already exists — will be skipped).
+**New Standard Objects** declared in this tracking plan's `## New Standard Objects` section will be added automatically by `/merge-tracking-plan`: Job Description, Job Description Details, Job Description Field, Sam Session, Role Requirement, Screening Question, Success Page Share, Job Share Message, Job Share Channel, Invite Teammates, Team Member Invite, Job Posting Page.
 
 ### `docs/dashboards.md`
 
@@ -1669,7 +1674,7 @@ No dashboard changes needed — the Hiring Dashboard already tracks the wizard f
 | `frontend/src/pages/interview/EmbeddedSamSession.tsx` | Update `handleStart()` to conditionally call `captureSamSessionStarted` or `captureSamSessionSetupFailed` based on `voiceState.lastSetupFailure` | Sam Session Started (modified), Sam Session Setup Failed |
 | `frontend/src/pages/interview/RoleRequirements.tsx` | Add capture in `deleteQuestion()` before state removal. Add capture in `confirmQuestionEdit()` with text-change guard. Add capture in `confirmQuestionEditor()` after API success. | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added |
 | `frontend/src/pages/interview/InterviewQuestions.tsx` | Add capture in `handleDelete()` before API call. Add capture in `handleSaveEdit()` and `handleAIRefine()` with text-change guard. Add capture in `handleAdd()` and `handleAICreate()` after API success. | Screening Question Deleted, Screening Question Edited, Screening Question Added |
-| `frontend/src/pages/interview/JobSuccess.tsx` | Add captures for Share, Invite teammates, and Go to job posting page buttons. | Success Page Share Button Clicked, Invite Teammates Button Clicked, Go To Job Posting Page Clicked |
+| `frontend/src/pages/interview/JobSuccess.tsx` | Add captures for Share, Invite teammates, and Go to job posting page buttons. | Success Page Share Button Clicked, Invite Teammates Button Clicked, Job Posting Page Link Clicked |
 | `frontend/src/components/interview/ShareInterviewModal.tsx` | Add captures in `handleGeneratePost()`, `handleCopy()`, and `handlePlatformShare()`. Thread `jobId` as prop. | Job Share Message AI Refined, Job Share Message Copied, Job Share Channel Clicked |
 | `frontend/src/components/interview/InviteModal.tsx` | Add capture in `handleSendInvite()` with role and email count. Thread `jobId` as prop. | Team Member Invite Sent |
 | `backend/app/core/router.py` | Fix `_should_capture_published()` dedup logic — only dedup on `status`, not `wizard_step` | Job Posting Published (bug fix) |
