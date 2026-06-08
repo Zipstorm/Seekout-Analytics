@@ -1456,7 +1456,7 @@ export const CUSTOM_LINK_ADDED = 'Custom Link Added';  // was CUSTOM_LINK_CREATE
 | Remove | Add | Notes |
 |--------|-----|-------|
 | `Profile Created` with `input_method` | `Candidate Profile Created` with `portfolio_id`, `resume_id`, `input_method`, `has_resume`, `has_photo`, `links_count`, `link_types` | Renamed + enriched. Same trigger point, richer properties. |
-| `Custom Link Created` | `Custom Link Added` | Renamed. Properties updated: `surface` → `current_persona`. |
+| `Custom Link Created` with `link_name`, `is_job_specific`, `target_job_title`, `target_company` | `Custom Link Added` with `current_persona`, `link_type`, `link_name`, `is_job_specific`, `target_job_title`, `target_company` | Renamed. Properties updated: `surface` → `current_persona`; remove stale `Custom Link Created` references from schema and Property Dictionary. |
 
 **Prospect Persona Events table — add new events:**
 
@@ -1474,9 +1474,14 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | Enum | `file_type` | New property (photo events). Values: `jpg`, `png`, `gif`, `webp`. Used In: `Profile Photo Added` |
 | Boolean | `has_resume` | Already exists (Used In: `Interest Expressed`). Append to Used In: `Profile Build Snapshot`, `Candidate Profile Created` |
 | Boolean | `has_photo` | New property. Used In: `Profile Build Snapshot`, `Candidate Profile Created` |
+| Boolean | `is_job_specific` | Existing property. Replace Used In: `Custom Link Created` → `Custom Link Added`; keep `Custom Link Shared`. |
 | String | `resume_id` | New property. Used In: `Resume Uploaded`, `Resume Removed`, `Profile Build Snapshot`, `Candidate Profile Created`, `Candidate Profile Creation Failed` |
 | String | `resume_name` | New property. Used In: `Resume Uploaded` |
 | String | `portfolio_id` | New property. Used In: `Candidate Profile Created` |
+| String | `link_type` | New property. Used In: `Custom Link Added`. |
+| String | `link_name` | Existing property. Replace Used In: `Custom Link Created` → `Custom Link Added`. |
+| String | `target_job_title` | Existing property. Replace Used In: `Custom Link Created` → `Custom Link Added`. |
+| String | `target_company` | Existing property. Replace Used In: `Custom Link Created` → `Custom Link Added`. |
 | Numeric | `resume_size_bytes` | New property. Used In: `Resume Uploaded`, `Resume Upload Failed` |
 | Numeric | `file_size_bytes` | New property (photo events). Used In: `Profile Photo Added`, `Profile Photo Upload Failed` |
 | Numeric | `page_count` | New property. Description: `Page count (PDF native, DOCX via page breaks, TXT estimated; null for .doc or on error)`. Used In: `Resume Uploaded` |
@@ -1494,6 +1499,7 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | `current_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Profile Build Snapshot |
 | `previous_page_context` | Resume Upload Button Clicked, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Build Profile Button Clicked |
 | `entity_type` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Removed, Build Profile Button Clicked |
+| `current_persona` | Custom Link Added |
 | `component` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
 | `error_reason` | Resume Upload Failed, Profile Photo Upload Failed, Candidate Profile Creation Failed |
 
@@ -1525,6 +1531,7 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | Object | Change |
 |--------|--------|
 | Profile | Remove `Profile Created` from example events (replaced by `Candidate Profile Created` under new Candidate Profile object). Resulting examples: `Profile Section Updated` |
+| Custom Link | Replace `Custom Link Created` with `Custom Link Added`. Resulting examples: `Custom Link Added`, `Custom Link Shared` |
 
 **Standard Event Properties — `entity_type`:**
 
