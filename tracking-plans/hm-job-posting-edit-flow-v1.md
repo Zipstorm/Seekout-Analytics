@@ -281,6 +281,7 @@ User clicks the "+ Post Interview" button on a job card on the dashboard. Opens 
 | `component` | string | `job_postings_job_card` | Job card on the dashboard list |
 | `current_page_context` | string | `hm_job_postings` | Dashboard page |
 | `entity_type` | string | `job` | Business object context |
+| `is_email_verified` | boolean | `true`/`false` | Whether HM has completed email verification for this job |
 | `job_id` | string | UUID | Job identifier |
 | `job_title` | string | e.g., `Product Manager, Data Movement Platform` | Job title |
 | `previous_page_context` | string | snake_case or null | Previous page |
@@ -564,7 +565,7 @@ User clicks "Job details" button in the top-right of the posted job page. Opens 
 
 ### 15. Edit Job Posting Button Clicked
 
-User clicks "Edit" in the Job Details panel or "Edit job posting" in the chevron menu. Opens the job post wizard in **edit mode**. The `component` property distinguishes the entry point.
+User clicks "Edit" in the Job Details panel or "Edit job posting" in the chevron menu. Opens the job post wizard in **edit mode**.
 
 | Field | Value |
 |-------|-------|
@@ -585,6 +586,8 @@ User clicks "Edit" in the Job Details panel or "Edit job posting" in the chevron
 | `component` | string | `job_details_panel` or `posted_job_chevron_menu` | Where the click happened |
 | `current_page_context` | string | `hm_job_posting_detail` | Posted job page |
 | `entity_type` | string | `job` | Business object context |
+| `entry_point` | enum | `job_details_panel`, `chevron_menu` | Which UI surface the edit was initiated from |
+| `is_email_verified` | boolean | `true`/`false` | Whether the HM has completed email verification for this job |
 | `job_id` | string | UUID | Job identifier |
 | `job_title` | string | e.g., `Product Manager, Data Movement Platform` | Job title |
 | `previous_page_context` | string | snake_case or null | Previous page |
@@ -642,17 +645,18 @@ The intro video page (`/hiring-manager/job-postings/{id}/intro-video`) lets the 
 
 ### Existing Event Enrichment: Record Video Button Clicked
 
-Already in catalog (Not Started). Fires when user clicks "Record" in the Job Details panel, navigating to the intro video page.
+Already in catalog (Not Started). Fires when user clicks "Record" in the Job Details panel (no video exists) OR "Edit intro video" (video already exists), navigating to the intro video page.
 
 **Enriched Properties:**
 
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `action` | enum | `click` | Action type |
-| `action_value` | string | `record_button` | Button text |
+| `action_value` | string | `record_button` or `edit_intro_video` | `record_button` when no video exists. `edit_intro_video` when editing existing video |
 | `component` | string | `job_details_panel_intro_video` | Intro video section in Job Details panel |
 | `current_page_context` | string | `hm_job_posting_detail` | Posted job page |
 | `entity_type` | string | `job` | Business object context |
+| `has_existing_video` | boolean | `true`/`false` | `false` when clicking "Record" for the first time. `true` when clicking "Edit intro video" on an existing video |
 | `job_id` | string | UUID | Job identifier |
 | `previous_page_context` | string | snake_case or null | Previous page |
 
@@ -661,6 +665,8 @@ Already in catalog (Not Started). Fires when user clicks "Record" in the Job Det
 ### Existing Event Enrichment: Intro Script Updated
 
 Already in catalog (Not Started, has `job_id` and `edit_method`). Fires when the user saves a manual text edit (clicks "Save") OR completes an AI regeneration (clicks "Regenerate" in the regenerate modal). Single event with `edit_method` property to distinguish.
+
+**Guard: only fire when script actually changed.** Compare the saved/regenerated text against the original. If the user clicks "Edit" → doesn't change anything → clicks "Save", the event is skipped. Same pattern as v3's `Role Requirement Edited` and `Screening Question Edited`.
 
 **Enriched Properties:**
 
@@ -671,8 +677,9 @@ Already in catalog (Not Started, has `job_id` and `edit_method`). Fires when the
 | `entity_type` | string | `job` | Business object context |
 | `has_ai_instruction` | boolean | `true`/`false` | Whether user provided instruction text in the regenerate modal (false if left blank) |
 | `job_id` | string | UUID | Job identifier |
+| `original_script_length` | number | e.g., `410` | Character count of the script BEFORE the edit |
 | `previous_page_context` | string | snake_case or null | Previous page |
-| `script_length` | number | e.g., `450` | Character count of the script after save/regeneration |
+| `script_length` | number | e.g., `450` | Character count of the script AFTER save/regeneration |
 
 > **Note:** The catalog already defines `edit_method` with values `text`, `voice`. For the intro video context, `ai_regenerate` is a new allowed value. `voice` is not applicable here.
 
@@ -1022,7 +1029,11 @@ After the first invite is sent, the "Invite recruiter" button label changes to "
 | `edit_method` | enum | `text`, `ai_regenerate` | How the intro script was edited (existing catalog property, adding `ai_regenerate` value) |
 | `script_length` | number | -- | Character count of the intro video script after save/regeneration |
 | `has_ai_instruction` | boolean | true / false | Whether user provided instruction text in the regenerate modal |
+| `entry_point` | enum | `job_details_panel`, `chevron_menu` (+ existing values) | Which UI surface the action was initiated from |
+| `has_existing_video` | boolean | true / false | Whether an intro video already exists when navigating to the intro video page |
 | `has_intro_video` | boolean | true / false | Whether an intro video exists at time of action |
+| `is_email_verified` | boolean | true / false | Whether the HM has completed email verification for this job |
+| `original_script_length` | number | -- | Character count of the intro script before editing |
 | `interview_name` | string | -- | Interview name from the edit interview form |
 | `resume_upload_option` | enum | `yes_optional`, `yes_required`, `no_resume_upload` | Resume upload setting in edit interview |
 | `assessment_questions_count` | number | -- | Number of behavioral assessment questions |
@@ -1051,10 +1062,13 @@ Additionally:
 |---------|----------|--------|
 | Enum | `active_tab` | New property. Values: `my_jobs`, `shared_with_me`, `archived`. Used In: `Job Postings Dashboard Loaded` |
 | Enum | `selected_tab` | New property. Values: `my_jobs`, `shared_with_me`, `archived`. Used In: `Job Postings Tab Switched` |
-| Enum | `entry_point` | Existing — append `dashboard_job_card`, `recent_sidebar` to Allowed Values. Append `Job Post Clicked` to Used In |
+| Enum | `entry_point` | Existing — append `dashboard_job_card`, `recent_sidebar`, `job_details_panel`, `chevron_menu` to Allowed Values. Append `Job Post Clicked`, `Edit Job Posting Button Clicked` to Used In |
 | Enum | `invite_status` | New property. Values: `pending`, `accepted`, `revoked`. Used In: `Recruiter Invite Link Copied`, `Recruiter Invite Resent`, `Recruiter Invite Revoked` |
 | Enum | `previous_status` | New property. Values: `draft`, `open`, `closed`. Used In: `Job Archived` |
+| Boolean | `has_existing_video` | New property. Used In: `Record Video Button Clicked` |
 | Boolean | `has_jobs` | New property. Used In: `Job Postings Dashboard Loaded` |
+| Boolean | `is_email_verified` | New property. Used In: `Post Interview Button Clicked`, `Edit Job Posting Button Clicked` |
+| Numeric | `original_script_length` | New property. Used In: `Intro Script Updated` |
 | Numeric | `my_jobs_count` | New property. Used In: `Job Postings Dashboard Loaded` |
 | Numeric | `shared_with_me_count` | New property. Used In: `Job Postings Dashboard Loaded` |
 | Numeric | `archived_count` | New property. Used In: `Job Postings Dashboard Loaded` |
