@@ -65,7 +65,7 @@ Onboarding (existing events — no changes)
        │
        └─ Submit
             ├─ User clicks "Build my AI profile" → fires: Build Profile Button Clicked
-            ├─ State snapshot captured → fires: Profile Build Snapshot
+            ├─ State snapshot captured → fires: Build Profile Snapshot
             ├─ AI generates profile → fires: Candidate Profile Created
             └─ AI generation fails → fires: Candidate Profile Creation Failed
 ```
@@ -216,10 +216,12 @@ After all surface references were removed from capture calls, the `SURFACE_PROSP
 
 | Object | Entity | Example Events |
 |---|---|---|
-| Resume | Prospect resume document | Resume Uploaded, Resume Upload Failed, Resume Removed, Resume Upload Button Clicked |
+| Resume Upload | Prospect resume upload flow | Resume Upload Button Clicked, Resume Upload Failed |
+| Resume | Prospect resume document | Resume Uploaded, Resume Removed |
 | Profile Photo | Prospect profile photo | Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Add Profile Photo Button Clicked |
-| Candidate Profile | AI-generated candidate profile | Candidate Profile Created, Candidate Profile Creation Failed, Build Profile Button Clicked, Profile Build Snapshot |
 | LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Clicked |
+| Build Profile | AI profile generation process | Build Profile Button Clicked, Build Profile Snapshot |
+| Candidate Profile | AI-generated candidate profile | Candidate Profile Created, Candidate Profile Creation Failed |
 
 ## New Events
 
@@ -979,13 +981,13 @@ BUILD_PROFILE_BUTTON_CLICKED = "Build Profile Button Clicked"
 
 ---
 
-### 5b. Profile Build Snapshot
+### 5b. Build Profile Snapshot
 
 Captures the full state of what the user provided before AI profile generation starts. Fires after `Build Profile Button Clicked` and resume validation, but before the backend API call.
 
 | Field | Value |
 |-------|-------|
-| **Event** | `Profile Build Snapshot` |
+| **Event** | `Build Profile Snapshot` |
 | **Area** | Prospect |
 | **Type** | -- (state capture, not an action) |
 | **Trigger** | Fires programmatically after Build Profile Button Clicked, after resume validation, before backend API call |
@@ -1014,14 +1016,14 @@ Captures the full state of what the user provided before AI profile generation s
 
 ```typescript
 import { capture } from '@/lib/posthog';
-import { PROFILE_BUILD_SNAPSHOT } from '@/lib/posthogEvents';
+import { BUILD_PROFILE_SNAPSHOT } from '@/lib/posthogEvents';
 
 // State tracked across the component:
 const [photoUploadMethod, setPhotoUploadMethod] = useState<'take_photo' | 'upload' | null>(null);
 
 // Inside handleCreateProfile, after defaultResume validation:
 const resumeExt = resumeFileName?.split('.').pop()?.toLowerCase() ?? null;
-capture(PROFILE_BUILD_SNAPSHOT, {
+capture(BUILD_PROFILE_SNAPSHOT, {
   has_resume: !!resumeFileName,
   resume_id: resumeId ?? defaultResume?.id ?? null,
   resume_file_type: resumeExt,
@@ -1044,11 +1046,11 @@ const portfolio = await createPortfolio(defaultResume.id, { linkIds });
 **Constants:**
 ```typescript
 // frontend/src/lib/posthogEvents.ts
-export const PROFILE_BUILD_SNAPSHOT = 'Profile Build Snapshot';
+export const BUILD_PROFILE_SNAPSHOT = 'Build Profile Snapshot';
 ```
 ```python
 # backend/app/shared/posthog_events.py
-PROFILE_BUILD_SNAPSHOT = "Profile Build Snapshot"
+BUILD_PROFILE_SNAPSHOT = "Build Profile Snapshot"
 ```
 
 ---
@@ -1333,7 +1335,7 @@ const [photoUploadMethod, setPhotoUploadMethod] = useState<'take_photo' | 'uploa
 | Profile Photo Upload Failed | Prospect | Photo rejected (size/format) | `upload_method`, `file_size_bytes`, `error_reason`, `error_category`, `current_page_context` | -- | -- |
 | Profile Photo Removed | Prospect | User clicks Remove on photo | `action`, `action_value`, `current_page_context`, `component`, `entity_type` | -- | -- |
 | Build Profile Button Clicked | Prospect | User clicks "Build my AI profile" | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
-| Profile Build Snapshot | Prospect | State capture before AI generation | `has_resume`, `resume_id`, `resume_file_type`, `resume_page_count`, `has_photo`, `photo_upload_method`, `links_count`, `link_types`, `current_page_context` | -- | -- |
+| Build Profile Snapshot | Prospect | State capture before AI generation | `has_resume`, `resume_id`, `resume_file_type`, `resume_page_count`, `has_photo`, `photo_upload_method`, `links_count`, `link_types`, `current_page_context` | -- | -- |
 | Candidate Profile Created | Prospect | Backend generates portfolio | `portfolio_id`, `resume_id`, `input_method`, `has_resume`, `has_photo`, `links_count`, `link_types` | -- | -- |
 | Candidate Profile Creation Failed | Prospect | Backend portfolio generation fails | `resume_id`, `error_reason`, `error_category` | -- | -- |
 
@@ -1356,7 +1358,7 @@ const [photoUploadMethod, setPhotoUploadMethod] = useState<'take_photo' | 'uploa
 | Onboarding → Profile Creation | Account Created → Intro Completed → Page Viewed → Build Profile Button Clicked → Candidate Profile Created | End-to-end new user conversion from signup to AI profile. Filter Page Viewed by `current_page_context` = `candidate_create_profile`. |
 | Resume Upload Conversion | Resume Upload Button Clicked → Resume Uploaded | % of users who start upload and succeed |
 | Profile Photo Adoption | Add Profile Photo Button Clicked → Profile Photo Added | % of users who add a photo |
-| Profile Completeness at Creation | Profile Build Snapshot | Single-event funnel filtered by `has_resume` = true, `has_photo` = true, `links_count` > 0. Measures % providing all optional items. |
+| Profile Completeness at Creation | Build Profile Snapshot | Single-event funnel filtered by `has_resume` = true, `has_photo` = true, `links_count` > 0. Measures % providing all optional items. |
 
 ---
 
@@ -1366,14 +1368,14 @@ const [photoUploadMethod, setPhotoUploadMethod] = useState<'take_photo' | 'uploa
 |---|---|---|---|
 | `resume_id` | string | UUID | Resume identifier from `Resume.id` |
 | `resume_name` | string | -- | Original uploaded filename |
-| `resume_file_type` | string | pdf / doc / docx / txt | File format extension — used on resume events and Profile Build Snapshot |
+| `resume_file_type` | string | pdf / doc / docx / txt | File format extension — used on resume events and Build Profile Snapshot |
 | `resume_size_bytes` | number | -- | Resume file size in bytes |
-| `resume_page_count` | number | -- | Resume page count in Profile Build Snapshot |
+| `resume_page_count` | number | -- | Resume page count in Build Profile Snapshot |
 | `page_count` | number | -- | Page count: PDF native, DOCX via page breaks, TXT estimated. Null for .doc or on error. |
 | `upload_method` | enum | take_photo / upload | How profile photo was added |
 | `file_type` | string | jpg / png / gif / webp | Image format (photo events only) |
 | `file_size_bytes` | number | -- | Image file size (photo events only) |
-| `photo_upload_method` | enum | take_photo / upload | How photo was added — used in Profile Build Snapshot (null if no photo) |
+| `photo_upload_method` | enum | take_photo / upload | How photo was added — used in Build Profile Snapshot (null if no photo) |
 | `has_resume` | boolean | true / false | Whether user uploaded a resume |
 | `has_photo` | boolean | true / false | Whether user added a profile photo |
 | `links_count` | number | -- | Total external links |
@@ -1411,7 +1413,7 @@ PROFILE_PHOTO_ADDED = "Profile Photo Added"
 PROFILE_PHOTO_UPLOAD_FAILED = "Profile Photo Upload Failed"
 PROFILE_PHOTO_REMOVED = "Profile Photo Removed"
 BUILD_PROFILE_BUTTON_CLICKED = "Build Profile Button Clicked"
-PROFILE_BUILD_SNAPSHOT = "Profile Build Snapshot"
+BUILD_PROFILE_SNAPSHOT = "Build Profile Snapshot"
 CANDIDATE_PROFILE_CREATED = "Candidate Profile Created"
 CANDIDATE_PROFILE_CREATION_FAILED = "Candidate Profile Creation Failed"
 
@@ -1434,7 +1436,7 @@ export const PROFILE_PHOTO_ADDED = 'Profile Photo Added';
 export const PROFILE_PHOTO_UPLOAD_FAILED = 'Profile Photo Upload Failed';
 export const PROFILE_PHOTO_REMOVED = 'Profile Photo Removed';
 export const BUILD_PROFILE_BUTTON_CLICKED = 'Build Profile Button Clicked';
-export const PROFILE_BUILD_SNAPSHOT = 'Profile Build Snapshot';
+export const BUILD_PROFILE_SNAPSHOT = 'Build Profile Snapshot';
 export const CANDIDATE_PROFILE_CREATED = 'Candidate Profile Created';
 export const CANDIDATE_PROFILE_CREATION_FAILED = 'Candidate Profile Creation Failed';
 
@@ -1470,12 +1472,12 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | Enum | `input_method` | Update Used In: `Candidate Profile Created` (was: `Profile Created`) |
 | Enum | `error_category` | Append new values to existing enum: `unsupported_format`, `extraction_failed`, `invalid_magic_bytes`, `size_limit`, `ai_generation`. (`server` already exists — no change needed.) Append to Used In: `Resume Upload Failed`, `Profile Photo Upload Failed`, `Candidate Profile Creation Failed` |
 | Enum | `upload_method` | New property. Values: `take_photo`, `upload`. Used In: `Profile Photo Added`, `Profile Photo Upload Failed` |
-| Enum | `resume_file_type` | New property. Values: `pdf`, `doc`, `docx`, `txt`. Used In: `Resume Uploaded`, `Resume Upload Failed`, `Resume Removed`, `Profile Build Snapshot` |
+| Enum | `resume_file_type` | New property. Values: `pdf`, `doc`, `docx`, `txt`. Used In: `Resume Uploaded`, `Resume Upload Failed`, `Resume Removed`, `Build Profile Snapshot` |
 | Enum | `file_type` | New property (photo events). Values: `jpg`, `png`, `gif`, `webp`. Used In: `Profile Photo Added` |
-| Boolean | `has_resume` | Already exists (Used In: `Interest Expressed`). Append to Used In: `Profile Build Snapshot`, `Candidate Profile Created` |
-| Boolean | `has_photo` | New property. Used In: `Profile Build Snapshot`, `Candidate Profile Created` |
+| Boolean | `has_resume` | Already exists (Used In: `Interest Expressed`). Append to Used In: `Build Profile Snapshot`, `Candidate Profile Created` |
+| Boolean | `has_photo` | New property. Used In: `Build Profile Snapshot`, `Candidate Profile Created` |
 | Boolean | `is_job_specific` | Existing property. Replace Used In: `Custom Link Created` → `Custom Link Added`; keep `Custom Link Shared`. |
-| String | `resume_id` | New property. Used In: `Resume Uploaded`, `Resume Removed`, `Profile Build Snapshot`, `Candidate Profile Created`, `Candidate Profile Creation Failed` |
+| String | `resume_id` | New property. Used In: `Resume Uploaded`, `Resume Removed`, `Build Profile Snapshot`, `Candidate Profile Created`, `Candidate Profile Creation Failed` |
 | String | `resume_name` | New property. Used In: `Resume Uploaded` |
 | String | `portfolio_id` | New property. Used In: `Candidate Profile Created` |
 | String | `link_type` | New property. Used In: `Custom Link Added`. |
@@ -1485,10 +1487,10 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | Numeric | `resume_size_bytes` | New property. Used In: `Resume Uploaded`, `Resume Upload Failed` |
 | Numeric | `file_size_bytes` | New property (photo events). Used In: `Profile Photo Added`, `Profile Photo Upload Failed` |
 | Numeric | `page_count` | New property. Description: `Page count (PDF native, DOCX via page breaks, TXT estimated; null for .doc or on error)`. Used In: `Resume Uploaded` |
-| Numeric | `links_count` | New property. Used In: `Profile Build Snapshot`, `Candidate Profile Created` |
-| Numeric | `resume_page_count` | New property. Description: `Resume page count in Profile Build Snapshot`. Used In: `Profile Build Snapshot` |
-| Array | `link_types` | New property. Description: `Platform types of added links`. Used In: `Profile Build Snapshot`, `Candidate Profile Created` |
-| Enum | `photo_upload_method` | New property. Values: `take_photo`, `upload`. Description: `How photo was added (null if no photo) — snapshot only`. Used In: `Profile Build Snapshot` |
+| Numeric | `links_count` | New property. Used In: `Build Profile Snapshot`, `Candidate Profile Created` |
+| Numeric | `resume_page_count` | New property. Description: `Resume page count in Build Profile Snapshot`. Used In: `Build Profile Snapshot` |
+| Array | `link_types` | New property. Description: `Platform types of added links`. Used In: `Build Profile Snapshot`, `Candidate Profile Created` |
+| Enum | `photo_upload_method` | New property. Values: `take_photo`, `upload`. Description: `How photo was added (null if no photo) — snapshot only`. Used In: `Build Profile Snapshot` |
 
 **Property Dictionary — update "Used In" for existing properties:**
 
@@ -1496,7 +1498,7 @@ All 13 new events listed in the New Events Summary table above should be inserte
 |----------|---------------------|
 | `action` (user_action) | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
 | `action_value` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
-| `current_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Profile Build Snapshot |
+| `current_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
 | `previous_page_context` | Resume Upload Button Clicked, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Build Profile Button Clicked |
 | `entity_type` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Removed, Build Profile Button Clicked |
 | `current_persona` | Custom Link Added |
@@ -1521,9 +1523,11 @@ All 13 new events listed in the New Events Summary table above should be inserte
 
 | Object | Entity | Example Events |
 |--------|--------|---------------|
-| Resume | User's uploaded resume document | Resume Upload Button Clicked, Resume Uploaded, Resume Upload Failed, Resume Removed |
+| Resume Upload | User's resume upload flow | Resume Upload Button Clicked, Resume Upload Failed |
+| Resume | User's uploaded resume document | Resume Uploaded, Resume Removed |
 | Profile Photo | User's profile headshot image | Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed |
-| Profile Build | AI profile generation process | Build Profile Button Clicked, Profile Build Snapshot |
+| LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Clicked |
+| Build Profile | AI profile generation process | Build Profile Button Clicked, Build Profile Snapshot |
 | Candidate Profile | Job seeker's AI-generated career profile | Candidate Profile Created, Candidate Profile Creation Failed |
 
 **Standard Objects table — update:**
@@ -1552,7 +1556,7 @@ Add `candidate_profile` as a valid value for job seeker profile setup events.
 - Onboarding → Profile Creation funnel: `Account Created` → `Intro Completed` → `Page Viewed` (candidate_create_profile) → `Build Profile Button Clicked` → `Candidate Profile Created`
 - Resume upload conversion: `Resume Upload Button Clicked` → `Resume Uploaded`
 - Profile photo adoption rate: `Add Profile Photo Button Clicked` → `Profile Photo Added`
-- Profile completeness at creation: `Profile Build Snapshot` filtered by `has_resume` = true, `has_photo` = true, `links_count` > 0
+- Profile completeness at creation: `Build Profile Snapshot` filtered by `has_resume` = true, `has_photo` = true, `links_count` > 0
 
 ---
 
@@ -1561,18 +1565,18 @@ Add `candidate_profile` as a valid value for job seeker profile setup events.
 | File | Change | Events Affected |
 |------|--------|----------------|
 | `frontend/src/lib/posthogEvents.ts` | Add 13 new event constants, rename `CUSTOM_LINK_CREATED` → `CUSTOM_LINK_ADDED`, remove `PROFILE_CREATED` | All |
-| `frontend/src/pages/candidate/CreateProfile.tsx` | Add `Page Viewed` on mount, `Build Profile Button Clicked`, `Profile Build Snapshot`, `Resume Removed`, `LinkedIn Export Learn How Clicked` captures. Track `photoUploadMethod` state via `onUploadMethodChange` prop. | Page Viewed, Build Profile Button Clicked, Profile Build Snapshot, Resume Removed, LinkedIn Export Learn How Clicked |
+| `frontend/src/pages/candidate/CreateProfile.tsx` | Add `Page Viewed` on mount, `Build Profile Button Clicked`, `Build Profile Snapshot`, `Resume Removed`, `LinkedIn Export Learn How Clicked` captures. Track `photoUploadMethod` state via `onUploadMethodChange` prop. | Page Viewed, Build Profile Button Clicked, Build Profile Snapshot, Resume Removed, LinkedIn Export Learn How Clicked |
 | `frontend/src/components/ResumeDropzone.tsx` | Add `Resume Upload Button Clicked` capture in `openFileDialog()` | Resume Upload Button Clicked |
 | `frontend/src/components/HeadshotUpload.tsx` | Add `onUploadMethodChange` prop. Add captures for photo add/fail/remove. Pass `method` param through `handleFile()`. | Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed |
 | `frontend/src/pages/candidate/PortfolioEditor.tsx` | Remove `surface: SURFACE_PROSPECT` from `Profile Section Updated` captures (summary, skills, journey) | Profile Section Updated |
 | `frontend/src/components/portfolio/JourneyEditDialog.tsx` | Add `Profile Section Updated` captures with `section: 'experience'` and `section: 'education'` in per-entry save handlers | Profile Section Updated |
 | `frontend/src/components/portfolio/ShareModal.tsx` | Remove `surface: SURFACE_PROSPECT` from `Custom Link Shared` | Custom Link Shared |
 | `frontend/src/pages/public/PublicPortfolio.tsx` | Remove `surface: SURFACE_PROSPECT` from all `Profile Link Engaged` captures | Profile Link Engaged |
-| `frontend/src/lib/portfolioApi.ts` | Add `pageCount` field to `ResumeDto` interface | Profile Build Snapshot (`resume_page_count` property) |
+| `frontend/src/lib/portfolioApi.ts` | Add `pageCount` field to `ResumeDto` interface | Build Profile Snapshot (`resume_page_count` property) |
 | `backend/app/shared/posthog_events.py` | Add 12 new event constants, rename `CUSTOM_LINK_CREATED` → `CUSTOM_LINK_ADDED`, remove `PROFILE_CREATED` | All backend events |
 | `backend/app/portfolio/router.py` | Replace `Profile Created` with `Candidate Profile Created` (enriched). Add `Candidate Profile Creation Failed` in try/except. Remove `surface` from `Profile Link Viewed`. Query `UserLink` for link analytics. Import `UserLink` model. | Candidate Profile Created, Candidate Profile Creation Failed, Profile Link Viewed |
 | `backend/app/resumes/router.py` | Add `Resume Uploaded` on confirm success. Add `Resume Upload Failed` on 5 validation error paths. Store page count in `extracted` JSONB via `extract_page_count()`. Import `posthog_client` and event constants. | Resume Uploaded, Resume Upload Failed |
-| `backend/app/resumes/schemas.py` | Add `page_count` field to `ResumeResponse` with `@model_validator(mode="after")` to derive from `extracted` JSONB. Import `Self`, `model_validator`. | Resume Uploaded (supports `page_count`), Profile Build Snapshot (supports `resume_page_count`) |
+| `backend/app/resumes/schemas.py` | Add `page_count` field to `ResumeResponse` with `@model_validator(mode="after")` to derive from `extracted` JSONB. Import `Self`, `model_validator`. | Resume Uploaded (supports `page_count`), Build Profile Snapshot (supports `resume_page_count`) |
 | `backend/app/users/router.py` | Replace `surface` with `current_persona` on `Custom Link Added`. Add `Resume Uploaded` and `Resume Upload Failed` captures on direct upload endpoint (4 error paths + 1 success). Import `io`, `extract_page_count`, new event constants, `get_current_persona`. | Custom Link Added, Resume Uploaded, Resume Upload Failed |
 | `backend/app/session_runtime/services/resume_parser.py` | Add `extract_pdf_page_count()` and `extract_page_count()` functions (PDF, DOCX, TXT support). No changes to existing functions. | Resume Uploaded (`page_count` property) |
 
