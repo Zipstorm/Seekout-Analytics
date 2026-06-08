@@ -1510,12 +1510,7 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | Old Event | Replaced By | Why | Removed Date |
 |-----------|-------------|-----|--------------|
 | Profile Created | Candidate Profile Created | Enriched with resume, photo, and link state; same trigger point | June 2026 |
-
-**Renamed Events table — add:**
-
-| Old Name | New Name | Why | Renamed Date |
-|----------|----------|-----|--------------|
-| Custom Link Created | Custom Link Added | Better describes the action | June 2026 |
+| Custom Link Created | Custom Link Added | Renamed for clearer action wording; properties updated from `surface` to `current_persona` | June 2026 |
 
 ### `docs/event-schema.md`
 
