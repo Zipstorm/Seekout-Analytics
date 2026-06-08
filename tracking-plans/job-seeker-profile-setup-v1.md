@@ -25,7 +25,7 @@ During implementation, several decisions were made that differ from the original
 | Page count extended to DOCX and TXT (not just PDF) | More comprehensive analytics at minimal cost |
 | Page count stored in `extracted` JSONB, not a new column | Avoids a DB migration for one analytics-only property |
 | `Custom Link Created` renamed to `Custom Link Added` | Better describes the action (user adds a link to their profile, not "creates" one) |
-| `LinkedIn Export Learn How Clicked` event added | Captures intent signal for users interested in LinkedIn PDF import |
+| `LinkedIn Export Learn How Link Clicked` event added | Captures intent signal for users interested in LinkedIn PDF import |
 | `entry_point` dropped from Page Viewed on create-profile | Not meaningful — users arrive via a single onboarding flow |
 | `resume_size_bytes` dropped from Resume Removed | Frontend state doesn't carry file size after upload |
 | `action_value` on Resume Upload Button Clicked uses `drop_resume_here_or_click_to_upload` | Matches exact UI text in snake_case per naming conventions |
@@ -55,7 +55,7 @@ Onboarding (existing events — no changes)
        │    ├─ Backend confirms upload → fires: Resume Uploaded
        │    ├─ Backend rejects upload → fires: Resume Upload Failed
        │    ├─ User clicks "Remove" → fires: Resume Removed
-       │    └─ User clicks "Learn how" (LinkedIn export) → fires: LinkedIn Export Learn How Clicked
+       │    └─ User clicks "Learn how" link (LinkedIn export) → fires: LinkedIn Export Learn How Link Clicked
        │
        ├─ Profile photo section
        │    ├─ User opens photo menu → fires: Add Profile Photo Button Clicked
@@ -219,7 +219,7 @@ After all surface references were removed from capture calls, the `SURFACE_PROSP
 | Resume Upload | Prospect resume upload flow | Resume Upload Button Clicked, Resume Upload Failed |
 | Resume | Prospect resume document | Resume Uploaded, Resume Removed |
 | Profile Photo | Prospect profile photo | Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Add Profile Photo Button Clicked |
-| LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Clicked |
+| LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Link Clicked |
 | Build Profile | AI profile generation process | Build Profile Button Clicked, Build Profile Snapshot |
 | Candidate Profile | AI-generated candidate profile | Candidate Profile Created, Candidate Profile Creation Failed |
 
@@ -576,13 +576,13 @@ RESUME_REMOVED = "Resume Removed"
 
 ---
 
-### 3. LinkedIn Export Learn How Clicked
+### 3. LinkedIn Export Learn How Link Clicked
 
 User clicks the "Learn how" link to see instructions for exporting their LinkedIn profile as a PDF. This event was **not in the original tracking plan** — it was added during implementation as a useful intent signal.
 
 | Field | Value |
 |-------|-------|
-| **Event** | `LinkedIn Export Learn How Clicked` |
+| **Event** | `LinkedIn Export Learn How Link Clicked` |
 | **Area** | Prospect |
 | **Type** | -- |
 | **Trigger** | User clicks "Learn how" link in the LinkedIn export tip below the resume upload area |
@@ -608,14 +608,14 @@ User clicks the "Learn how" link to see instructions for exporting their LinkedI
 
 ```typescript
 import { capture } from '@/lib/posthog';
-import { LINKEDIN_EXPORT_LEARN_HOW_CLICKED, getPreviousPageContext } from '@/lib/posthogEvents';
+import { LINKEDIN_EXPORT_LEARN_HOW_LINK_CLICKED, getPreviousPageContext } from '@/lib/posthogEvents';
 
 <a
   href="..."
   target="_blank"
   rel="noopener noreferrer"
   className="..."
-  onClick={() => capture(LINKEDIN_EXPORT_LEARN_HOW_CLICKED, {
+  onClick={() => capture(LINKEDIN_EXPORT_LEARN_HOW_LINK_CLICKED, {
     action: 'click',
     action_value: 'learn_how_export_linkedin_pdf',
     current_page_context: 'candidate_create_profile',
@@ -632,7 +632,7 @@ import { LINKEDIN_EXPORT_LEARN_HOW_CLICKED, getPreviousPageContext } from '@/lib
 **Constant (frontend only — no backend constant):**
 ```typescript
 // frontend/src/lib/posthogEvents.ts
-export const LINKEDIN_EXPORT_LEARN_HOW_CLICKED = 'LinkedIn Export Learn How Clicked';
+export const LINKEDIN_EXPORT_LEARN_HOW_LINK_CLICKED = 'LinkedIn Export Learn How Link Clicked';
 ```
 
 ---
@@ -1345,7 +1345,7 @@ const [photoUploadMethod, setPhotoUploadMethod] = useState<'take_photo' | 'uploa
 | Resume Uploaded | Prospect | Backend confirms resume stored | `resume_id`, `resume_name`, `resume_file_type`, `resume_size_bytes`, `page_count` | -- | -- |
 | Resume Upload Failed | Prospect | Backend rejects resume | `resume_file_type`, `resume_size_bytes`, `error_reason`, `error_category` | -- | -- |
 | Resume Removed | Prospect | User clicks Remove on resume | `action`, `action_value`, `resume_id`, `resume_file_type`, `current_page_context`, `previous_page_context`, `component`, `entity_type` | -- | -- |
-| LinkedIn Export Learn How Clicked | Prospect | User clicks "Learn how" link | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
+| LinkedIn Export Learn How Link Clicked | Prospect | User clicks "Learn how" link | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
 | Add Profile Photo Button Clicked | Prospect | User opens photo action menu | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- |
 | Profile Photo Added | Prospect | Photo saved successfully | `upload_method`, `file_type`, `file_size_bytes`, `current_page_context`, `previous_page_context`, `entity_type` | -- | -- |
 | Profile Photo Upload Failed | Prospect | Photo rejected (size/format) | `upload_method`, `file_size_bytes`, `error_reason`, `error_category`, `current_page_context`, `previous_page_context`, `entity_type` | -- | -- |
@@ -1446,7 +1446,7 @@ export const RESUME_UPLOAD_BUTTON_CLICKED = 'Resume Upload Button Clicked';
 export const RESUME_UPLOADED = 'Resume Uploaded';
 export const RESUME_UPLOAD_FAILED = 'Resume Upload Failed';
 export const RESUME_REMOVED = 'Resume Removed';
-export const LINKEDIN_EXPORT_LEARN_HOW_CLICKED = 'LinkedIn Export Learn How Clicked';
+export const LINKEDIN_EXPORT_LEARN_HOW_LINK_CLICKED = 'LinkedIn Export Learn How Link Clicked';
 export const ADD_PROFILE_PHOTO_BUTTON_CLICKED = 'Add Profile Photo Button Clicked';
 export const PROFILE_PHOTO_ADDED = 'Profile Photo Added';
 export const PROFILE_PHOTO_UPLOAD_FAILED = 'Profile Photo Upload Failed';
@@ -1461,7 +1461,7 @@ export const CUSTOM_LINK_ADDED = 'Custom Link Added';  // was CUSTOM_LINK_CREATE
 // REMOVED: export const PROFILE_CREATED = 'Profile Created';
 ```
 
-> **Note:** Backend has 12 new constants, frontend has 13 (includes `LINKEDIN_EXPORT_LEARN_HOW_CLICKED` which is frontend-only).
+> **Note:** Backend has 12 new constants, frontend has 13 (includes `LINKEDIN_EXPORT_LEARN_HOW_LINK_CLICKED` which is frontend-only).
 
 ---
 
@@ -1512,13 +1512,13 @@ All 13 new events listed in the New Events Summary table above should be inserte
 
 | Property | Append to "Used In" |
 |----------|---------------------|
-| `action` (user_action) | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
-| `action_value` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
-| `current_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
-| `previous_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
-| `entity_type` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
+| `action` (user_action) | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Link Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
+| `action_value` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Link Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
+| `current_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Link Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
+| `previous_page_context` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Link Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
+| `entity_type` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Link Clicked, Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed, Build Profile Button Clicked, Build Profile Snapshot |
 | `current_persona` | Custom Link Added |
-| `component` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
+| `component` | Resume Upload Button Clicked, Resume Removed, LinkedIn Export Learn How Link Clicked, Add Profile Photo Button Clicked, Profile Photo Removed, Build Profile Button Clicked |
 | `error_reason` | Resume Upload Failed, Profile Photo Upload Failed, Candidate Profile Creation Failed |
 
 **Removed Events table — add:**
@@ -1537,7 +1537,7 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | Resume Upload | User's resume upload flow | Resume Upload Button Clicked, Resume Upload Failed |
 | Resume | User's uploaded resume document | Resume Uploaded, Resume Removed |
 | Profile Photo | User's profile headshot image | Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed |
-| LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Clicked |
+| LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Link Clicked |
 | Build Profile | AI profile generation process | Build Profile Button Clicked, Build Profile Snapshot |
 | Candidate Profile | Job seeker's AI-generated career profile | Candidate Profile Created, Candidate Profile Creation Failed |
 
@@ -1576,7 +1576,7 @@ Add `candidate_profile` as a valid value for job seeker profile setup events.
 | File | Change | Events Affected |
 |------|--------|----------------|
 | `frontend/src/lib/posthogEvents.ts` | Add 13 new event constants, rename `CUSTOM_LINK_CREATED` → `CUSTOM_LINK_ADDED`, remove `PROFILE_CREATED` | All |
-| `frontend/src/pages/candidate/CreateProfile.tsx` | Add `Page Viewed` on mount, `Build Profile Button Clicked`, `Build Profile Snapshot`, `Resume Removed`, `LinkedIn Export Learn How Clicked` captures. Track `photoUploadMethod` state via `onUploadMethodChange` prop. | Page Viewed, Build Profile Button Clicked, Build Profile Snapshot, Resume Removed, LinkedIn Export Learn How Clicked |
+| `frontend/src/pages/candidate/CreateProfile.tsx` | Add `Page Viewed` on mount, `Build Profile Button Clicked`, `Build Profile Snapshot`, `Resume Removed`, `LinkedIn Export Learn How Link Clicked` captures. Track `photoUploadMethod` state via `onUploadMethodChange` prop. | Page Viewed, Build Profile Button Clicked, Build Profile Snapshot, Resume Removed, LinkedIn Export Learn How Link Clicked |
 | `frontend/src/components/ResumeDropzone.tsx` | Add `Resume Upload Button Clicked` capture in `openFileDialog()` | Resume Upload Button Clicked |
 | `frontend/src/components/HeadshotUpload.tsx` | Add `onUploadMethodChange` prop. Add captures for photo add/fail/remove. Pass `method` param through `handleFile()`. | Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed |
 | `frontend/src/pages/candidate/PortfolioEditor.tsx` | Remove `surface: SURFACE_PROSPECT` from `Profile Section Updated` captures (summary, skills, journey) | Profile Section Updated |
