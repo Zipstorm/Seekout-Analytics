@@ -69,15 +69,26 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Persona | User persona (hiring_manager, recruiter, job_seeker) | Switch Persona Button Clicked, Persona Updated |
 | Job Link | Shared job posting link viewed by anonymous visitors | Job Link Viewed, Job Link Engaged |
 | Profile Link | Prospect's shareable profile link viewed by visitors | Profile Link Viewed, Profile Link Engaged |
-| Job Post Wizard | Job creation wizard session | Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Post Wizard Intake Mode Selected, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Post Wizard Back Button Clicked |
+| Job Post Wizard | Job creation wizard session | Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Description Evaluated, Job Description Evaluation Failed, Job Description Details Toggled, Job Description Field Edited, Job Post Wizard Intake Mode Selected, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Post Wizard Back Button Clicked |
 | Job Posting | Job posting lifecycle (draft, verified, published) | Job Posting Draft Created, Job Posting Verified, Job Posting Published |
-| Sam | AI hiring partner (Sam) conversation | Sam Session Started, Sam Session Ended |
+| Job Description | Job description content | Job Description Evaluated, Job Description Evaluation Failed |
+| Job Description Details | Extracted job description details card | Job Description Details Toggled |
+| Job Description Field | Editable AI-extracted field | Job Description Field Edited |
+| Sam Session | AI hiring partner session lifecycle | Sam Session Started, Sam Session Setup Failed, Sam Session Ended |
+| Role Requirement | Role requirement question | Role Requirement Deleted, Role Requirement Edited, Role Requirement Added |
+| Screening Question | Interview screening question | Screening Question Deleted, Screening Question Edited, Screening Question Added |
+| Success Page Share | Share section on wizard success page | Success Page Share Button Clicked |
+| Job Share Message | Share message content | Job Share Message AI Refined, Job Share Message Copied |
+| Job Share Channel | Share distribution channel | Job Share Channel Clicked |
+| Invite Teammates | Invite teammates action on success page | Invite Teammates Button Clicked |
+| Team Member Invite | Team member invitation | Team Member Invite Sent |
+| Job Posting Page | Job posting detail page link | Job Posting Page Link Clicked |
 | Job Verification Code | Email verification code | Job Verification Code Send Button Clicked |
 | Screening Configuration | Job screening setup | Screening Configuration Saved |
 | Intro Video | HM intro video recording | Intro Video Created, Intro Video Deleted |
 | Candidate | Candidate in review pipeline | Candidate Viewed, Candidate Tab Viewed, Candidate Recording Played |
-| Requirement | AI-generated role requirement | Requirement Add Button Clicked, Requirement Modified |
-| Question | AI-generated interview question | Question Add Button Clicked, Question Modified |
+| Requirement | AI-generated role requirement | Requirement Add Button Clicked |
+| Question | AI-generated interview question | Question Add Button Clicked |
 | Intro Script | Intro video script | Intro Script Updated |
 | Chat | Chat/WebSocket connection for messaging | Chat WebSocket Connected, Chat WebSocket Error |
 
@@ -409,4 +420,4 @@ For critical flows, track the UI interaction (intent) and the server-confirmed r
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
 
-> **Exception:** `Sam Session Started` carries optional failure properties (`mic_enabled`, `error_category`, `error_reason`) for voice setup failures instead of using a separate failure event. This allows analysts to build a single funnel (`Sam Session Started` → `Sam Session Ended`) and filter by `mic_enabled = false` for failures, rather than unioning two separate events.
+> **Exception:** `Sam Session Setup Failed` captures voice setup failures separately from `Sam Session Started`, which is success-only.
