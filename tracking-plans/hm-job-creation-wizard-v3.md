@@ -7,7 +7,7 @@
 **Scope:** v3 — 18 new events + 1 bug fix: 4 for the AI job description evaluation flow (step 1), Sam Session Started split into success/failure (step 2), 3 role requirement CRUD events (step 3), 3 screening question CRUD events with AI tracking (step 4), 7 success page events (share modal, invite, navigation), plus `Job Posting Published` backend bug fix. Also removes `Requirement Modified` and `Question Modified`.
 
 > Reference: `docs/event-catalog.md` for naming conventions and existing event catalog.
-> Reference: `tracking-plans/hm-job-creation-wizard-v2.md` for the v2 wizard tracking plan (22 events).
+> Reference: `tracking-plans/archived/hm-job-creation-wizard-v2.md` for the v2 wizard tracking plan (22 events).
 
 ---
 
