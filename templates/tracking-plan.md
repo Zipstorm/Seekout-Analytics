@@ -23,9 +23,9 @@ Map each PRD success metric to PostHog events.
 
 Events introduced by this feature. All follow Object-Action, Proper Case.
 
-| Event | Area | Trigger | Key Properties | Group | Property Updates |
-|---|---|---|---|---|---|
-| [Object Action] | Account / Prospect / Hiring / Viral Loop | [When this fires] | `property_1`, `property_2` | `job` / -- | `$set_once: prop`, `group(job): prop` / -- |
+| Event | Area | Type | Trigger | Key Properties | Group | Property Updates |
+|---|---|---|---|---|---|---|
+| [Object Action] | Account / Prospect / Hiring / Viral Loop | Intent / Success / Failure / Error / Lifecycle / Navigation / State Change | [When this fires] | `property_1`, `property_2` | `job` / -- | `$set_once: prop`, `group(job): prop` / -- |
 
 <!--
 ## New Standard Objects

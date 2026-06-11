@@ -32,7 +32,7 @@ This repository is the single source of truth for all product analytics — even
 ├── templates/              # Reusable templates
 │   └── tracking-plan.md       # Template for new feature tracking plans
 ├── scripts/                # Validation tooling
-│   └── validate-analytics-docs.py  # 14-rule cross-document consistency checker
+│   └── validate-analytics-docs.py  # 17-rule cross-document consistency checker
 └── logs/                   # Validator run history
     └── conflicts-log.md
 ```
@@ -92,12 +92,12 @@ This repo is built for use with [Claude Code](https://docs.anthropic.com/en/docs
 | Command | Description |
 |---------|-------------|
 | `/posthog-analytics` | Generate tracking plans and maintain the event catalog |
-| `/validate-analytics` | Run the 14-rule cross-document consistency validator |
+| `/validate-analytics` | Run the 17-rule cross-document consistency validator |
 | `/merge-tracking-plan` | Merge an approved tracking plan into the catalog, then archive it |
 
 ## Validation
 
-The validator (`scripts/validate-analytics-docs.py`) enforces 14 consistency rules across all analytics documents — checking event coverage, property compliance, naming conventions, and funnel definitions. Run history is logged to `logs/conflicts-log.md`.
+The validator (`scripts/validate-analytics-docs.py`) enforces 17 consistency rules across all analytics documents — checking event coverage, property compliance, naming conventions, object–action segregation, outcome-terminal form, event-type taxonomy, and funnel definitions. Run history is logged to `logs/conflicts-log.md`.
 
 ## Analytics Platform
 
