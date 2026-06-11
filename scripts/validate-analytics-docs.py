@@ -38,6 +38,9 @@ RULE_NAMES = {
     12: "Naming conventions",
     13: "Event property coverage",
     14: "No duplicate names",
+    15: "Action validity",
+    16: "Outcome terminal form",
+    17: "Event type validity",
 }
 
 TP_RULE_NAMES = {
@@ -51,6 +54,9 @@ TP_RULE_NAMES = {
     "TP7": "Standard Object usage",
     "TP8": "Funnel event validity",
     "TP9": "Inline enum consistency",
+    "TP10": "Action validity",
+    "TP11": "Outcome terminal form",
+    "TP12": "Event type validity",
 }
 
 NEW_OBJECTS_SECTION = "New Standard Objects"
@@ -422,6 +428,7 @@ def parse_schema(path):
       person_props   – dict[prop, {type, method}]
       std_event_props – dict[prop, {when}]
       intent_outcome – list[{flow, intent, success, failure}]
+      event_types    – set[str] of allowed event types (empty if table absent)
     """
     text = strip_frontmatter(path.read_text())
     tables = parse_tables(text)
@@ -475,7 +482,17 @@ def parse_schema(path):
                     )
             break
 
-    return std_objects, person_props, std_event_props, intent_outcome
+    # Event Types enum (first column → set of allowed types).
+    event_types = set()
+    _, et_rows = _find_table(tables, "Event Types")
+    if et_rows:
+        for r in et_rows:
+            if r:
+                t = r[0].strip().strip("`").strip()
+                if t:
+                    event_types.add(t)
+
+    return std_objects, person_props, std_event_props, intent_outcome, event_types
 
 
 def parse_dashboards(path):
@@ -563,7 +580,9 @@ def parse_tracking_plan(path):
 
     Returns:
       TrackingPlanData with events, intent/outcome rows, funnels, property
-      details, object declarations, and declaration parse errors.
+      details, object declarations, and declaration parse errors. Each event in
+      `.events` carries a `type` key (None when the New Events table has no
+      Type column).
     """
     text = strip_frontmatter(path.read_text())
     tables = parse_tables(text)
@@ -571,25 +590,29 @@ def parse_tracking_plan(path):
         text
     )
 
-    # ── New Events table ──
+    # ── New Events table (header-keyed: tolerant of extra/reordered columns) ──
     tp_events = {}
-    _, ev_rows = _find_table(tables, "New Events")
+    ev_header, ev_rows = _find_table(tables, "New Events")
     if ev_rows:
+        col = {h.strip().lower(): i for i, h in enumerate(ev_header or [])}
+        has_type = "type" in col
+
+        def _cell(row, key):
+            i = col.get(key)
+            return row[i].strip() if i is not None and i < len(row) else ""
+
         for row in ev_rows:
-            if len(row) < 6:
-                continue
-            name = row[0].strip()
+            name = _cell(row, "event")
             if not name or name.startswith("["):
                 continue
-            area = row[1].strip()
-            props, inline_enums = extract_props(row[3])
-            group = row[4].strip()
-            person, grp = parse_property_updates(row[5])
+            props, inline_enums = extract_props(_cell(row, "key properties"))
+            person, grp = parse_property_updates(_cell(row, "property updates"))
             tp_events[name] = dict(
-                area=area,
+                area=_cell(row, "area"),
+                type=_cell(row, "type") if has_type else None,
                 properties=props,
                 inline_enums=inline_enums,
-                group=group,
+                group=_cell(row, "group"),
                 person_props=person,
                 group_props=grp,
             )
@@ -657,13 +680,72 @@ def parse_tracking_plan(path):
 
 # ── Validation Rules ─────────────────────────────────────────────────────────
 
+# Canonical outcome terminals (past tense). "Error"/"Success"/"Failure" are invalid.
+OUTCOME_TERMINALS = {"Failed", "Succeeded", "Errored"}
+# Non-canonical outcome words -> required canonical form (Rule 16 / TP11).
+OUTCOME_VARIANTS = {
+    "Fail": "Failed", "Fails": "Failed", "Failure": "Failed", "Failures": "Failed",
+    "Succeed": "Succeeded", "Succeeds": "Succeeded", "Success": "Succeeded",
+    "Error": "Errored", "Errors": "Errored",
+}
+IRREGULAR_PAST = {"Made", "Sent", "Withdrawn"}
+# Row-validation fallback ONLY — docs/event-schema.md's Event Types table is the
+# source of truth; its absence is an error (Rule 17 / TP12), not a silent fallback.
+EVENT_TYPES = {"Intent", "Success", "Failure", "Error", "Lifecycle", "Navigation", "State Change"}
+# Type -> required name terminals (Rule 16 / TP11).
+TYPE_TERMINALS = {
+    "Success": ("Succeeded",),
+    "Failure": ("Failed", "Errored"),
+    "Error": ("Errored",),
+}
+
 
 def _object_prefix(event_name, known_objects):
-    """Match the longest known object that is a prefix of the event name."""
+    """Match the longest known object that is a prefix of the event name.
+    Exact equality counts — the event is then all object, no action
+    (Rule 15 / TP10 flag the missing action)."""
     for obj in sorted(known_objects, key=len, reverse=True):
-        if event_name.startswith(obj + " "):
+        if event_name == obj or event_name.startswith(obj + " "):
             return obj
     return None
+
+
+def _split_object_action(event_name, known_objects):
+    """Segregate an event name into (object, action).
+    Object = longest known Standard Object prefix (or exact match);
+    action = remainder ('' on exact match).
+    Returns (None, None) when no known object matches."""
+    obj = _object_prefix(event_name, known_objects)
+    if not obj:
+        return None, None
+    return obj, event_name[len(obj):].strip()
+
+
+def _candidate_object(event_name):
+    """Suggest the likely object for an event whose prefix is unknown.
+    Outcome events ('... Publish Failed') carry a verb-noun before the
+    terminal — that word belongs to the ACTION, so drop two words; plain
+    events drop only the trailing verb."""
+    words = event_name.split()
+    if not words:
+        return None
+    outcome_words = OUTCOME_TERMINALS | set(OUTCOME_VARIANTS)
+    drop = 2 if words[-1] in outcome_words else 1
+    return " ".join(words[:-drop]) if len(words) > drop else None
+
+
+def _unknown_object_error(name):
+    """Message for an event whose object prefix is not a known Standard Object,
+    with a candidate-object suggestion when one can be derived."""
+    msg = f'Event "{name}" uses an object prefix not in Standard Objects table'
+    cand = _candidate_object(name)
+    if cand:
+        msg += (
+            f' (likely object: "{cand}" — add it to docs/event-schema.md, or '
+            f"rename the event; the verb-noun before Failed/Succeeded/Errored is "
+            f"part of the action)"
+        )
+    return msg
 
 
 def _is_general_usage(text):
@@ -743,9 +825,7 @@ def rule_01(catalog_events, schema_objects):
         if obj:
             found.add(obj)
         elif not name.endswith("Button Clicked"):
-            errors.append(
-                f'Event "{name}" uses an object prefix not in Standard Objects table'
-            )
+            errors.append(_unknown_object_error(name))
     for obj in schema_objects:
         if obj not in found:
             warnings.append(
@@ -1051,6 +1131,104 @@ def rule_14(duplicate_events, prop_dict):
     return errors, warnings
 
 
+def _action_errors(event_names, known_objects):
+    """Shared Rule 15 / TP10 logic — syntactic action validity only.
+    Splits object from action, requires a non-empty action whose final word is
+    past tense (ends 'ed') or an allowed irregular. No semantics, no allow-list.
+    """
+    errors = []
+    for name in event_names:
+        if name.endswith("Button Clicked"):        # intent events are verb-first
+            continue
+        last_word = name.split()[-1]
+        if last_word in OUTCOME_VARIANTS:           # Rule 16 owns the better message
+            continue
+        obj, action = _split_object_action(name, known_objects)
+        if obj is None:                             # Rule 1 / TP7 owns this error
+            continue
+        if not action:
+            errors.append(f'Event "{name}" is only an object — missing an action')
+            continue
+        last = action.split()[-1]
+        if not (last.endswith("ed") or last in IRREGULAR_PAST):
+            errors.append(
+                f'Event "{name}": action "{action}" must end in a past-tense verb '
+                f"(Created, Failed, Succeeded, Errored)"
+            )
+    return errors
+
+
+def _outcome_terminal_errors(typed_events):
+    """Shared Rule 16 / TP11 logic — type-driven terminal form.
+    typed_events: iterable of (event_name, event_type). Flags non-canonical
+    trailing words type-independently, then enforces the type's required
+    terminal. One message per event."""
+    errors = []
+    for name, etype in typed_events:
+        last = name.split()[-1]
+        if last in OUTCOME_VARIANTS:                # type-independent; one message per event
+            errors.append(
+                f'Outcome event "{name}" must end with "{OUTCOME_VARIANTS[last]}", '
+                f'not "{last}" (outcome terminals are Failed/Succeeded/Errored)'
+            )
+            continue
+        allowed = TYPE_TERMINALS.get(etype)
+        if allowed and last not in allowed:
+            errors.append(
+                f'Event "{name}" has Type {etype} but does not end in '
+                + " / ".join(allowed)
+            )
+    return errors
+
+
+def _event_type_errors(typed_events, allowed_types):
+    """Shared Rule 17 / TP12 row-level logic. None type => missing column,
+    handled at the table level, not here."""
+    errors = []
+    for name, etype in typed_events:
+        if etype is None:
+            continue
+        if etype not in allowed_types:
+            errors.append(
+                f'Event "{name}" has Type "{etype}" — must be one of: '
+                + ", ".join(sorted(allowed_types))
+            )
+    return errors
+
+
+def _missing_enum_error(schema_event_types):
+    """docs/event-schema.md's Event Types table is the source of truth; its
+    absence is an error (Rule 17 / TP12)."""
+    if schema_event_types:
+        return []
+    return [
+        "Event Types table not found in docs/event-schema.md — it is the "
+        "source of truth for the event type enum"
+    ]
+
+
+def rule_15(catalog_events, schema_objects):
+    """Action validity: every catalog event needs a syntactically valid action."""
+    return _action_errors(catalog_events, schema_objects), []
+
+
+def rule_16(catalog_events):
+    """Outcome terminal form: type-driven canonical terminals (past tense)."""
+    return _outcome_terminal_errors(
+        (n, ev["type"]) for n, ev in catalog_events.items()
+    ), []
+
+
+def rule_17(catalog_events, schema_event_types):
+    """Event type validity: every catalog row's Type is a member of the enum."""
+    errors = _missing_enum_error(schema_event_types)
+    allowed = schema_event_types or EVENT_TYPES
+    errors += _event_type_errors(
+        ((n, ev["type"]) for n, ev in catalog_events.items()), allowed
+    )
+    return errors, []
+
+
 # ── Tracking Plan Validation Rules ────────────────────────────────────────────
 
 
@@ -1227,6 +1405,36 @@ def tp_rule_09(tp_events, prop_dict):
                         f"not in catalog allowed values {sorted(allowed)}"
                     )
     return errors, warnings
+
+
+def tp_rule_10(tp_events, schema_objects):
+    """Action validity: every new event needs a syntactically valid action."""
+    return _action_errors(tp_events, schema_objects), []
+
+
+def tp_rule_11(tp_events):
+    """Outcome terminal form: type-driven canonical terminals (past tense).
+    With no Type column, type is None — the variant-terminal name check still
+    runs, but no type-driven terminal is enforced."""
+    return _outcome_terminal_errors(
+        (n, ev.get("type")) for n, ev in tp_events.items()
+    ), []
+
+
+def tp_rule_12(tp_events, schema_event_types):
+    """Event type validity: New Events table must carry a valid Type per row."""
+    errors = _missing_enum_error(schema_event_types)
+    if tp_events and all(ev.get("type") is None for ev in tp_events.values()):
+        errors.append(
+            'New Events table has no "Type" column — add one '
+            "(see templates/tracking-plan.md)"
+        )
+    else:
+        allowed = schema_event_types or EVENT_TYPES
+        errors += _event_type_errors(
+            ((n, ev.get("type") or "--") for n, ev in tp_events.items()), allowed
+        )
+    return errors, []
 
 
 # ── Logging ──────────────────────────────────────────────────────────────────
@@ -1428,7 +1636,7 @@ def check_removal_safety(tp_path):
             return 2
 
     catalog_events, _, _ = parse_catalog(CATALOG_PATH)
-    schema_objects, _, _, _ = parse_schema(SCHEMA_PATH)
+    schema_objects, _, _, _, _ = parse_schema(SCHEMA_PATH)
     tp_data = parse_tracking_plan(tp_path)
     declaration_errors, declaration_warnings = validate_object_declarations(
         tp_data.added_objects,
@@ -1459,8 +1667,8 @@ def validate_catalog():
             sys.exit(2)
 
     catalog_events, prop_dict, dup_events = parse_catalog(CATALOG_PATH)
-    schema_objects, schema_person, schema_evt_props, schema_io = parse_schema(
-        SCHEMA_PATH
+    schema_objects, schema_person, schema_evt_props, schema_io, schema_event_types = (
+        parse_schema(SCHEMA_PATH)
     )
     funnels, dash_ph, dash_props = parse_dashboards(DASHBOARD_PATH)
 
@@ -1485,6 +1693,9 @@ def validate_catalog():
         (12, rule_12, (catalog_events, prop_dict)),
         (13, rule_13, (catalog_events, prop_dict)),
         (14, rule_14, (dup_events, prop_dict)),
+        (15, rule_15, (catalog_events, schema_objects)),
+        (16, rule_16, (catalog_events,)),
+        (17, rule_17, (catalog_events, schema_event_types)),
     ]
 
     _run_rules(rules, known, RULE_NAMES)
@@ -1502,7 +1713,7 @@ def validate_tracking_plan(tp_path):
             sys.exit(2)
 
     catalog_events, prop_dict, _ = parse_catalog(CATALOG_PATH)
-    schema_objects, _, schema_evt_props, _ = parse_schema(SCHEMA_PATH)
+    schema_objects, _, schema_evt_props, _, schema_event_types = parse_schema(SCHEMA_PATH)
     tp_data = parse_tracking_plan(tp_path)
 
     if not tp_data.events:
@@ -1538,6 +1749,9 @@ def validate_tracking_plan(tp_path):
         ),
         ("TP8", tp_rule_08, (tp_data.funnels, tp_data.events, catalog_events)),
         ("TP9", tp_rule_09, (tp_data.events, prop_dict)),
+        ("TP10", tp_rule_10, (tp_data.events, schema_objects)),
+        ("TP11", tp_rule_11, (tp_data.events,)),
+        ("TP12", tp_rule_12, (tp_data.events, schema_event_types)),
     ]
 
     _run_rules(rules, known, TP_RULE_NAMES, mode_label=f"Tracking Plan: {plan_name}")

@@ -35,12 +35,18 @@ Every event follows the pattern: **Object Action**
 4. **No special characters or trailing spaces** — Letters, numbers, and spaces only. No `/`, `&`, `@`, `#` or other special characters.
 5. **Separate intent from outcome** — Track the user's action (intent) and whether it succeeded or failed:
    - Intent: `Share Button Clicked`
-   - Success: `Job Shared`
+   - Success: `Job Share Succeeded`
    - Failure: `Job Share Failed`
 6. **Intent events use present tense** — Intent events follow the pattern
    `[Action] [Object] Button Clicked` where the action is present tense:
    `Share Button Clicked`, `Create Job Button Clicked`,
    `Record Video Button Clicked`. This is exception to the past-tense rule.
+7. **Outcome events keep the object clean** — in `Job Publish Failed`, the
+   object is `Job` and the action is `Publish Failed`. The verb-noun before the
+   outcome terminal belongs to the action; never add verb stems (e.g.
+   `Job Publish`) to the Standard Objects table. Outcome terminals are past
+   tense: `Failed` / `Succeeded` / `Errored` — never `Error`, `Success`, or
+   `Failure`.
 
 ### Property Names: snake_case
 
@@ -93,6 +99,24 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Chat | Chat/WebSocket connection for messaging | Chat WebSocket Connected, Chat WebSocket Error |
 
 When introducing a new object, add it to this table before using it in events.
+
+---
+
+## Event Types
+
+Every event in the catalog **and** in every tracking plan must carry exactly one **Type** from the enum below. `--` is not a valid type. `page_view` / `user_action` describe the *capture mechanism*, not the event type, and are not valid here.
+
+| Type | Meaning | Terminal rule | Examples |
+|------|---------|---------------|----------|
+| `Intent` | User-initiated UI action expressing intent (typically `[Action] [Object] Button Clicked`) | none | `Share Button Clicked`, `Create Job Button Clicked` |
+| `Success` | Server-confirmed positive outcome of an attempted action | name must end `Succeeded` | `Job Share Succeeded`, `Auth Login Succeeded` |
+| `Failure` | Server-confirmed negative outcome of an attempted action | name must end `Failed` or `Errored` (per failure mode) | `Job Share Failed`, `Auth Session Restore Failed` |
+| `Error` | Unexpected system error not tied to a specific user attempt (e.g. WebSocket errors) | name must end `Errored` | `Chat WebSocket Errored` |
+| `Lifecycle` | Session/entity lifecycle transition (Started, Ended, Completed, Connected, Joined) | none | `Voice Session Started`, `Team Member Joined` |
+| `Navigation` | Page/screen view | none | `Page Viewed` |
+| `State Change` | Entity state mutation outside a success/failure pair (Status Changed, Modified, Updated) | none | `Requirement Modified`, `Question Modified` |
+
+This table is the **source of truth** for the event-type enum. The validator (`scripts/validate-analytics-docs.py`) reads it for Rule 17 / TP12 and **errors if it is absent**.
 
 ---
 
@@ -374,7 +398,7 @@ posthog.capture('Share Button Clicked', {
 ```python
 # Outcome - success (fired on server confirmation — backend)
 posthog.capture(
-    event='Job Shared',
+    event='Job Share Succeeded',
     distinct_id=str(user.user_id),
     properties={
         'job_id': str(job_id),

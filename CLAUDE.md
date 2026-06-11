@@ -56,7 +56,7 @@ Before generating any analytics document, read:
 ## Commands
 
 - `/posthog-analytics` — Generate tracking plans and maintain the event catalog
-- `/validate-analytics` — Run the 14-rule cross-document consistency validator
+- `/validate-analytics` — Run the 17-rule cross-document consistency validator
 - `/merge-tracking-plan` — Manually merge an approved tracking plan's events into `docs/event-catalog.md` (and update schema/dashboards as needed), then archive the plan
 
 ## Product Context
