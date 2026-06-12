@@ -55,26 +55,49 @@ Existing v1 backend event. Add:
 |---|---|---|---|
 | `has_handle` | boolean | `true` / `false` | Whether a handle was persisted on the created profile. |
 
-## A3. `Handle Availability Checked` — *optional, recommended*
+## A3. Handle availability — *optional, recommended*
 
-The field live-checks availability (✓ available / unavailable). A lightweight event here would tell us how often users try handles, and the unavailable-collision rate. **Recommended but not required** — include only if handle adoption is a tracked goal.
+The handle field live-checks availability (✓ available / unavailable). These events tell us how often users try handles, the collision rate, and whether unavailability causes abandonment. **Recommended but not required** — include only if handle adoption is a tracked goal.
+
+**Trigger logic:** Fires once on **blur** (user clicks/tabs out of the handle input) — but **only if the handle value changed** since the last blur or since the field was first focused. This avoids duplicate fires when the user clicks in and out without editing. If the user never blurs (e.g. types a handle and clicks "Build my AI profile" directly), the event fires on the button click before the submit flow begins. Which event fires depends on the most recent availability API response.
+
+### A3a. `Candidate Handle Add Succeeded`
+
+Fires when the handle the user entered is **available**.
 
 | Field | Value |
 |---|---|
-| **Event** | `Handle Availability Checked` |
+| **Event** | `Candidate Handle Add Succeeded` |
 | **Area** | Prospect |
-| **Type** | — |
-| **Trigger** | Debounced availability check resolves as the user types a handle |
-| **Source** | Backend (or frontend after API resolves) |
+| **Type** | Success |
+| **Trigger** | Handle input blur (if value changed) or "Build my AI profile" click (if handle is dirty and not yet blur-fired), AND the most recent availability check returned available |
+| **Source** | Frontend |
 | **Group** | — |
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `is_available` | boolean | `true` / `false` | Whether the typed handle was available |
-| `handle_length` | number | e.g. `8` | Character count of the checked handle |
+| `handle_length` | number | e.g. `8` | Character count of the handle |
 | `current_page_context` | string | `candidate_create_profile` | Page |
 
-> **Recommendation:** Implement A1 + A2 now (they cost nothing — properties on events that already fire). Treat A3 as a fast-follow only if handle adoption becomes a KPI.
+### A3b. `Candidate Handle Add Failed`
+
+Fires when the handle the user entered is **unavailable** (taken by another user).
+
+| Field | Value |
+|---|---|
+| **Event** | `Candidate Handle Add Failed` |
+| **Area** | Prospect |
+| **Type** | Failure |
+| **Trigger** | Handle input blur (if value changed) or "Build my AI profile" click (if handle is dirty and not yet blur-fired), AND the most recent availability check returned unavailable |
+| **Source** | Frontend |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `handle_length` | number | e.g. `8` | Character count of the handle |
+| `current_page_context` | string | `candidate_create_profile` | Page |
+
+> **Recommendation:** Implement A1 + A2 now (they cost nothing — properties on events that already fire). Treat A3a/A3b as a fast-follow only if handle adoption becomes a KPI.
 
 ---
 
@@ -664,8 +687,7 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 | `journey_count` | number | | Journey/timeline entries — Profile Overview Loaded, Candidate Profile Published |
 | `has_description` | boolean | `true` / `false` | Summary present — Profile Overview Loaded, Candidate Profile Published |
 | `has_handle` | boolean | `true` / `false` | Handle claimed — Build Profile Snapshot, Candidate Profile Created |
-| `handle_length` | number or null | | Handle character count — Build Profile Snapshot, Handle Availability Checked |
-| `is_available` | boolean | `true` / `false` | Handle availability — Handle Availability Checked |
+| `handle_length` | number or null | | Handle character count — Build Profile Snapshot, Candidate Handle Add Succeeded, Candidate Handle Add Failed |
 | `tab_name` | enum | `overview`, `resume`, `github`, `portfolio` | Editor tab — Profile Tab Switched |
 | `name_changed` | boolean | `true` / `false` | Whether a rename actually changed the name — Rename Portfolio Save Button Clicked |
 | `new_name_length` | number | | New portfolio name length — Portfolio Renamed |
@@ -710,7 +732,8 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 **Part A (modifications to v1 events):**
 - [ ] `Build Profile Snapshot` — add `has_handle`, `handle_length`
 - [ ] `Candidate Profile Created` — add `has_handle`
-- [ ] `Handle Availability Checked` *(optional)* → Prospect
+- [ ] `Candidate Handle Add Succeeded` *(optional)* → Prospect
+- [ ] `Candidate Handle Add Failed` *(optional)* → Prospect
 
 **Part B — Prospect:**
 - [ ] Profile Overview Loaded
@@ -768,7 +791,7 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 
 ## Open questions / decisions for review
 
-1. **Handle event A3** — implement the optional `Handle Availability Checked` now, or defer? (Default: defer.)
+1. **Handle event A3** — implement the optional `Candidate Handle Add Succeeded` / `Candidate Handle Add Failed` now, or defer? (Default: defer.)
 2. **Per-question screening detail (D5)** — aggregate-only on submit (current default) vs. per-response `Screening Question Answered`.
 3. **Retake intent (D8c)** — track the `Retake Question Button Clicked` intent, or only the `Interview Question Retaken` success? (Default: success only.)
 4. **Anonymous → user stitching** — confirm engineering can `alias()` the interview ID to the email at D2b and again to the user ID at signup (D8h). Without it, the interview→signup funnel breaks.
