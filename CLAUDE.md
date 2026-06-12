@@ -49,7 +49,7 @@ Before generating any analytics document, read:
 
 - **Events:** Object-Action framework, Proper Case (e.g., `Job Created`, `Interest Expressed`)
 - **Properties:** snake_case (e.g., `signup_context`, `referrer_user_id`)
-- **Verbs:** Past tense only (Created, Viewed, Shared, Submitted)
+- **Verbs:** Past tense only (Created, Viewed, Shared, Submitted). Result events use strict terminals: Succeeded, Rejected, or Errored.
 - **Standard Objects:** Check `docs/event-schema.md` before creating new objects
 - **Property Dictionary:** Check `docs/event-catalog.md` before creating new properties
 
@@ -74,6 +74,6 @@ The `context/` folder contains product structure docs that analytics events are 
 - Tracking plans are archived to `tracking-plans/archived/` after merging — never deleted
 - Never place tracking plans in `docs/`
 - Reuse existing events and properties before creating new ones
-- Intent vs outcome: for critical flows, always track both the UI click and server-confirmed result
+- Interaction/Started vs Result: for critical flows, track the UI interaction or process start separately from the processed result
 - Viral attribution: any sharing chain event must carry `referrer_user_id`
 - `acting_as` required on all hiring surface events (role is per-event, never a person property)

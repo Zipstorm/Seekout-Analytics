@@ -33,20 +33,23 @@ Every event follows the pattern: **Object Action**
    `Account Created`, `Create Job Button Clicked`, `Record Video Button Clicked`.
 3. **Consistent object names** — Always refer to the same object the same way. Use `Team Member` everywhere, never `TeamMember` or `team member`.
 4. **No special characters or trailing spaces** — Letters, numbers, and spaces only. No `/`, `&`, `@`, `#` or other special characters.
-5. **Separate intent from outcome** — Track the user's action (intent) and whether it succeeded or failed:
-   - Intent: `Share Button Clicked`
+5. **Separate interaction/start from result** — Track the user's action or flow entry separately from the processed result:
+   - Interaction: `Share Button Clicked`
+   - Started: `Job Post Wizard Started`
    - Success: `Job Share Succeeded`
-   - Failure: `Job Share Failed`
-6. **Intent events use present tense** — Intent events follow the pattern
+   - Rejected: `Job Share Rejected`
+   - Error: `Chat WebSocket Errored`
+6. **Interaction events capture discrete user-triggered actions** — Interaction events often follow the pattern
    `[Action] [Object] Button Clicked` where the action is present tense:
    `Share Button Clicked`, `Create Job Button Clicked`,
    `Record Video Button Clicked`. This is exception to the past-tense rule.
-7. **Outcome events keep the object clean** — in `Job Publish Failed`, the
-   object is `Job` and the action is `Publish Failed`. The verb-noun before the
-   outcome terminal belongs to the action; never add verb stems (e.g.
-   `Job Publish`) to the Standard Objects table. Outcome terminals are past
-   tense: `Failed` / `Succeeded` / `Errored` — never `Error`, `Success`, or
-   `Failure`.
+7. **Result events keep the object clean** — in `Job Publish Rejected`, the
+   object is `Job` and the action is `Publish Rejected`. The verb-noun before the
+   result terminal belongs to the action; never add verb stems (e.g.
+   `Job Publish`) to the Standard Objects table. Result terminals are past
+   tense: `Succeeded` / `Rejected` / `Errored` — never `Success`, `Failure`,
+   `Failed`, or `Error`. Existing events that still use old terminals are
+   naming debt for a later rename pass.
 
 ### Property Names: snake_case
 
@@ -108,13 +111,12 @@ Every event in the catalog **and** in every tracking plan must carry exactly one
 
 | Type | Meaning | Terminal rule | Examples |
 |------|---------|---------------|----------|
-| `Intent` | User-initiated UI action expressing intent (typically `[Action] [Object] Button Clicked`) | none | `Share Button Clicked`, `Create Job Button Clicked` |
-| `Success` | Server-confirmed positive outcome of an attempted action | name must end `Succeeded` | `Job Share Succeeded`, `Auth Login Succeeded` |
-| `Failure` | Server-confirmed negative outcome of an attempted action | name must end `Failed` or `Errored` (per failure mode) | `Job Share Failed`, `Auth Session Restore Failed` |
-| `Error` | Unexpected system error not tied to a specific user attempt (e.g. WebSocket errors) | name must end `Errored` | `Chat WebSocket Errored` |
-| `Lifecycle` | Session/entity lifecycle transition (Started, Ended, Completed, Connected, Joined) | none | `Voice Session Started`, `Team Member Joined` |
-| `Navigation` | Page/screen view | none | `Page Viewed` |
-| `State Change` | Entity state mutation outside a success/failure pair (Status Changed, Modified, Updated) | none | `Requirement Modified`, `Question Modified` |
+| `View` | User saw a page, screen, object, or content without taking action | none | `Page Viewed`, `Job Link Viewed` |
+| `Interaction` | Discrete user-triggered action | none | `Share Button Clicked`, `Create Job Button Clicked` |
+| `Started` | User entered a multi-step flow, session, or process | name must end `Started` | `Job Post Wizard Started`, `Sam Session Started` |
+| `Success` | Action, request, or flow step accepted or completed | name must end `Succeeded` | `Auth Login Succeeded`, `Job Share Succeeded` |
+| `Rejected` | Intended action or request did not succeed because the system declined or rejected it | name must end `Rejected` | `Job Share Rejected`, `Auth Login Rejected` |
+| `Error` | System or technical fault, not user-caused rejection | name must end `Errored` | `Chat WebSocket Errored` |
 
 This table is the **source of truth** for the event-type enum. The validator (`scripts/validate-analytics-docs.py`) reads it for Rule 17 / TP12 and **errors if it is absent**.
 
@@ -378,10 +380,10 @@ posthog.capture(
 )
 ```
 
-### Intent vs outcome pair
+### Interaction vs result pair
 
 ```javascript
-// Intent (fired on button click — frontend)
+// Interaction (fired on button click — frontend)
 posthog.capture('Share Button Clicked', {
   action: 'click',
   action_value: 'share_job_button',
@@ -396,7 +398,7 @@ posthog.capture('Share Button Clicked', {
 ```
 
 ```python
-# Outcome - success (fired on server confirmation — backend)
+# Result - success (fired on server confirmation — backend)
 posthog.capture(
     event='Job Share Succeeded',
     distinct_id=str(user.user_id),
@@ -408,9 +410,9 @@ posthog.capture(
     groups={'job': str(job_id)},
 )
 
-# Outcome - failure (fired on error — backend)
+# Result - rejected (fired when the system rejects the request — backend)
 posthog.capture(
-    event='Job Share Failed',
+    event='Job Share Rejected',
     distinct_id=str(user.user_id),
     properties={
         'job_id': str(job_id),
@@ -423,17 +425,19 @@ posthog.capture(
 
 ---
 
-## Intent vs Outcome Pattern
+## Interaction / Started / Result Pattern
 
-For critical flows, track the UI interaction (intent) and the server-confirmed result (outcome) as separate events. This isolates frontend UX issues from backend failures in funnel analysis.
+For critical flows, track the UI interaction or process start separately from the processed result. This isolates frontend UX issues from rejected requests and technical errors in funnel analysis.
 
-| Flow | Intent Event | Success Event | Failure Event |
-|------|-------------|---------------|---------------|
+Current catalog examples that still use old result terminals or non-result names are deferred rename debt. New or renamed result events must use `Succeeded`, `Rejected`, or `Errored`.
+
+| Flow | Interaction / Started Event | Success Event | Rejected Event |
+|------|-----------------------------|---------------|----------------|
 | Login / Signup | Login Started | Account Created (new) or Auth Login Succeeded (returning) | Login Cancelled, Auth Login Failed |
 | Sharing a job | Share Button Clicked | Job Shared | Job Share Failed |
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
-| Creating a job (wizard start) | Create Job Button Clicked | Job Post Wizard Started | -- |
+| Creating a job (wizard start) | Create Job Button Clicked, Job Post Wizard Started | -- | -- |
 | Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
 | Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- |
 | Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- |
@@ -444,4 +448,4 @@ For critical flows, track the UI interaction (intent) and the server-confirmed r
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
 
-> **Exception:** `Sam Session Setup Failed` captures voice setup failures separately from `Sam Session Started`, which is success-only.
+> **Exception:** `Sam Session Setup Failed` captures voice setup rejection separately from `Sam Session Started`, which is start-only.
