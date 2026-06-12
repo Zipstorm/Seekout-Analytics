@@ -47,9 +47,9 @@ class SplitObjectActionTests(unittest.TestCase):
     def test_simple_past_tense(self):
         self.assertEqual(mod._split_object_action("Job Published", OBJECTS), ("Job", "Published"))
 
-    def test_outcome_event(self):
+    def test_result_event(self):
         self.assertEqual(
-            mod._split_object_action("Job Publish Failed", OBJECTS), ("Job", "Publish Failed")
+            mod._split_object_action("Job Publish Rejected", OBJECTS), ("Job", "Publish Rejected")
         )
 
     def test_multiword_action(self):
@@ -68,8 +68,8 @@ class SplitObjectActionTests(unittest.TestCase):
 
 
 class CandidateObjectTests(unittest.TestCase):
-    def test_outcome_terminal_drops_two(self):
-        self.assertEqual(mod._candidate_object("Pipeline Publish Failed"), "Pipeline")
+    def test_result_terminal_drops_two(self):
+        self.assertEqual(mod._candidate_object("Pipeline Publish Rejected"), "Pipeline")
 
     def test_variant_terminal_also_drops_two(self):
         self.assertEqual(mod._candidate_object("Pipeline Publish Error"), "Pipeline")
@@ -78,7 +78,7 @@ class CandidateObjectTests(unittest.TestCase):
         self.assertEqual(mod._candidate_object("Pipeline Created"), "Pipeline")
 
     def test_too_short_returns_none(self):
-        self.assertIsNone(mod._candidate_object("Publish Failed"))
+        self.assertIsNone(mod._candidate_object("Publish Rejected"))
 
 
 class ActionErrorsTests(unittest.TestCase):
@@ -86,8 +86,8 @@ class ActionErrorsTests(unittest.TestCase):
         names = [
             "Review Decision Made",   # irregular past
             "Interest Withdrawn",     # irregular past
-            "Job Publish Errored",    # canonical outcome terminal
-            "Share Button Clicked",   # intent event, skipped
+            "Job Publish Errored",    # canonical result terminal
+            "Share Button Clicked",   # interaction event, skipped
         ]
         self.assertEqual(mod._action_errors(names, OBJECTS), [])
 
@@ -105,7 +105,7 @@ class ActionErrorsTests(unittest.TestCase):
         self.assertIn("only an object", errs[0])
 
     def test_skips_variant_terminal(self):
-        # Variant outcome terminals are deferred to Rule 16, not flagged here.
+        # Variant result terminals are deferred to Rule 16, not flagged here.
         self.assertEqual(mod._action_errors(["Job Publish Success"], OBJECTS), [])
 
     def test_skips_unknown_object(self):
@@ -113,55 +113,81 @@ class ActionErrorsTests(unittest.TestCase):
         self.assertEqual(mod._action_errors(["Fnord Bar"], OBJECTS), [])
 
 
-class OutcomeTerminalTests(unittest.TestCase):
+class ResultTerminalTests(unittest.TestCase):
     def test_success_wrong_terminal(self):
-        errs = mod._outcome_terminal_errors([("Job Created", "Success")])
+        errs = mod._result_terminal_errors([("Job Created", "Success")])
         self.assertEqual(len(errs), 1)
         self.assertIn("does not end in", errs[0])
 
     def test_success_correct(self):
         self.assertEqual(
-            mod._outcome_terminal_errors([("Job Create Succeeded", "Success")]), []
+            mod._result_terminal_errors([("Job Create Succeeded", "Success")]), []
         )
 
-    def test_failure_accepts_failed_and_errored(self):
+    def test_rejected_correct(self):
         self.assertEqual(
-            mod._outcome_terminal_errors(
-                [("Job Share Failed", "Failure"), ("Job Share Errored", "Failure")]
-            ),
+            mod._result_terminal_errors([("Job Share Rejected", "Rejected")]),
             [],
         )
 
+    def test_failed_variant_points_to_rejected(self):
+        errs = mod._result_terminal_errors([("Job Share Failed", "Rejected")])
+        self.assertEqual(len(errs), 1)
+        self.assertIn("Rejected", errs[0])
+        self.assertIn("Failed", errs[0])
+
+    def test_started_correct(self):
+        self.assertEqual(
+            mod._result_terminal_errors([("Job Post Wizard Started", "Started")]),
+            [],
+        )
+
+    def test_started_wrong_terminal(self):
+        errs = mod._result_terminal_errors([("Job Post Wizard Opened", "Started")])
+        self.assertEqual(len(errs), 1)
+        self.assertIn("Started", errs[0])
+
     def test_error_variant_terminal(self):
-        errs = mod._outcome_terminal_errors([("Chat WebSocket Error", "Error")])
+        errs = mod._result_terminal_errors([("Chat WebSocket Error", "Error")])
         self.assertEqual(len(errs), 1)
         self.assertIn("Errored", errs[0])
 
     def test_error_correct(self):
         self.assertEqual(
-            mod._outcome_terminal_errors([("Chat WebSocket Errored", "Error")]), []
+            mod._result_terminal_errors([("Chat WebSocket Errored", "Error")]), []
         )
 
     def test_variant_is_type_independent(self):
-        errs = mod._outcome_terminal_errors([("Job Publish Success", None)])
+        errs = mod._result_terminal_errors([("Job Publish Success", None)])
         self.assertEqual(len(errs), 1)
         self.assertIn("Succeeded", errs[0])
 
     def test_one_message_per_event(self):
         # Variant check and type check both apply; only one message is emitted.
-        errs = mod._outcome_terminal_errors([("Job Publish Success", "Success")])
+        errs = mod._result_terminal_errors([("Job Publish Success", "Success")])
         self.assertEqual(len(errs), 1)
 
 
 class EventTypeTests(unittest.TestCase):
+    def test_event_type_set(self):
+        self.assertEqual(
+            mod.EVENT_TYPES,
+            {"View", "Interaction", "Started", "Success", "Rejected", "Error"},
+        )
+
     def test_invalid_types_flagged(self):
         typed = [
             ("A B", "--"),
             ("C D", "user_action"),
             ("E F", "page_view"),
             ("G H", ""),
+            ("I J", "Intent"),
+            ("K L", "Failure"),
+            ("M N", "Lifecycle"),
+            ("O P", "Navigation"),
+            ("Q R", "State Change"),
         ]
-        self.assertEqual(len(mod._event_type_errors(typed, mod.EVENT_TYPES)), 4)
+        self.assertEqual(len(mod._event_type_errors(typed, mod.EVENT_TYPES)), 9)
 
     def test_all_enum_members_pass(self):
         typed = [(f"Obj{i} Acted", t) for i, t in enumerate(sorted(mod.EVENT_TYPES))]
@@ -176,6 +202,67 @@ class EventTypeTests(unittest.TestCase):
         self.assertEqual(warns, [])
         self.assertTrue(any("Event Types table not found" in e for e in errs))
         self.assertTrue(any("Job Created" in e and "Type" in e for e in errs))
+
+
+class ResultPatternParserTests(unittest.TestCase):
+    NEW_TABLE = """## Interaction / Started / Result Pattern
+
+| Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
+|---|---|---|---|---|
+| Sharing | Share Button Clicked | Job Share Succeeded | Job Share Rejected | Chat WebSocket Errored |
+"""
+
+    OLD_TABLE = """## Intent vs Outcome
+
+| Flow | Intent Event | Success Event | Failure Event |
+|---|---|---|---|
+| Sharing | Share Button Clicked | Job Shared | Job Share Failed |
+"""
+
+    def test_new_result_pattern_shape_parses(self):
+        rows, errors = mod._parse_result_pattern_table(
+            mod.parse_tables(self.NEW_TABLE),
+            "test",
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["interaction_started"], "Share Button Clicked")
+        self.assertEqual(rows[0]["success"], "Job Share Succeeded")
+        self.assertEqual(rows[0]["rejected"], "Job Share Rejected")
+        self.assertEqual(rows[0]["error"], "Chat WebSocket Errored")
+
+    def test_old_result_pattern_shape_rejected(self):
+        rows, errors = mod._parse_result_pattern_table(
+            mod.parse_tables(self.OLD_TABLE),
+            "test",
+        )
+        self.assertEqual(rows, [])
+        self.assertEqual(len(errors), 1)
+        self.assertIn("Intent vs Outcome", errors[0])
+
+    def test_platform_health_uses_new_columns(self):
+        text = """### Platform Health Dashboard
+
+| Flow | Interaction / Started Event | Success Event | Rejected Event |
+|---|---|---|---|
+| Sharing | Share Button Clicked | Job Share Succeeded | Job Share Rejected |
+"""
+        rows, errors = mod._parse_platform_health_table(mod.parse_tables(text))
+        self.assertEqual(errors, [])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["rejected"], "Job Share Rejected")
+
+    def test_rule_09_compares_new_keys(self):
+        row = {
+            "flow": "Sharing",
+            "interaction_started": "Share Button Clicked",
+            "success": "Job Share Succeeded",
+            "rejected": "Job Share Rejected",
+            "error": "--",
+        }
+        errors, warnings = mod.rule_09([row], [], [row])
+        self.assertEqual(warnings, [])
+        self.assertEqual(errors, [])
 
 
 class ParseTrackingPlanTests(unittest.TestCase):
