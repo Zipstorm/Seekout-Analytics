@@ -105,15 +105,15 @@ Fires when the handle the user entered is **unavailable** (taken by another user
 
 **Images 2, 3, 4.** The editor has an Overview / Resume / Github / Portfolio tab bar, a Download action on the Resume tab, and a Publish / Unpublish toggle in the header. v1 deferred all editor events to v2.
 
-## B1. `Profile Overview Loaded`
+## B1. `Candidate Profile Overview Load Succeeded`
 
-A content-aware load event for the overview tab — separate from the generic `Page Viewed`, because it carries the profile's completeness state at load time (this is what Image 2 asks for: published?, skills count, journey count, photo?, description?).
+A content-aware load event for the overview tab — separate from the generic `Page Viewed`, because it carries the profile's completeness state at load time (published?, skills count, journey count, photo?, description?, intro video?).
 
 | Field | Value |
 |---|---|
-| **Event** | `Profile Overview Loaded` |
+| **Event** | `Candidate Profile Overview Load Succeeded` |
 | **Area** | Prospect |
-| **Type** | — |
+| **Type** | Success |
 | **Trigger** | Overview tab finishes loading on the editor page |
 | **Source** | Frontend |
 | **Group** | — |
@@ -127,14 +127,15 @@ A content-aware load event for the overview tab — separate from the generic `P
 | `has_profile_photo` | boolean | `true` / `false` | Profile photo present? |
 | `has_description` | boolean | `true` / `false` | Summary/description present? |
 | `has_intro_video` | boolean | `true` / `false` | Intro video recorded? (the "Record an introduction video" card) |
+| `profile_completeness_rate` | number | `0`–`100` | Percentage of completeness steps filled (e.g. 3/5 = 60). Steps: skills > 0, journey > 0, profile photo, description, intro video. |
 | `current_page_context` | string | `candidate_editor_overview` | Page |
 | `previous_page_context` | string | snake_case or null | Previous page |
 
-## B2. `Profile Tab Switched`
+## B2. `Candidate Profile Tab Switched`
 
 | Field | Value |
 |---|---|
-| **Event** | `Profile Tab Switched` |
+| **Event** | `Candidate Profile Tab Switched` |
 | **Area** | Prospect |
 | **Type** | user_action |
 | **Trigger** | User clicks Overview / Resume / Github / Portfolio tab |
@@ -151,13 +152,13 @@ A content-aware load event for the overview tab — separate from the generic `P
 | `component` | string | `editor_tab_bar` | UI location |
 | `entity_type` | string | `candidate_profile` | |
 
-## B3. `Resume Downloaded`
+## B3. `Candidate Resume Download Succeeded`
 
 | Field | Value |
 |---|---|
-| **Event** | `Resume Downloaded` |
+| **Event** | `Candidate Resume Download Succeeded` |
 | **Area** | Prospect |
-| **Type** | user_action |
+| **Type** | Success |
 | **Trigger** | User clicks "Download" on the Resume tab |
 | **Source** | Frontend |
 | **Group** | — |
@@ -176,7 +177,7 @@ A content-aware load event for the overview tab — separate from the generic `P
 
 The user wants a **frontend click (intent)** plus a **backend event that confirms the publish** (outcome). Same pattern applies to unpublish (Image 4 shows the header toggles to "Unpublish" once published).
 
-### B4a. `Publish Button Clicked` (intent, frontend)
+### B4a. `Portfolio Publish Button Clicked` (intent, frontend)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -187,7 +188,7 @@ The user wants a **frontend click (intent)** plus a **backend event that confirm
 | `component` | string | `editor_header_actions` | |
 | `entity_type` | string | `candidate_profile` | |
 
-### B4b. `Candidate Profile Published` (success, backend)
+### B4b. `Candidate Portfolio Publish Succeeded` (success, backend)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -199,7 +200,7 @@ The user wants a **frontend click (intent)** plus a **backend event that confirm
 | `has_description` | boolean | | |
 | `has_intro_video` | boolean | | |
 
-### B4c. `Candidate Profile Publish Failed` (failure, backend)
+### B4c. `Candidate Portfolio Publish Failed` (failure, backend)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -207,9 +208,13 @@ The user wants a **frontend click (intent)** plus a **backend event that confirm
 | `error_reason` | string | | Truncated to 256 chars |
 | `error_category` | enum | `validation`, `server`, `network` | |
 
-### B4d. `Unpublish Button Clicked` (intent) + B4e. `Candidate Profile Unpublished` (success, backend)
+### B4d. `Portfolio Unpublish Button Clicked` (intent)
 
-Mirror of B4a/B4b. `Unpublish Button Clicked` carries `action_value = unpublish_button`; `Candidate Profile Unpublished` carries `portfolio_id`, `is_published = false`.
+Mirror of B4a. `action_value = unpublish_button`. Same properties: `action`, `action_value`, `portfolio_id`, `current_page_context`, `component`, `entity_type`.
+
+### B4e. `Candidate Portfolio Unpublish Succeeded` (success, backend)
+
+Mirror of B4b. Carries `portfolio_id`, `is_published = false`.
 
 ---
 
@@ -618,8 +623,8 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 
 | Object | Entity | Example Events |
 |---|---|---|
-| Profile Overview | Job seeker profile editor overview tab | Profile Overview Loaded |
-| Profile Tab | Editor tab navigation | Profile Tab Switched |
+| Profile Overview | Job seeker profile editor overview tab | Candidate Profile Overview Load Succeeded |
+| Profile Tab | Editor tab navigation | Candidate Profile Tab Switched |
 | Portfolio | A job seeker's portfolio (dashboard card) | Rename Portfolio Button Clicked, Portfolio Renamed, Portfolio Deleted |
 | Interview | Anonymous AI screening interview session | Get Started Button Clicked, Interview Started, Interview Submitted |
 | Identity Check | Third-party (Persona) identity verification | Open Identity Check Button Clicked, Identity Verified, Identity Verification Failed |
@@ -635,8 +640,8 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 
 | Flow | Intent Event | Success Event | Failure Event |
 |---|---|---|---|
-| Publish profile | Publish Button Clicked | Candidate Profile Published | Candidate Profile Publish Failed |
-| Unpublish profile | Unpublish Button Clicked | Candidate Profile Unpublished | — |
+| Publish portfolio | Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | Candidate Portfolio Publish Failed |
+| Unpublish portfolio | Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | — |
 | Rename portfolio | Rename Portfolio Save Button Clicked | Portfolio Renamed (only if `name_changed`) | — |
 | Delete portfolio | Delete Portfolio Button Clicked | Portfolio Deleted | — |
 | Identity verification | Open Identity Check Button Clicked | Identity Verified | Identity Verification Failed |
@@ -657,7 +662,7 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 | Device → start | Allow Access Button Clicked → Device Access Granted → Interview Started | Camera/mic friction before interview begins |
 | Per-question completion | Interview Started → Interview Question Answered (breakdown by `question_number`) → Interview Submitted | Where in the question set candidates drop |
 | Interview → signup | Interview Submitted → Account Created (`entry_point = interview`) | Anonymous candidate → Helix user conversion |
-| Publish conversion | Publish Button Clicked → Candidate Profile Published | Publish success rate |
+| Publish conversion | Portfolio Publish Button Clicked → Candidate Portfolio Publish Succeeded | Publish success rate |
 
 ---
 
@@ -671,7 +676,7 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 | Question retake rate | Interview Question Retaken | trend | by `question_number`, `job_id` | Hiring |
 | Resume attach rate at interview | Upload Resume Step Completed (`has_resume`) | trend | by `has_resume` | Prospect |
 | Device-access friction | Allow Access Button Clicked → Device Access Granted | funnel | by `camera_granted`, `mic_granted` | Platform Health |
-| Profile publish rate | Publish Button Clicked → Candidate Profile Published | funnel | — | Prospect |
+| Profile publish rate | Portfolio Publish Button Clicked → Candidate Portfolio Publish Succeeded | funnel | — | Prospect |
 | Handle adoption | Build Profile Snapshot (`has_handle`) | trend | by `has_handle` | Prospect |
 | Interview → signup conversion | Interview Submitted → Account Created (`entry_point=interview`) | funnel | — | Growth / Viral Loop |
 
@@ -682,13 +687,14 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `interview_id` | UUID | | Anonymous AI interview session identifier (from URL) |
-| `is_published` | boolean | `true` / `false` | Profile published state — Profile Overview Loaded, Candidate Profile Published/Unpublished |
-| `skills_count` | number | | Skills on the profile — Profile Overview Loaded, Candidate Profile Published |
-| `journey_count` | number | | Journey/timeline entries — Profile Overview Loaded, Candidate Profile Published |
-| `has_description` | boolean | `true` / `false` | Summary present — Profile Overview Loaded, Candidate Profile Published |
+| `is_published` | boolean | `true` / `false` | Profile published state — Candidate Profile Overview Load Succeeded, Candidate Portfolio Publish Succeeded / Unpublish Succeeded |
+| `skills_count` | number | | Skills on the profile — Candidate Profile Overview Load Succeeded, Candidate Portfolio Publish Succeeded |
+| `journey_count` | number | | Journey/timeline entries — Candidate Profile Overview Load Succeeded, Candidate Portfolio Publish Succeeded |
+| `has_description` | boolean | `true` / `false` | Summary present — Candidate Profile Overview Load Succeeded, Candidate Portfolio Publish Succeeded |
+| `profile_completeness_rate` | number | `0`–`100` | Percentage of completeness steps filled — Candidate Profile Overview Load Succeeded |
 | `has_handle` | boolean | `true` / `false` | Handle claimed — Build Profile Snapshot, Candidate Profile Created |
 | `handle_length` | number or null | | Handle character count — Build Profile Snapshot, Candidate Handle Add Succeeded, Candidate Handle Add Failed |
-| `tab_name` | enum | `overview`, `resume`, `github`, `portfolio` | Editor tab — Profile Tab Switched |
+| `tab_name` | enum | `overview`, `resume`, `github`, `portfolio` | Editor tab — Candidate Profile Tab Switched |
 | `name_changed` | boolean | `true` / `false` | Whether a rename actually changed the name — Rename Portfolio Save Button Clicked |
 | `new_name_length` | number | | New portfolio name length — Portfolio Renamed |
 | `previous_name_length` | number | | Previous portfolio name length — Portfolio Renamed |
@@ -736,14 +742,14 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 - [ ] `Candidate Handle Add Failed` *(optional)* → Prospect
 
 **Part B — Prospect:**
-- [ ] Profile Overview Loaded
-- [ ] Profile Tab Switched
-- [ ] Resume Downloaded
-- [ ] Publish Button Clicked
-- [ ] Candidate Profile Published
-- [ ] Candidate Profile Publish Failed
-- [ ] Unpublish Button Clicked
-- [ ] Candidate Profile Unpublished
+- [ ] Candidate Profile Overview Load Succeeded
+- [ ] Candidate Profile Tab Switched
+- [ ] Candidate Resume Download Succeeded
+- [ ] Portfolio Publish Button Clicked
+- [ ] Candidate Portfolio Publish Succeeded
+- [ ] Candidate Portfolio Publish Failed
+- [ ] Portfolio Unpublish Button Clicked
+- [ ] Candidate Portfolio Unpublish Succeeded
 
 **Part C — Prospect:**
 - [ ] Rename Portfolio Button Clicked
