@@ -288,7 +288,7 @@ All Part D events carry `interview_id`, `job_id`, and the `job` group.
 | `interview_id` | string (UUID) | | |
 | `job_id` | string (UUID) | | |
 
-### D1b. `Get Started Button Clicked` (intent)
+### D1b. `Get Started Interview Button Clicked` (intent)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -304,9 +304,9 @@ All Part D events carry `interview_id`, `job_id`, and the `job` group.
 
 ### D2a. `Page Viewed` — `current_page_context = interview_candidate_info`
 
-### D2b. `Interview Information Submitted`
+### D2b. `Candidate Interview Information Submitted`
 
-Fires on "Next". Email is mandatory; first/last names optional. **Do not** put name or email values in properties — only booleans.
+Fires on "Next". Email is mandatory; first/last names optional. **Do not** put name or email values in properties — only booleans. Email is captured via `posthog.alias()` on the person profile, not as an event property.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -326,22 +326,7 @@ Fires on "Next". Email is mandatory; first/last names optional. **Do not** put n
 
 Resume upload reuses the existing v1 events (`Resume Upload Button Clicked`, `Resume Uploaded`, `Resume Upload Failed`, `Resume Removed`) with `interview_id` + `job_id` added and `current_page_context = interview_upload_resume`. The "Learn how" LinkedIn-export link reuses the existing **`LinkedIn Export Learn How Link Clicked`**. New events below.
 
-### D3a. `Agreement Acknowledged` (user_action, toggle)
-
-The "I understand and agree to the above" checkbox gates the Next button.
-
-| Property | Type | Values | Description |
-|---|---|---|---|
-| `action` | enum | `toggle` | |
-| `action_value` | string | `i_understand_and_agree_to_the_above` | Exact checkbox label |
-| `is_checked` | boolean | `true` / `false` | New checkbox state |
-| `interview_id` | string (UUID) | | |
-| `job_id` | string (UUID) | | |
-| `current_page_context` | string | `interview_upload_resume` | |
-| `component` | string | `interview_recording_data_card` | |
-| `entity_type` | string | `interview` | |
-
-### D3b. `What To Expect Link Clicked` (user_action)
+### D3a. `What To Expect Link Clicked` (user_action)
 
 The "What to expect" expander (Image 13). Captures intent / nervousness signal.
 
@@ -355,9 +340,9 @@ The "What to expect" expander (Image 13). Captures intent / nervousness signal.
 | `component` | string | `interview_ai_guided_card` | |
 | `entity_type` | string | `interview` | |
 
-### D3c. `Upload Resume Step Completed` (user_action)
+### D3b. `Interview Resume Step Next Button Clicked` (intent)
 
-Fires on "Next". Captures whether the candidate proceeded with or without a resume (both allowed).
+Fires on "Next". Captures whether the candidate proceeded with or without a resume (both allowed). This is a frontend click event only — resume upload is confirmed separately by the existing backend `Resume Uploaded` event.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -399,7 +384,7 @@ Fires on "Next". Captures whether the candidate proceeded with or without a resu
 | `component` | string | `secure_identity_check_card` | |
 | `entity_type` | string | `identity_check` | |
 
-### D4d. `Identity Verified` (success, backend)
+### D4d. `Identity Verification Succeeded` (success, backend)
 
 The backend confirmation that the third-party (Persona) identity check succeeded — fires when status flips to verified (Image 15). This is the outcome of D4b.
 
@@ -463,7 +448,7 @@ Fires on "Next" with aggregate answer composition — avoids per-keystroke noise
 | `component` | string | `device_check_card` | |
 | `entity_type` | string | `device_check` | |
 
-### D6c. `Device Access Granted` (success) / D6d. `Device Access Denied` (failure)
+### D6c. `Device Access Grant Succeeded` (success) / D6d. `Device Access Rejected` (failure)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -473,7 +458,7 @@ Fires on "Next" with aggregate answer composition — avoids per-keystroke noise
 | `mic_granted` | boolean | `true` / `false` | Microphone permission result |
 | `error_reason` | string | (denied only) | Permission error, if any |
 
-### D6e. `Start Interview Button Clicked` (intent)
+### D6e. `Interview Start Button Clicked` (intent)
 
 Enabled only after access is granted.
 
@@ -487,7 +472,7 @@ Enabled only after access is granted.
 | `component` | string | `device_check_footer` | |
 | `entity_type` | string | `interview` | |
 
-### D6f. `Interview Started` (success, backend)
+### D6f. `Candidate Interview Started` (success, backend)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -500,65 +485,55 @@ Enabled only after access is granted.
 
 ## D7. Interview — per-question (Images 19, 20, 21, 23)
 
-### D7a. `Interview Question Answered` (user_action)
+### D7a. `Candidate Interview Question Resolved` (per-question terminal event)
 
-Fires on **Save & continue** (Image 23) — the AI marks the question complete and the candidate moves on. This is the primary "a question was answered" signal.
+Fires once per question when it reaches a terminal state — whether answered, answered after a restart, or skipped. This is the primary per-question signal and powers stacked bar charts by `question_status`.
+
+**Triggers:**
+- **Save & continue** click → `question_status = answered`
+- **Save & continue** click after restarting the question → `question_status = answered_restarted`
+- **Skip this question** confirmation → `question_status = skipped`
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `action` | enum | `click` | |
-| `action_value` | string | `save_and_continue_button` | |
 | `interview_id` | string (UUID) | | |
 | `job_id` | string (UUID) | | |
-| `question_number` | number | `1`–`N` | Position of the answered question |
+| `question_number` | number | `1`–`N` | Position of the question |
 | `questions_count` | number | | Total interview questions |
+| `question_status` | enum | `answered`, `answered_restarted`, `skipped` | Terminal status of this question |
 | `input_mode` | enum | `voice`, `text` | |
-| `response_duration_seconds` | number or null | | Total spoken duration on this question (the "You spoke for…" total) |
+| `response_duration_seconds` | number or null | | Spoken duration (null if skipped) |
 | `current_page_context` | string | `interview_recording` | |
-| `component` | string | `interview_recording_footer` | |
+| `component` | string | `interview_recording_footer` or `skip_question_modal` | |
 | `entity_type` | string | `interview_question` | |
 
 ### D7b. Restart question (intent → outcome)
 
-- **`Restart Question Button Clicked`** (intent) — clicking "Restart" opens the confirm modal (Image 20). `action_value = restart`.
-- **`Interview Question Restarted`** (success) — fires after the candidate clicks "Restart" again to confirm; the question starts over. Properties: `interview_id`, `job_id`, `question_number`.
-- **`Interview Question Restart Failed`** (failure) — restart could not be re-initialized. Properties: `interview_id`, `job_id`, `question_number`, `error_reason`, `error_category`.
+- **`Interview Question Restart Button Clicked`** (intent) — clicking "Restart" opens the confirm modal (Image 20). `action_value = restart`.
+- **`Interview Question Restart Succeeded`** (success) — fires after the candidate clicks "Restart" again to confirm; the question starts over. Properties: `interview_id`, `job_id`, `question_number`.
+- **`Interview Question Restart Rejected`** (failure) — restart could not be re-initialized. Properties: `interview_id`, `job_id`, `question_number`, `error_reason`, `error_category`.
 
 ### D7c. Skip question (intent → outcome)
 
-- **`Skip Question Button Clicked`** (intent) — clicking "Skip" opens the skip modal (Image 21). `action_value = skip`.
-- **`Question Skipped`** (success) — fires after the candidate clicks "Skip this question" to confirm. Properties: `interview_id`, `job_id`, `question_number`.
-- **`Skip Question Cancelled`** (user_action) — the candidate clicks "Go back and answer" instead. `action_value = go_back_and_answer`. Properties: `interview_id`, `job_id`, `question_number`.
+- **`Interview Question Skip Button Clicked`** (intent) — clicking "Skip" opens the skip modal (Image 21). `action_value = skip`.
+- **`Interview Question Skip Succeeded`** (success) — fires after the candidate clicks "Skip this question" to confirm. Properties: `interview_id`, `job_id`, `question_number`.
+- **`Interview Question Skip Rejected`** (user_action) — the candidate clicks "Go back and answer" instead. `action_value = go_back_and_answer`. Properties: `interview_id`, `job_id`, `question_number`.
 
-All three carry `current_page_context = interview_recording`, `component = interview_recording_footer` (or `skip_question_modal` / `restart_question_modal` for the confirm/cancel actions), `entity_type = interview_question`.
+All carry `current_page_context = interview_recording`, `component = interview_recording_footer` (or `skip_question_modal` / `restart_question_modal` for the confirm/cancel actions), `entity_type = interview_question`.
 
 ## D8. Review & submit (Images 24, 25, 26, 28)
 
 ### D8a. `Page Viewed` — `current_page_context = interview_review`
 
-### D8b. `Edit Screening Response Button Clicked` (user_action)
+### D8b. `Interview Screening Response Edit Button Clicked` (user_action)
 
 The "Edit" link next to a screening answer (Image 24). `action_value = edit`, `entity_type = screening_response`, plus `interview_id`, `job_id`.
 
-### D8c. `Interview Question Retaken` (distinct event)
+### D8c. `Interview Review Answer Question Button Clicked` (user_action)
 
-Retaking a video question (Image 25). Kept as its **own event** so retake volume is measurable separately from first answers. Fires after the retake's "Save & next" returns the candidate to the review page.
+For a skipped/missing question on the review page, the "Answer question" button (Image 26). `action_value = answer_question`, `entity_type = interview_question`, plus `interview_id`, `job_id`, `question_number`. Completing the answer fires `Candidate Interview Question Resolved` (D7a) with `question_status = answered`.
 
-| Property | Type | Values | Description |
-|---|---|---|---|
-| `interview_id` | string (UUID) | | |
-| `job_id` | string (UUID) | | |
-| `question_number` | number | | Which question was retaken |
-| `input_mode` | enum | `voice`, `text` | |
-| `response_duration_seconds` | number or null | | Duration of the retake answer |
-
-> The "Retake this question" link itself can fire an intent `Retake Question Button Clicked` (`action_value = retake_this_question`) if click-to-completion drop-off matters; the success event D8c is the one that powers "how many questions get retaken."
-
-### D8d. `Answer Question Button Clicked` (user_action)
-
-For a skipped/missing question, the "Answer question" button (Image 26). `action_value = answer_question`, `entity_type = interview_question`, plus `interview_id`, `job_id`, `question_number`. Completing the answer then fires `Interview Question Answered` (D7a) again.
-
-### D8e. `Submit Interview Button Clicked` (intent)
+### D8d. `Interview Submit Button Clicked` (intent)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -570,7 +545,7 @@ For a skipped/missing question, the "Answer question" button (Image 26). `action
 | `component` | string | `interview_review_footer` | |
 | `entity_type` | string | `interview` | |
 
-### D8f. `Interview Submitted` (success, backend)
+### D8e. `Interview Submit Succeeded` (success, backend)
 
 The completion event — the headline conversion for the whole flow.
 
@@ -588,7 +563,7 @@ The completion event — the headline conversion for the whole flow.
 | `input_mode` | enum | `voice`, `text` | |
 | `total_duration_seconds` | number or null | | End-to-end interview duration |
 
-### D8g. `Interview Submission Failed` (failure, backend)
+### D8f. `Interview Submit Rejected` (failure, backend)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -612,11 +587,11 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 | Profile Overview | Job seeker profile editor overview tab | Candidate Profile Overview Load Succeeded |
 | Profile Tab | Editor tab navigation | Candidate Profile Tab Switched |
 | Portfolio | A job seeker's portfolio (dashboard card) | Portfolio Rename Button Clicked, Portfolio Rename Succeeded, Portfolio Delete Succeeded |
-| Interview | Anonymous AI screening interview session | Get Started Button Clicked, Interview Started, Interview Submitted |
-| Identity Check | Third-party (Persona) identity verification | Open Identity Check Button Clicked, Identity Verified, Identity Verification Failed |
+| Interview | Anonymous AI screening interview session | Get Started Interview Button Clicked, Candidate Interview Started, Interview Submit Succeeded |
+| Identity Check | Third-party (Persona) identity verification | Open Identity Check Button Clicked, Identity Verification Succeeded, Identity Verification Failed |
 | Screening Response | Candidate's answers to recruiter Yes/No screening questions | Screening Responses Submitted |
-| Interview Question | An individual AI interview question | Interview Question Answered, Question Skipped, Interview Question Restarted, Interview Question Retaken |
-| Device Check | Camera/mic permission check before interview | Allow Access Button Clicked, Device Access Granted |
+| Interview Question | An individual AI interview question | Candidate Interview Question Resolved, Interview Question Restart Succeeded, Interview Question Skip Succeeded |
+| Device Check | Camera/mic permission check before interview | Allow Access Button Clicked, Device Access Grant Succeeded |
 
 > `Candidate Profile`, `Resume`, `Resume Upload`, `Build Profile`, and `LinkedIn Export` objects already exist from Job Seeker v1 and are reused.
 
@@ -630,12 +605,12 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 | Unpublish portfolio | Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | — |
 | Rename portfolio | Portfolio Rename Button Clicked | Portfolio Rename Succeeded | — |
 | Delete portfolio | Portfolio Delete Button Clicked | Portfolio Delete Succeeded | — |
-| Identity verification | Open Identity Check Button Clicked | Identity Verified | Identity Verification Failed |
-| Device access | Allow Access Button Clicked | Device Access Granted | Device Access Denied |
-| Start interview | Start Interview Button Clicked | Interview Started | — |
-| Restart question | Restart Question Button Clicked | Interview Question Restarted | Interview Question Restart Failed |
-| Skip question | Skip Question Button Clicked | Question Skipped | (Skip Question Cancelled = abandon intent) |
-| Submit interview | Submit Interview Button Clicked | Interview Submitted | Interview Submission Failed |
+| Identity verification | Open Identity Check Button Clicked | Identity Verification Succeeded | Identity Verification Failed |
+| Device access | Allow Access Button Clicked | Device Access Grant Succeeded | Device Access Rejected |
+| Start interview | Interview Start Button Clicked | Candidate Interview Started | — |
+| Restart question | Interview Question Restart Button Clicked | Interview Question Restart Succeeded | Interview Question Restart Rejected |
+| Skip question | Interview Question Skip Button Clicked | Interview Question Skip Succeeded | Interview Question Skip Rejected |
+| Submit interview | Interview Submit Button Clicked | Interview Submit Succeeded | Interview Submit Rejected |
 
 ---
 
@@ -643,11 +618,11 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 
 | Funnel Name | Steps | Purpose |
 |---|---|---|
-| Interview completion | Page Viewed (`interview_landing`) → Get Started Button Clicked → Interview Information Submitted → Upload Resume Step Completed → Identity Verified → Screening Responses Submitted → Interview Started → Interview Submitted | End-to-end candidate conversion; step-level drop-off |
-| Identity verification | Open Identity Check Button Clicked → Identity Verified | Verification completion / failure rate |
-| Device → start | Allow Access Button Clicked → Device Access Granted → Interview Started | Camera/mic friction before interview begins |
-| Per-question completion | Interview Started → Interview Question Answered (breakdown by `question_number`) → Interview Submitted | Where in the question set candidates drop |
-| Interview → signup | Interview Submitted → Account Created (`entry_point = interview`) | Anonymous candidate → Helix user conversion |
+| Interview completion | Page Viewed (`interview_landing`) → Get Started Interview Button Clicked → Candidate Interview Information Submitted → Interview Resume Step Next Button Clicked → Identity Verification Succeeded → Screening Responses Submitted → Candidate Interview Started → Interview Submit Succeeded | End-to-end candidate conversion; step-level drop-off |
+| Identity verification | Open Identity Check Button Clicked → Identity Verification Succeeded | Verification completion / failure rate |
+| Device → start | Allow Access Button Clicked → Device Access Grant Succeeded → Candidate Interview Started | Camera/mic friction before interview begins |
+| Per-question completion | Candidate Interview Started → Candidate Interview Question Resolved (breakdown by `question_number`, `question_status`) → Interview Submit Succeeded | Where in the question set candidates drop |
+| Interview → signup | Interview Submit Succeeded → Account Created (`entry_point = interview`) | Anonymous candidate → Helix user conversion |
 | Publish conversion | Portfolio Publish Button Clicked → Candidate Portfolio Publish Succeeded | Publish success rate |
 
 ---
@@ -656,15 +631,15 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 
 | Success Metric | PostHog Event(s) | Insight Type | Breakdown / Filter | Dashboard |
 |---|---|---|---|---|
-| Interview completion rate | Get Started Button Clicked → Interview Submitted | funnel | by `job_id`, `start_source` | Prospect / Hiring |
-| Identity verification pass rate | Identity Verified vs Identity Verification Failed | trend (formula) | by `error_category` | Platform Health |
-| Question skip rate | Question Skipped / Interview Question Answered | trend | by `question_number` | Hiring |
-| Question retake rate | Interview Question Retaken | trend | by `question_number`, `job_id` | Hiring |
-| Resume attach rate at interview | Upload Resume Step Completed (`has_resume`) | trend | by `has_resume` | Prospect |
-| Device-access friction | Allow Access Button Clicked → Device Access Granted | funnel | by `camera_granted`, `mic_granted` | Platform Health |
+| Interview completion rate | Get Started Interview Button Clicked → Interview Submit Succeeded | funnel | by `job_id`, `start_source` | Prospect / Hiring |
+| Identity verification pass rate | Identity Verification Succeeded vs Identity Verification Failed | trend (formula) | by `error_category` | Platform Health |
+| Question skip rate | Candidate Interview Question Resolved (`question_status = skipped`) | trend | by `question_number` | Hiring |
+| Question retake rate | Candidate Interview Question Resolved (`question_status = answered_restarted`) | trend | by `question_number`, `job_id` | Hiring |
+| Resume attach rate at interview | Interview Resume Step Next Button Clicked (`has_resume`) | trend | by `has_resume` | Prospect |
+| Device-access friction | Allow Access Button Clicked → Device Access Grant Succeeded | funnel | by `camera_granted`, `mic_granted` | Platform Health |
 | Profile publish rate | Portfolio Publish Button Clicked → Candidate Portfolio Publish Succeeded | funnel | — | Prospect |
 | Handle adoption | Build Profile Snapshot (`has_handle`) | trend | by `has_handle` | Prospect |
-| Interview → signup conversion | Interview Submitted → Account Created (`entry_point=interview`) | funnel | — | Growth / Viral Loop |
+| Interview → signup conversion | Interview Submit Succeeded → Account Created (`entry_point=interview`) | funnel | — | Growth / Viral Loop |
 
 ---
 
@@ -685,15 +660,15 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 | `previous_name_length` | number | | Previous portfolio name length — Portfolio Rename Succeeded |
 | `was_published` | boolean | `true` / `false` | Whether a deleted portfolio was published — Portfolio Delete Succeeded |
 | `start_source` | enum | `interview_link`, `email_invite`, `job_board`, `direct` (+ existing `create_job_button`) | How a candidate reached the interview — Page Viewed (interview_landing) |
-| `has_first_name` | boolean | `true` / `false` | Optional name field filled — Interview Information Submitted |
-| `has_last_name` | boolean | `true` / `false` | Optional name field filled — Interview Information Submitted |
-| `agreement_acknowledged` | boolean | `true` | Recording/data agreement accepted — Upload Resume Step Completed |
-| `is_checked` | boolean | `true` / `false` | Checkbox state — Agreement Acknowledged |
-| `verification_vendor` | string | `persona` | Identity vendor — Identity Verified / Failed |
-| `time_to_verify_seconds` | number or null | | Seconds to verify identity — Identity Verified |
-| `camera_granted` | boolean | `true` / `false` | Camera permission — Device Access Granted/Denied, Interview Started |
-| `mic_granted` | boolean | `true` / `false` | Mic permission — Device Access Granted/Denied |
-| `input_mode` | enum | `voice`, `text` | *(reuses existing enum)* Interview modality — Interview Started, Interview Question Answered, etc. |
+| `has_first_name` | boolean | `true` / `false` | Optional name field filled — Candidate Interview Information Submitted |
+| `has_last_name` | boolean | `true` / `false` | Optional name field filled — Candidate Interview Information Submitted |
+| `agreement_acknowledged` | boolean | `true` | Recording/data agreement accepted — Interview Resume Step Next Button Clicked |
+| `verification_vendor` | string | `persona` | Identity vendor — Identity Verification Succeeded / Failed |
+| `time_to_verify_seconds` | number or null | | Seconds to verify identity — Identity Verification Succeeded |
+| `camera_granted` | boolean | `true` / `false` | Camera permission — Device Access Grant Succeeded / Rejected, Candidate Interview Started |
+| `mic_granted` | boolean | `true` / `false` | Mic permission — Device Access Grant Succeeded / Rejected |
+| `input_mode` | enum | `voice`, `text` | *(reuses existing enum)* Interview modality — Candidate Interview Started, Candidate Interview Question Resolved, etc. |
+| `question_status` | enum | `answered`, `answered_restarted`, `skipped` | Terminal status of a question — Candidate Interview Question Resolved |
 | `question_number` | number | `1`–`N` | *(reuses existing property)* Question position — interview question events |
 | `questions_count` | number | | *(reuses existing property)* Total interview questions — Interview Started, Interview Submitted |
 | `response_duration_seconds` | number or null | | Spoken duration on a question — Interview Question Answered, Interview Question Retaken |
@@ -744,35 +719,32 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 
 **Part D — Interview (new Interview / Identity Check / Screening Response / Interview Question / Device Check areas):**
 - [ ] Page Viewed (new contexts + `start_source`) — existing event, no catalog row change beyond property note
-- [ ] Get Started Button Clicked
-- [ ] Interview Information Submitted
-- [ ] Agreement Acknowledged
+- [ ] Get Started Interview Button Clicked
+- [ ] Candidate Interview Information Submitted
 - [ ] What To Expect Link Clicked
-- [ ] Upload Resume Step Completed
+- [ ] Interview Resume Step Next Button Clicked
 - [ ] Open Identity Check Button Clicked
 - [ ] Refresh Status Button Clicked
-- [ ] Identity Verified
+- [ ] Identity Verification Succeeded
 - [ ] Identity Verification Failed
 - [ ] Screening Responses Submitted
 - [ ] Allow Access Button Clicked
-- [ ] Device Access Granted
-- [ ] Device Access Denied
-- [ ] Start Interview Button Clicked
-- [ ] Interview Started
-- [ ] Interview Question Answered
-- [ ] Restart Question Button Clicked
-- [ ] Interview Question Restarted
-- [ ] Interview Question Restart Failed
-- [ ] Skip Question Button Clicked
-- [ ] Question Skipped
-- [ ] Skip Question Cancelled
-- [ ] Edit Screening Response Button Clicked
-- [ ] Retake Question Button Clicked *(optional intent)*
-- [ ] Interview Question Retaken
-- [ ] Answer Question Button Clicked
-- [ ] Submit Interview Button Clicked
-- [ ] Interview Submitted
-- [ ] Interview Submission Failed
+- [ ] Device Access Grant Succeeded
+- [ ] Device Access Rejected
+- [ ] Interview Start Button Clicked
+- [ ] Candidate Interview Started
+- [ ] Candidate Interview Question Resolved
+- [ ] Interview Question Restart Button Clicked
+- [ ] Interview Question Restart Succeeded
+- [ ] Interview Question Restart Rejected
+- [ ] Interview Question Skip Button Clicked
+- [ ] Interview Question Skip Succeeded
+- [ ] Interview Question Skip Rejected
+- [ ] Interview Screening Response Edit Button Clicked
+- [ ] Interview Review Answer Question Button Clicked
+- [ ] Interview Submit Button Clicked
+- [ ] Interview Submit Succeeded
+- [ ] Interview Submit Rejected
 
 - [ ] New objects added to Standard Objects table: **Yes** (8 — see New Standard Objects)
 - [ ] Reuse confirmed: `Resume Upload Button Clicked`, `Resume Uploaded`, `Resume Upload Failed`, `Resume Removed`, `LinkedIn Export Learn How Link Clicked`, `Account Created` (with `entry_point=interview`)
@@ -783,5 +755,5 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 
 1. **Handle event A3** — implement the optional `Candidate Handle Add Succeeded` / `Candidate Handle Add Failed` now, or defer? (Default: defer.)
 2. **Per-question screening detail (D5)** — aggregate-only on submit (current default) vs. per-response `Screening Question Answered`.
-3. **Retake intent (D8c)** — track the `Retake Question Button Clicked` intent, or only the `Interview Question Retaken` success? (Default: success only.)
+3. **Rejected vs Failed naming** — some failure events use "Rejected" (user/system denied) vs "Failed" (technical error). Validate against naming rules after pulling latest from main.
 4. **Anonymous → user stitching** — confirm engineering can `alias()` the interview ID to the email at D2b and again to the user ID at signup (D8h). Without it, the interview→signup funnel breaks.
