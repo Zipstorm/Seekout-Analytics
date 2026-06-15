@@ -98,17 +98,22 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 
 ### Platform Health Dashboard (Platform Team)
 
-Tracks failure rates across the five Intent → Success / Failure triplets defined in the event catalog.
+Tracks rejected-result and technical-error rates across the Interaction / Started → Success / Rejected / Error flows defined in the schema.
 
-| Flow | Intent Event | Success Event | Failure Event |
-|------|-------------|---------------|---------------|
-| Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
-| Job sharing | Share Button Clicked | Job Shared | Job Share Failed |
-| Interest expression | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
-| Team invite | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
-| Intro video recording | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
-| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
+| Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
+|------|-----------------------------|---------------|----------------|-------------|
+| Login / Signup | Login Started | Account Created (new) or Auth Login Succeeded (returning) | Login Cancelled, Auth Login Failed | -- |
+| Sharing a job | Share Button Clicked | Job Shared | Job Share Failed | -- |
+| Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed | -- |
+| Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed | -- |
+| Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed | -- |
+| Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed | -- |
+| Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed | -- |
+| Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed | -- |
+| Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed | -- |
+| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed | -- |
 
-- Failure rate per flow (failures / intents) over time
+- Rejected rate per flow (rejected results / interactions or starts) over time
+- Technical error rate where an `Error Event` exists
 - `error_category` distribution per flow (with `error_reason` drill-down for debugging)
-- Intent-to-success conversion rate per flow
+- Interaction/start-to-success conversion rate per flow

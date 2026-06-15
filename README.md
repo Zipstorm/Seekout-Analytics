@@ -97,7 +97,7 @@ This repo is built for use with [Claude Code](https://docs.anthropic.com/en/docs
 
 ## Validation
 
-The validator (`scripts/validate-analytics-docs.py`) enforces 17 consistency rules across all analytics documents — checking event coverage, property compliance, naming conventions, object–action segregation, outcome-terminal form, event-type taxonomy, and funnel definitions. Run history is logged to `logs/conflicts-log.md`.
+The validator (`scripts/validate-analytics-docs.py`) enforces 17 consistency rules across all analytics documents — checking event coverage, property compliance, naming conventions, object–action segregation, result-terminal form, event-type taxonomy, and funnel definitions. Run history is logged to `logs/conflicts-log.md`.
 
 ## Analytics Platform
 
@@ -107,7 +107,7 @@ Events are instrumented via **PostHog**. See [`docs/event-schema.md`](docs/event
 
 - `docs/event-catalog.md` is the **single source of truth** for all events
 - Reuse existing events and properties before creating new ones
-- Track both **intent and outcome** for critical flows (UI click + server confirmation)
+- Track **interaction/start and result** separately for critical flows
 - Viral attribution: sharing chain events must carry `referrer_user_id`
 - `acting_as` is required on all hiring surface events
 - Tracking plans are **archived after merge** — never deleted

@@ -25,7 +25,7 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 
 | Event | Area | Type | Trigger | Key Properties | Group | Property Updates |
 |---|---|---|---|---|---|---|
-| [Object Action] | Account / Prospect / Hiring / Viral Loop | Intent / Success / Failure / Error / Lifecycle / Navigation / State Change | [When this fires] | `property_1`, `property_2` | `job` / -- | `$set_once: prop`, `group(job): prop` / -- |
+| [Object Action] | Account / Prospect / Hiring / Viral Loop | View / Interaction / Started / Success / Rejected / Error | [When this fires] | `property_1`, `property_2` | `job` / -- | `$set_once: prop`, `group(job): prop` / -- |
 
 <!--
 ## New Standard Objects
@@ -50,13 +50,13 @@ Standard Object. Reason is optional reviewer context.
 
 ---
 
-## Intent vs Outcome
+## Interaction / Started / Result Pattern
 
-For critical user flows, track both the UI interaction and server-confirmed result.
+For critical user flows, track the UI interaction or process start separately from the processed result.
 
-| Flow | Intent Event | Success Event | Failure Event |
-|---|---|---|---|
-| [User action] | [Button Clicked] | [Object Actioned] | [Object Action Failed] |
+| Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
+|---|---|---|---|---|
+| [User flow] | [Button Clicked or Flow Started] | [Object Action Succeeded] | [Object Action Rejected] | [Object Action Errored] / -- |
 
 ---
 

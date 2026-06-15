@@ -25,7 +25,7 @@ MAX_LOG_RUNS = 20
 
 RULE_NAMES = {
     1: "Object coverage",
-    2: "Intent-Outcome alignment",
+    2: "Interaction / Started / Result alignment",
     3: "Person property alignment",
     4: "Standard property compliance",
     5: "Funnel event existence",
@@ -39,7 +39,7 @@ RULE_NAMES = {
     13: "Event property coverage",
     14: "No duplicate names",
     15: "Action validity",
-    16: "Outcome terminal form",
+    16: "Result terminal form",
     17: "Event type validity",
 }
 
@@ -50,12 +50,12 @@ TP_RULE_NAMES = {
     "TP3": "No duplicate events vs catalog",
     "TP4": "Property coverage (catalog + tracking plan)",
     "TP5": "Standard property compliance",
-    "TP6": "Intent vs Outcome completeness",
+    "TP6": "Interaction / Started / Result completeness",
     "TP7": "Standard Object usage",
     "TP8": "Funnel event validity",
     "TP9": "Inline enum consistency",
     "TP10": "Action validity",
-    "TP11": "Outcome terminal form",
+    "TP11": "Result terminal form",
     "TP12": "Event type validity",
 }
 
@@ -66,7 +66,8 @@ REMOVED_OBJECTS_SECTION = "Removed Standard Objects"
 @dataclass
 class TrackingPlanData:
     events: dict = field(default_factory=dict)
-    intent_outcome: list = field(default_factory=list)
+    result_pattern: list = field(default_factory=list)
+    result_pattern_errors: list = field(default_factory=list)
     funnels: dict = field(default_factory=dict)
     prop_dict: dict = field(default_factory=dict)
     added_objects: dict = field(default_factory=dict)
@@ -135,6 +136,163 @@ def _find_table(tables, pattern):
         if pattern.lower() in h.lower():
             return header, rows
     return None, None
+
+
+RESULT_PATTERN_HEADING = "Interaction / Started / Result Pattern"
+RESULT_PATTERN_REQUIRED_COLUMNS = [
+    "Flow",
+    "Interaction / Started Event",
+    "Success Event",
+    "Rejected Event",
+]
+RESULT_PATTERN_OPTIONAL_COLUMNS = ["Error Event"]
+RESULT_PATTERN_EVENT_KEYS = ("interaction_started", "success", "rejected", "error")
+RESULT_PATTERN_ROLE_LABELS = {
+    "interaction_started": "interaction / started",
+    "success": "success",
+    "rejected": "rejected",
+    "error": "error",
+}
+
+
+def _normalize_table_header(cell):
+    return re.sub(r"\s+", " ", cell.strip())
+
+
+def _result_pattern_column_error(source_label):
+    return (
+        f'{source_label} "{RESULT_PATTERN_HEADING}" table must use columns: '
+        "Flow | Interaction / Started Event | Success Event | Rejected Event "
+        "(optional: Error Event)."
+    )
+
+
+def _parse_result_pattern_table(tables, source_label):
+    rows_out = []
+    errors = []
+    found = False
+
+    for heading, header, rows in tables:
+        normalized_heading = heading.strip()
+        lower_heading = normalized_heading.lower()
+        if "intent" in lower_heading and (
+            "outcome" in lower_heading or "pattern" in lower_heading
+        ):
+            errors.append(
+                f'{source_label} uses old "Intent vs Outcome" table heading; '
+                f'use "{RESULT_PATTERN_HEADING}".'
+            )
+            continue
+        if normalized_heading != RESULT_PATTERN_HEADING:
+            continue
+
+        found = True
+        normalized_header = [_normalize_table_header(h) for h in header]
+        col = {h: i for i, h in enumerate(normalized_header)}
+        allowed_columns = set(RESULT_PATTERN_REQUIRED_COLUMNS) | set(
+            RESULT_PATTERN_OPTIONAL_COLUMNS
+        )
+        if (
+            any(c not in col for c in RESULT_PATTERN_REQUIRED_COLUMNS)
+            or "Intent Event" in col
+            or "Failure Event" in col
+            or any(c not in allowed_columns for c in normalized_header)
+        ):
+            errors.append(_result_pattern_column_error(source_label))
+            continue
+
+        for row in rows:
+            flow = row[col["Flow"]].strip() if col["Flow"] < len(row) else ""
+            if not flow or flow.startswith("["):
+                continue
+            rows_out.append(
+                dict(
+                    flow=flow,
+                    interaction_started=(
+                        row[col["Interaction / Started Event"]].strip()
+                        if col["Interaction / Started Event"] < len(row)
+                        else ""
+                    ),
+                    success=(
+                        row[col["Success Event"]].strip()
+                        if col["Success Event"] < len(row)
+                        else ""
+                    ),
+                    rejected=(
+                        row[col["Rejected Event"]].strip()
+                        if col["Rejected Event"] < len(row)
+                        else ""
+                    ),
+                    error=(
+                        row[col["Error Event"]].strip()
+                        if "Error Event" in col and col["Error Event"] < len(row)
+                        else "--"
+                    ),
+                )
+            )
+
+    if not found and not errors:
+        errors.append(
+            f'{source_label} is missing "{RESULT_PATTERN_HEADING}" table.'
+        )
+    return rows_out, errors
+
+
+def _parse_platform_health_table(tables):
+    rows_out = []
+    errors = []
+    header, rows = _find_table(tables, "Platform Health")
+    if rows is None:
+        return rows_out, errors
+
+    normalized_header = [_normalize_table_header(h) for h in (header or [])]
+    col = {h: i for i, h in enumerate(normalized_header)}
+    allowed_columns = set(RESULT_PATTERN_REQUIRED_COLUMNS) | set(
+        RESULT_PATTERN_OPTIONAL_COLUMNS
+    )
+    if (
+        any(c not in col for c in RESULT_PATTERN_REQUIRED_COLUMNS)
+        or "Intent Event" in col
+        or "Failure Event" in col
+        or any(c not in allowed_columns for c in normalized_header)
+    ):
+        errors.append(
+            "Platform Health table must use columns: "
+            "Flow | Interaction / Started Event | Success Event | Rejected Event "
+            "(optional: Error Event)."
+        )
+        return rows_out, errors
+
+    for row in rows:
+        flow = row[col["Flow"]].strip() if col["Flow"] < len(row) else ""
+        if not flow or flow.startswith("["):
+            continue
+        rows_out.append(
+            dict(
+                flow=flow,
+                interaction_started=(
+                    row[col["Interaction / Started Event"]].strip()
+                    if col["Interaction / Started Event"] < len(row)
+                    else ""
+                ),
+                success=(
+                    row[col["Success Event"]].strip()
+                    if col["Success Event"] < len(row)
+                    else ""
+                ),
+                rejected=(
+                    row[col["Rejected Event"]].strip()
+                    if col["Rejected Event"] < len(row)
+                    else ""
+                ),
+                error=(
+                    row[col["Error Event"]].strip()
+                    if "Error Event" in col and col["Error Event"] < len(row)
+                    else "--"
+                ),
+            )
+        )
+    return rows_out, errors
 
 
 def _is_table_separator(line):
@@ -427,7 +585,8 @@ def parse_schema(path):
       std_objects    – dict[obj, {entity, example_events}]
       person_props   – dict[prop, {type, method}]
       std_event_props – dict[prop, {when}]
-      intent_outcome – list[{flow, intent, success, failure}]
+      result_pattern – list[{flow, interaction_started, success, rejected, error}]
+      result_pattern_errors – list[str]
       event_types    – set[str] of allowed event types (empty if table absent)
     """
     text = strip_frontmatter(path.read_text())
@@ -466,21 +625,9 @@ def parse_schema(path):
                 prop = r[0].strip().strip("`")
                 std_event_props[prop] = dict(when=r[3].strip())
 
-    intent_outcome = []
-    for heading, _h, rows in tables:
-        h = heading.lower()
-        if "intent" in h and ("outcome" in h or "pattern" in h):
-            for r in rows:
-                if len(r) >= 4:
-                    intent_outcome.append(
-                        dict(
-                            flow=r[0].strip(),
-                            intent=r[1].strip(),
-                            success=r[2].strip(),
-                            failure=r[3].strip(),
-                        )
-                    )
-            break
+    result_pattern, result_pattern_errors = _parse_result_pattern_table(
+        tables, "docs/event-schema.md"
+    )
 
     # Event Types enum (first column → set of allowed types).
     event_types = set()
@@ -492,14 +639,22 @@ def parse_schema(path):
                 if t:
                     event_types.add(t)
 
-    return std_objects, person_props, std_event_props, intent_outcome, event_types
+    return (
+        std_objects,
+        person_props,
+        std_event_props,
+        result_pattern,
+        result_pattern_errors,
+        event_types,
+    )
 
 
 def parse_dashboards(path):
     """
     Returns:
       funnels        – dict[name, list[{stage, event, defined_in}]]
-      platform_health – list[{flow, intent, success, failure}]
+      platform_health – list[{flow, interaction_started, success, rejected, error}]
+      platform_health_errors – list[str]
       dashboard_props – dict[dashboard, {properties, property_values}]
     """
     text = strip_frontmatter(path.read_text())
@@ -520,19 +675,7 @@ def parse_dashboards(path):
                     )
             funnels[heading] = entries
 
-    platform_health = []
-    _, ph_rows = _find_table(tables, "Platform Health")
-    if ph_rows:
-        for r in ph_rows:
-            if len(r) >= 4:
-                platform_health.append(
-                    dict(
-                        flow=r[0].strip(),
-                        intent=r[1].strip(),
-                        success=r[2].strip(),
-                        failure=r[3].strip(),
-                    )
-                )
+    platform_health, platform_health_errors = _parse_platform_health_table(tables)
 
     dashboard_props = {}
     sections = re.split(r"^(###\s+.+)$", text, flags=re.MULTILINE)
@@ -571,7 +714,7 @@ def parse_dashboards(path):
             properties=list(set(props)), property_values=prop_values
         )
 
-    return funnels, platform_health, dashboard_props
+    return funnels, platform_health, platform_health_errors, dashboard_props
 
 
 def parse_tracking_plan(path):
@@ -579,7 +722,7 @@ def parse_tracking_plan(path):
     Parse a tracking plan markdown file.
 
     Returns:
-      TrackingPlanData with events, intent/outcome rows, funnels, property
+      TrackingPlanData with events, result-pattern rows, funnels, property
       details, object declarations, and declaration parse errors. Each event in
       `.events` carries a `type` key (None when the New Events table has no
       Type column).
@@ -617,24 +760,10 @@ def parse_tracking_plan(path):
                 group_props=grp,
             )
 
-    # ── Intent vs Outcome table ──
-    tp_intent_outcome = []
-    _, io_rows = _find_table(tables, "Intent vs Outcome")
-    if io_rows:
-        for row in io_rows:
-            if len(row) < 4:
-                continue
-            flow = row[0].strip()
-            if not flow or flow.startswith("["):
-                continue
-            tp_intent_outcome.append(
-                dict(
-                    flow=flow,
-                    intent=row[1].strip(),
-                    success=row[2].strip(),
-                    failure=row[3].strip(),
-                )
-            )
+    # ── Interaction / Started / Result Pattern table ──
+    tp_result_pattern, tp_result_pattern_errors = _parse_result_pattern_table(
+        tables, f"{path}"
+    )
 
     # ── Funnels table ──
     tp_funnels = {}
@@ -669,7 +798,8 @@ def parse_tracking_plan(path):
 
     return TrackingPlanData(
         events=tp_events,
-        intent_outcome=tp_intent_outcome,
+        result_pattern=tp_result_pattern,
+        result_pattern_errors=tp_result_pattern_errors,
         funnels=tp_funnels,
         prop_dict=tp_prop_dict,
         added_objects=added_objects,
@@ -680,22 +810,24 @@ def parse_tracking_plan(path):
 
 # ── Validation Rules ─────────────────────────────────────────────────────────
 
-# Canonical outcome terminals (past tense). "Error"/"Success"/"Failure" are invalid.
-OUTCOME_TERMINALS = {"Failed", "Succeeded", "Errored"}
-# Non-canonical outcome words -> required canonical form (Rule 16 / TP11).
-OUTCOME_VARIANTS = {
-    "Fail": "Failed", "Fails": "Failed", "Failure": "Failed", "Failures": "Failed",
+# Canonical result terminals. "Failed"/"Error"/"Success"/"Failure" are invalid.
+RESULT_TERMINALS = {"Succeeded", "Rejected", "Errored"}
+# Non-canonical result words -> required canonical form (Rule 16 / TP11).
+RESULT_VARIANTS = {
+    "Fail": "Rejected", "Fails": "Rejected", "Failed": "Rejected",
+    "Failure": "Rejected", "Failures": "Rejected",
     "Succeed": "Succeeded", "Succeeds": "Succeeded", "Success": "Succeeded",
     "Error": "Errored", "Errors": "Errored",
 }
 IRREGULAR_PAST = {"Made", "Sent", "Withdrawn"}
 # Row-validation fallback ONLY — docs/event-schema.md's Event Types table is the
 # source of truth; its absence is an error (Rule 17 / TP12), not a silent fallback.
-EVENT_TYPES = {"Intent", "Success", "Failure", "Error", "Lifecycle", "Navigation", "State Change"}
+EVENT_TYPES = {"View", "Interaction", "Started", "Success", "Rejected", "Error"}
 # Type -> required name terminals (Rule 16 / TP11).
 TYPE_TERMINALS = {
+    "Started": ("Started",),
     "Success": ("Succeeded",),
-    "Failure": ("Failed", "Errored"),
+    "Rejected": ("Rejected",),
     "Error": ("Errored",),
 }
 
@@ -723,14 +855,14 @@ def _split_object_action(event_name, known_objects):
 
 def _candidate_object(event_name):
     """Suggest the likely object for an event whose prefix is unknown.
-    Outcome events ('... Publish Failed') carry a verb-noun before the
+    Result events ('... Publish Rejected') carry a verb-noun before the
     terminal — that word belongs to the ACTION, so drop two words; plain
     events drop only the trailing verb."""
     words = event_name.split()
     if not words:
         return None
-    outcome_words = OUTCOME_TERMINALS | set(OUTCOME_VARIANTS)
-    drop = 2 if words[-1] in outcome_words else 1
+    result_words = RESULT_TERMINALS | set(RESULT_VARIANTS)
+    drop = 2 if words[-1] in result_words else 1
     return " ".join(words[:-drop]) if len(words) > drop else None
 
 
@@ -742,7 +874,7 @@ def _unknown_object_error(name):
     if cand:
         msg += (
             f' (likely object: "{cand}" — add it to docs/event-schema.md, or '
-            f"rename the event; the verb-noun before Failed/Succeeded/Errored is "
+            f"rename the event; the verb-noun before Succeeded/Rejected/Errored is "
             f"part of the action)"
         )
     return msg
@@ -766,8 +898,8 @@ def _parse_exceptions(when_text):
     return {e.strip() for e in m.group(1).split(",")}
 
 
-def _object_for_intent_event(event_name, known_objects):
-    """Intent events use verb-first naming (e.g. 'Share Button Clicked').
+def _object_for_interaction_event(event_name, known_objects):
+    """Interaction events may use verb-first naming (e.g. 'Share Button Clicked').
     Try to find a known object embedded anywhere in the name."""
     for obj in sorted(known_objects, key=len, reverse=True):
         if f" {obj} " in f" {event_name} ":
@@ -821,7 +953,7 @@ def rule_01(catalog_events, schema_objects):
     for name in catalog_events:
         obj = _object_prefix(name, schema_objects)
         if not obj and name.endswith("Button Clicked"):
-            obj = _object_for_intent_event(name, schema_objects)
+            obj = _object_for_interaction_event(name, schema_objects)
         if obj:
             found.add(obj)
         elif not name.endswith("Button Clicked"):
@@ -834,36 +966,42 @@ def rule_01(catalog_events, schema_objects):
     return errors, warnings
 
 
-def rule_02(schema_io, catalog_events):
-    """Schema Intent vs Outcome events must exist in catalog.
+def _iter_result_pattern_events(flow):
+    for role in RESULT_PATTERN_EVENT_KEYS:
+        cell = flow.get(role, "")
+        if cell == "--":
+            continue
+        if "implicit" in cell.lower():
+            continue
+        # Split on commas and "or" to get individual event candidates.
+        parts = re.split(r",|\bor\b", cell)
+        for part in parts:
+            ev = part.strip()
+            # Strip trailing parenthetical qualifiers like "(new)" / "(returning)".
+            ev = re.sub(r"\s*\([^)]*\)\s*$", "", ev).strip()
+            # Strip markdown emphasis.
+            ev = ev.strip("*").strip()
+            if not ev or ev == "--":
+                continue
+            yield role, ev
+
+
+def rule_02(schema_result_pattern, schema_result_pattern_errors, catalog_events):
+    """Schema Interaction / Started / Result events must exist in catalog.
 
     Schema cells may be placeholders (`*(implicit — ...)*`) or compound values
     (`A, B` / `A (new) or B (returning)`). Split on commas and " or ", strip
     parenthetical qualifiers, and skip implicit placeholders.
     """
-    errors, warnings = [], []
-    for flow in schema_io:
-        for role in ("intent", "success", "failure"):
-            cell = flow[role]
-            if cell == "--":
-                continue
-            if "implicit" in cell.lower():
-                continue
-            # Split on commas and "or" to get individual event candidates.
-            parts = re.split(r",|\bor\b", cell)
-            for part in parts:
-                ev = part.strip()
-                # Strip trailing parenthetical qualifiers like "(new)" / "(returning)".
-                ev = re.sub(r"\s*\([^)]*\)\s*$", "", ev).strip()
-                # Strip markdown emphasis.
-                ev = ev.strip("*").strip()
-                if not ev or ev == "--":
-                    continue
-                if ev not in catalog_events:
-                    errors.append(
-                        f'Intent-Outcome table: "{ev}" ({role} for '
-                        f'"{flow["flow"]}") not found in Event Catalog'
-                    )
+    errors, warnings = list(schema_result_pattern_errors), []
+    for flow in schema_result_pattern:
+        for role, ev in _iter_result_pattern_events(flow):
+            if ev not in catalog_events:
+                errors.append(
+                    f'Result pattern table: "{ev}" '
+                    f'({RESULT_PATTERN_ROLE_LABELS[role]} for "{flow["flow"]}") '
+                    f"not found in Event Catalog"
+                )
     return errors, warnings
 
 
@@ -920,7 +1058,7 @@ def rule_04(catalog_events, schema_evt_props):
             )
         group = ev["group"].strip("`")
         if group == "job" and "job_id" not in props:
-            if ev["type"] in ("Intent", "Failure"):
+            if ev["type"] in ("Interaction", "Rejected"):
                 warnings.append(
                     f'Job-grouped {ev["type"].lower()} event "{name}" missing '
                     f"`job_id` (may be intentional for creation flow)"
@@ -997,24 +1135,41 @@ def rule_08(dashboard_props, prop_dict):
     return errors, warnings
 
 
-def rule_09(dash_ph, schema_io):
-    """Dashboard Platform Health table must match Schema Intent vs Outcome (for flows with failures)."""
-    errors, warnings = [], []
+def _result_pattern_tuple(row):
+    return (
+        row.get("interaction_started", ""),
+        row.get("success", ""),
+        row.get("rejected", ""),
+        row.get("error", "--"),
+    )
 
-    def _event_tuple(row):
-        return (row["intent"], row["success"], row["failure"])
 
-    schema_with_failure = [r for r in schema_io if r["failure"] != "--"]
-    dash_set = {_event_tuple(r) for r in dash_ph}
-    schema_set = {_event_tuple(r) for r in schema_with_failure}
+def _format_result_tuple(row_tuple):
+    cells = list(row_tuple)
+    if cells[-1] == "--":
+        cells = cells[:-1]
+    return " / ".join(cells)
+
+
+def rule_09(dash_ph, dash_ph_errors, schema_result_pattern):
+    """Dashboard Platform Health table must match Schema result rows."""
+    errors, warnings = list(dash_ph_errors), []
+
+    schema_with_result = [
+        r
+        for r in schema_result_pattern
+        if r.get("rejected") != "--" or r.get("error", "--") != "--"
+    ]
+    dash_set = {_result_pattern_tuple(r) for r in dash_ph}
+    schema_set = {_result_pattern_tuple(r) for r in schema_with_result}
     for t in dash_set - schema_set:
         errors.append(
-            f"Platform Health row ({t[0]} / {t[1]} / {t[2]}) "
-            f"not in Schema Intent-Outcome table"
+            f"Platform Health row ({_format_result_tuple(t)}) "
+            f"not in Schema Interaction / Started / Result table"
         )
     for t in schema_set - dash_set:
         errors.append(
-            f"Schema Intent-Outcome row ({t[0]} / {t[1]} / {t[2]}) "
+            f"Schema Interaction / Started / Result row ({_format_result_tuple(t)}) "
             f"not in Dashboard Platform Health table"
         )
     return errors, warnings
@@ -1138,10 +1293,10 @@ def _action_errors(event_names, known_objects):
     """
     errors = []
     for name in event_names:
-        if name.endswith("Button Clicked"):        # intent events are verb-first
+        if name.endswith("Button Clicked"):        # interaction events may be verb-first
             continue
         last_word = name.split()[-1]
-        if last_word in OUTCOME_VARIANTS:           # Rule 16 owns the better message
+        if last_word in RESULT_VARIANTS:            # Rule 16 owns the better message
             continue
         obj, action = _split_object_action(name, known_objects)
         if obj is None:                             # Rule 1 / TP7 owns this error
@@ -1153,12 +1308,12 @@ def _action_errors(event_names, known_objects):
         if not (last.endswith("ed") or last in IRREGULAR_PAST):
             errors.append(
                 f'Event "{name}": action "{action}" must end in a past-tense verb '
-                f"(Created, Failed, Succeeded, Errored)"
+                f"(Created, Started, Succeeded, Rejected, Errored)"
             )
     return errors
 
 
-def _outcome_terminal_errors(typed_events):
+def _result_terminal_errors(typed_events):
     """Shared Rule 16 / TP11 logic — type-driven terminal form.
     typed_events: iterable of (event_name, event_type). Flags non-canonical
     trailing words type-independently, then enforces the type's required
@@ -1166,10 +1321,10 @@ def _outcome_terminal_errors(typed_events):
     errors = []
     for name, etype in typed_events:
         last = name.split()[-1]
-        if last in OUTCOME_VARIANTS:                # type-independent; one message per event
+        if last in RESULT_VARIANTS:                 # type-independent; one message per event
             errors.append(
-                f'Outcome event "{name}" must end with "{OUTCOME_VARIANTS[last]}", '
-                f'not "{last}" (outcome terminals are Failed/Succeeded/Errored)'
+                f'Result event "{name}" must end with "{RESULT_VARIANTS[last]}", '
+                f'not "{last}" (result terminals are Succeeded/Rejected/Errored)'
             )
             continue
         allowed = TYPE_TERMINALS.get(etype)
@@ -1213,8 +1368,8 @@ def rule_15(catalog_events, schema_objects):
 
 
 def rule_16(catalog_events):
-    """Outcome terminal form: type-driven canonical terminals (past tense)."""
-    return _outcome_terminal_errors(
+    """Result terminal form: type-driven canonical terminals."""
+    return _result_terminal_errors(
         (n, ev["type"]) for n, ev in catalog_events.items()
     ), []
 
@@ -1329,19 +1484,17 @@ def tp_rule_05(tp_events, schema_evt_props):
     return errors, warnings
 
 
-def tp_rule_06(tp_intent_outcome, tp_events, catalog_events):
-    """All events in Intent vs Outcome table must exist in catalog or tracking plan."""
-    errors, warnings = [], []
+def tp_rule_06(tp_result_pattern, tp_result_pattern_errors, tp_events, catalog_events):
+    """All result-pattern events must exist in catalog or tracking plan."""
+    errors, warnings = list(tp_result_pattern_errors), []
     all_known = set(catalog_events.keys()) | set(tp_events.keys())
-    for flow in tp_intent_outcome:
-        for role in ("intent", "success", "failure"):
-            ev = flow[role]
-            if ev == "--" or not ev:
-                continue
+    for flow in tp_result_pattern:
+        for role, ev in _iter_result_pattern_events(flow):
             if ev not in all_known:
                 errors.append(
-                    f'Intent vs Outcome: "{ev}" ({role} for '
-                    f'"{flow["flow"]}") not found in catalog or tracking plan'
+                    f'Result pattern: "{ev}" '
+                    f'({RESULT_PATTERN_ROLE_LABELS[role]} for "{flow["flow"]}") '
+                    f"not found in catalog or tracking plan"
                 )
     return errors, warnings
 
@@ -1413,10 +1566,10 @@ def tp_rule_10(tp_events, schema_objects):
 
 
 def tp_rule_11(tp_events):
-    """Outcome terminal form: type-driven canonical terminals (past tense).
+    """Result terminal form: type-driven canonical terminals.
     With no Type column, type is None — the variant-terminal name check still
     runs, but no type-driven terminal is enforced."""
-    return _outcome_terminal_errors(
+    return _result_terminal_errors(
         (n, ev.get("type")) for n, ev in tp_events.items()
     ), []
 
@@ -1606,7 +1759,7 @@ def _resolve_tracking_plan_path(arg):
 def _catalog_object_for_event(event_name, schema_objects):
     obj = _object_prefix(event_name, schema_objects)
     if not obj and event_name.endswith("Button Clicked"):
-        obj = _object_for_intent_event(event_name, schema_objects)
+        obj = _object_for_interaction_event(event_name, schema_objects)
     return obj
 
 
@@ -1636,7 +1789,7 @@ def check_removal_safety(tp_path):
             return 2
 
     catalog_events, _, _ = parse_catalog(CATALOG_PATH)
-    schema_objects, _, _, _, _ = parse_schema(SCHEMA_PATH)
+    schema_objects, _, _, _, _, _ = parse_schema(SCHEMA_PATH)
     tp_data = parse_tracking_plan(tp_path)
     declaration_errors, declaration_warnings = validate_object_declarations(
         tp_data.added_objects,
@@ -1667,10 +1820,15 @@ def validate_catalog():
             sys.exit(2)
 
     catalog_events, prop_dict, dup_events = parse_catalog(CATALOG_PATH)
-    schema_objects, schema_person, schema_evt_props, schema_io, schema_event_types = (
-        parse_schema(SCHEMA_PATH)
-    )
-    funnels, dash_ph, dash_props = parse_dashboards(DASHBOARD_PATH)
+    (
+        schema_objects,
+        schema_person,
+        schema_evt_props,
+        schema_result_pattern,
+        schema_result_pattern_errors,
+        schema_event_types,
+    ) = parse_schema(SCHEMA_PATH)
+    funnels, dash_ph, dash_ph_errors, dash_props = parse_dashboards(DASHBOARD_PATH)
 
     if not catalog_events:
         print("ERROR: No events parsed from catalog", file=sys.stderr)
@@ -1680,14 +1838,14 @@ def validate_catalog():
 
     rules = [
         (1, rule_01, (catalog_events, schema_objects)),
-        (2, rule_02, (schema_io, catalog_events)),
+        (2, rule_02, (schema_result_pattern, schema_result_pattern_errors, catalog_events)),
         (3, rule_03, (schema_person, catalog_events)),
         (4, rule_04, (catalog_events, schema_evt_props)),
         (5, rule_05, (funnels, catalog_events)),
         (6, rule_06, (funnels, catalog_events)),
         (7, rule_07, (dash_props, prop_dict)),
         (8, rule_08, (dash_props, prop_dict)),
-        (9, rule_09, (dash_ph, schema_io)),
+        (9, rule_09, (dash_ph, dash_ph_errors, schema_result_pattern)),
         (10, rule_10, (catalog_events, prop_dict)),
         (11, rule_11, (catalog_events, prop_dict)),
         (12, rule_12, (catalog_events, prop_dict)),
@@ -1713,7 +1871,7 @@ def validate_tracking_plan(tp_path):
             sys.exit(2)
 
     catalog_events, prop_dict, _ = parse_catalog(CATALOG_PATH)
-    schema_objects, _, schema_evt_props, _, schema_event_types = parse_schema(SCHEMA_PATH)
+    schema_objects, _, schema_evt_props, _, _, schema_event_types = parse_schema(SCHEMA_PATH)
     tp_data = parse_tracking_plan(tp_path)
 
     if not tp_data.events:
@@ -1736,7 +1894,16 @@ def validate_tracking_plan(tp_path):
         ("TP3", tp_rule_03, (tp_data.events, catalog_events)),
         ("TP4", tp_rule_04, (tp_data.events, prop_dict, tp_data.prop_dict)),
         ("TP5", tp_rule_05, (tp_data.events, schema_evt_props)),
-        ("TP6", tp_rule_06, (tp_data.intent_outcome, tp_data.events, catalog_events)),
+        (
+            "TP6",
+            tp_rule_06,
+            (
+                tp_data.result_pattern,
+                tp_data.result_pattern_errors,
+                tp_data.events,
+                catalog_events,
+            ),
+        ),
         (
             "TP7",
             tp_rule_07,

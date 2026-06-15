@@ -36,6 +36,8 @@ Use the template at `templates/tracking-plan.md`.
 - **Proper Case** for event names
 - **snake_case** for all properties
 - **Past-tense verbs** only: Created, Viewed, Shared, Submitted
+- **Type taxonomy**: View / Interaction / Started / Success / Rejected / Error
+- **Result terminals**: Success events should end `Succeeded`, Rejected events should end `Rejected`, and Error events should end `Errored`
 - Check the Standard Objects table in `docs/event-schema.md` before creating new objects
 - Check the Property Dictionary in `docs/event-catalog.md` for existing property names, types, and allowed values
 - Reuse existing events and properties before creating new ones -- add properties rather than duplicating
@@ -49,7 +51,9 @@ source-of-truth docs (schema, catalog, dashboards).
 - [ ] Every event follows Object-Action with Proper Case
 - [ ] All properties are snake_case
 - [ ] No duplicate events (checked existing catalog)
-- [ ] Intent and outcome separated for critical flows
+- [ ] Interaction/start and result separated for critical flows
+- [ ] Type values use only View / Interaction / Started / Success / Rejected / Error
+- [ ] Result events use canonical terminals: Succeeded / Rejected / Errored
 - [ ] Job-related events include `job` group
 - [ ] Property Updates column filled for events that mutate person (`$set` / `$set_once`) or group (`group(job)`) properties
 - [ ] `acting_as` included on all hiring surface events
@@ -84,4 +88,4 @@ After saving the tracking plan:
 - **Don't over-instrument**: Track what drives decisions. Each event should answer a question you'd actually ask.
 - **Viral attribution is sacred**: Any event in the sharing -> signup chain must carry `referrer_user_id`. Missing attribution breaks K-factor measurement.
 - **Role is always per-event**: Never set `acting_as` as a person property. Same user = different roles on different jobs.
-- **Intent vs outcome**: For critical flows (share, express interest, publish), always track both the button click (intent) and the server-confirmed result (outcome/failure).
+- **Interaction/Started vs Result**: For critical flows (share, express interest, publish), track the button click or flow start separately from the server-confirmed result or rejection.
