@@ -222,7 +222,7 @@ Mirror of B4b. Carries `portfolio_id`, `is_published = false`.
 
 **Images 5, 6, 7.** The dashboard lists portfolios. The overflow menu has **Rename Portfolio** and **Delete**. Each portfolio has a unique `portfolio_id`.
 
-## C1. `Rename Portfolio Button Clicked` (intent)
+## C1. `Portfolio Rename Button Clicked` (intent)
 
 Opens the rename modal (Image 7).
 
@@ -235,23 +235,9 @@ Opens the rename modal (Image 7).
 | `component` | string | `portfolio_card_overflow_menu` | |
 | `entity_type` | string | `candidate_profile` | |
 
-## C2. `Rename Portfolio Save Button Clicked` (intent)
+## C2. `Portfolio Rename Succeeded` (success, backend)
 
-Fires when the user clicks **Save** in the modal — carries whether the name actually changed, so the no-op-save rate is visible.
-
-| Property | Type | Values | Description |
-|---|---|---|---|
-| `action` | enum | `click` | |
-| `action_value` | string | `save_button` | |
-| `portfolio_id` | string (UUID) | | |
-| `name_changed` | boolean | `true` / `false` | Did the new name differ from the old one? |
-| `current_page_context` | string | `candidate_dashboard` | |
-| `component` | string | `rename_portfolio_modal` | |
-| `entity_type` | string | `candidate_profile` | |
-
-## C3. `Portfolio Renamed` (success, backend)
-
-**Only fires when the name actually changed** (`name_changed = true`). If the user clicks Save without editing, C2 fires with `name_changed = false` and C3 does **not** fire.
+**Only fires when the name actually changed.** If the user clicks Save without editing, this event does **not** fire.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -259,7 +245,7 @@ Fires when the user clicks **Save** in the modal — carries whether the name ac
 | `new_name_length` | number | e.g. `42` | Character count of the new name (length only — not the name itself) |
 | `previous_name_length` | number | e.g. `60` | Character count of the previous name |
 
-## C4. `Delete Portfolio Button Clicked` (user_action)
+## C3. `Portfolio Delete Button Clicked` (intent)
 
 The delete menu item **deletes immediately with no confirmation dialog** (per your note). We still capture the click as intent so it can be paired with the backend outcome.
 
@@ -272,7 +258,7 @@ The delete menu item **deletes immediately with no confirmation dialog** (per yo
 | `component` | string | `portfolio_card_overflow_menu` | |
 | `entity_type` | string | `candidate_profile` | |
 
-## C5. `Portfolio Deleted` (success, backend)
+## C4. `Portfolio Delete Succeeded` (success, backend)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -625,7 +611,7 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 |---|---|---|
 | Profile Overview | Job seeker profile editor overview tab | Candidate Profile Overview Load Succeeded |
 | Profile Tab | Editor tab navigation | Candidate Profile Tab Switched |
-| Portfolio | A job seeker's portfolio (dashboard card) | Rename Portfolio Button Clicked, Portfolio Renamed, Portfolio Deleted |
+| Portfolio | A job seeker's portfolio (dashboard card) | Portfolio Rename Button Clicked, Portfolio Rename Succeeded, Portfolio Delete Succeeded |
 | Interview | Anonymous AI screening interview session | Get Started Button Clicked, Interview Started, Interview Submitted |
 | Identity Check | Third-party (Persona) identity verification | Open Identity Check Button Clicked, Identity Verified, Identity Verification Failed |
 | Screening Response | Candidate's answers to recruiter Yes/No screening questions | Screening Responses Submitted |
@@ -642,8 +628,8 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 |---|---|---|---|
 | Publish portfolio | Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | Candidate Portfolio Publish Failed |
 | Unpublish portfolio | Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | — |
-| Rename portfolio | Rename Portfolio Save Button Clicked | Portfolio Renamed (only if `name_changed`) | — |
-| Delete portfolio | Delete Portfolio Button Clicked | Portfolio Deleted | — |
+| Rename portfolio | Portfolio Rename Button Clicked | Portfolio Rename Succeeded | — |
+| Delete portfolio | Portfolio Delete Button Clicked | Portfolio Delete Succeeded | — |
 | Identity verification | Open Identity Check Button Clicked | Identity Verified | Identity Verification Failed |
 | Device access | Allow Access Button Clicked | Device Access Granted | Device Access Denied |
 | Start interview | Start Interview Button Clicked | Interview Started | — |
@@ -695,10 +681,9 @@ Add to the Standard Objects table in `docs/event-schema.md`:
 | `has_handle` | boolean | `true` / `false` | Handle claimed — Build Profile Snapshot, Candidate Profile Created |
 | `handle_length` | number or null | | Handle character count — Build Profile Snapshot, Candidate Handle Add Succeeded, Candidate Handle Add Failed |
 | `tab_name` | enum | `overview`, `resume`, `github`, `portfolio` | Editor tab — Candidate Profile Tab Switched |
-| `name_changed` | boolean | `true` / `false` | Whether a rename actually changed the name — Rename Portfolio Save Button Clicked |
-| `new_name_length` | number | | New portfolio name length — Portfolio Renamed |
-| `previous_name_length` | number | | Previous portfolio name length — Portfolio Renamed |
-| `was_published` | boolean | `true` / `false` | Whether a deleted portfolio was published — Portfolio Deleted |
+| `new_name_length` | number | | New portfolio name length — Portfolio Rename Succeeded |
+| `previous_name_length` | number | | Previous portfolio name length — Portfolio Rename Succeeded |
+| `was_published` | boolean | `true` / `false` | Whether a deleted portfolio was published — Portfolio Delete Succeeded |
 | `start_source` | enum | `interview_link`, `email_invite`, `job_board`, `direct` (+ existing `create_job_button`) | How a candidate reached the interview — Page Viewed (interview_landing) |
 | `has_first_name` | boolean | `true` / `false` | Optional name field filled — Interview Information Submitted |
 | `has_last_name` | boolean | `true` / `false` | Optional name field filled — Interview Information Submitted |
@@ -752,11 +737,10 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 - [ ] Candidate Portfolio Unpublish Succeeded
 
 **Part C — Prospect:**
-- [ ] Rename Portfolio Button Clicked
-- [ ] Rename Portfolio Save Button Clicked
-- [ ] Portfolio Renamed
-- [ ] Delete Portfolio Button Clicked
-- [ ] Portfolio Deleted
+- [ ] Portfolio Rename Button Clicked
+- [ ] Portfolio Rename Succeeded
+- [ ] Portfolio Delete Button Clicked
+- [ ] Portfolio Delete Succeeded
 
 **Part D — Interview (new Interview / Identity Check / Screening Response / Interview Question / Device Check areas):**
 - [ ] Page Viewed (new contexts + `start_source`) — existing event, no catalog row change beyond property note
