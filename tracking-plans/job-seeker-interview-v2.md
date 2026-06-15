@@ -87,7 +87,7 @@ Fires when the handle the user entered is **unavailable** (taken by another user
 |---|---|
 | **Event** | `Candidate Handle Add Rejected` |
 | **Area** | Prospect |
-| **Type** | Failure |
+| **Type** | Rejected |
 | **Trigger** | Handle input blur (if value changed) or "Build my AI profile" click (if handle is dirty and not yet blur-fired), AND the most recent availability check returned unavailable |
 | **Source** | Frontend |
 | **Group** | — |
@@ -137,7 +137,7 @@ A content-aware load event for the overview tab — separate from the generic `P
 |---|---|
 | **Event** | `Candidate Profile Tab Switched` |
 | **Area** | Prospect |
-| **Type** | user_action |
+| **Type** | Interaction |
 | **Trigger** | User clicks Overview / Resume / Github / Portfolio tab |
 | **Source** | Frontend |
 | **Group** | — |
@@ -326,7 +326,7 @@ Fires on "Next". Email is mandatory; first/last names optional. **Do not** put n
 
 Resume upload reuses the existing v1 events (`Resume Upload Button Clicked`, `Resume Uploaded`, `Resume Upload Failed`, `Resume Removed`) with `interview_id` + `job_id` added and `current_page_context = interview_upload_resume`. The "Learn how" LinkedIn-export link reuses the existing **`LinkedIn Export Learn How Link Clicked`**. New events below.
 
-### D3a. `What To Expect Link Clicked` (user_action)
+### D3a. `What To Expect Link Clicked` (interaction)
 
 The "What to expect" expander (Image 13). Captures intent / nervousness signal.
 
@@ -372,7 +372,7 @@ Fires on "Next". Captures whether the candidate proceeded with or without a resu
 | `component` | string | `secure_identity_check_card` | |
 | `entity_type` | string | `identity_check` | |
 
-### D4c. `Refresh Status Button Clicked` (user_action)
+### D4c. `Refresh Status Button Clicked` (interaction)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -411,7 +411,7 @@ These are the recruiter's Yes/No screening questions (distinct from the AI voice
 
 ### D5a. `Page Viewed` — `current_page_context = interview_screening_questions`
 
-### D5b. `Candidate Interview Screening Responses Submitted` (user_action)
+### D5b. `Candidate Interview Screening Responses Submitted` (interaction)
 
 Fires on "Next" with aggregate answer composition — avoids per-keystroke noise while still answering "how often is context provided, and how often is the mandatory No-explanation filled?"
 
@@ -509,15 +509,15 @@ Fires once per question when it reaches a terminal state — whether answered, a
 
 ### D7b. Restart question (intent → outcome)
 
-- **`Interview Question Restart Button Clicked`** (intent) — clicking "Restart" opens the confirm modal (Image 20). `action_value = restart`.
-- **`Interview Question Restart Succeeded`** (success) — fires after the candidate clicks "Restart" again to confirm; the question starts over. Properties: `interview_id`, `job_id`, `question_number`.
-- **`Interview Question Restart Errored`** (failure) — restart could not be re-initialized. Properties: `interview_id`, `job_id`, `question_number`, `error_reason`, `error_category`.
+- **`Candidate Interview Question Restart Button Clicked`** (intent) — clicking "Restart" opens the confirm modal (Image 20). `action_value = restart`.
+- **`Candidate Interview Question Restart Succeeded`** (success) — fires after the candidate clicks "Restart" again to confirm; the question starts over. Properties: `interview_id`, `job_id`, `question_number`.
+- **`Candidate Interview Question Restart Errored`** (error) — restart could not be re-initialized. Properties: `interview_id`, `job_id`, `question_number`, `error_reason`, `error_category`.
 
 ### D7c. Skip question (intent → outcome)
 
-- **`Interview Question Skip Button Clicked`** (intent) — clicking "Skip" opens the skip modal (Image 21). `action_value = skip`.
-- **`Interview Question Skip Succeeded`** (success) — fires after the candidate clicks "Skip this question" to confirm. Properties: `interview_id`, `job_id`, `question_number`.
-- **`Interview Question Skip Rejected`** (user_action) — the candidate clicks "Go back and answer" instead. `action_value = go_back_and_answer`. Properties: `interview_id`, `job_id`, `question_number`.
+- **`Candidate Interview Question Skip Button Clicked`** (intent) — clicking "Skip" opens the skip modal (Image 21). `action_value = skip`.
+- **`Candidate Interview Question Skip Succeeded`** (success) — fires after the candidate clicks "Skip this question" to confirm. Properties: `interview_id`, `job_id`, `question_number`.
+- **`Candidate Interview Question Skip Rejected`** (rejected) — the candidate clicks "Go back and answer" instead. `action_value = go_back_and_answer`. Properties: `interview_id`, `job_id`, `question_number`.
 
 All carry `current_page_context = interview_recording`, `component = interview_recording_footer` (or `skip_question_modal` / `restart_question_modal` for the confirm/cancel actions), `entity_type = interview_question`.
 
@@ -525,11 +525,11 @@ All carry `current_page_context = interview_recording`, `component = interview_r
 
 ### D8a. `Page Viewed` — `current_page_context = interview_review`
 
-### D8b. `Interview Screening Response Edit Button Clicked` (user_action)
+### D8b. `Candidate Interview Screening Response Edit Button Clicked` (interaction)
 
 The "Edit" link next to a screening answer (Image 24). `action_value = edit`, `entity_type = screening_response`, plus `interview_id`, `job_id`.
 
-### D8c. `Interview Review Answer Question Button Clicked` (user_action)
+### D8c. `Candidate Interview Review Answer Question Button Clicked` (interaction)
 
 For a skipped/missing question on the review page, the "Answer question" button (Image 26). `action_value = answer_question`, `entity_type = interview_question`, plus `interview_id`, `job_id`, `question_number`. Completing the answer fires `Candidate Interview Question Resolve Succeeded` (D7a) with `question_status = answered`.
 
@@ -603,12 +603,12 @@ The "Sign up to find out…" card is the existing signup flow. **Reuse `Account 
 | Candidate Interview | Anonymous AI screening interview session | Candidate Interview Started |
 | Interview Start Button | Start interview CTA | Interview Start Button Clicked |
 | Interview Resume Step Next Button | Resume step progression CTA | Interview Resume Step Next Button Clicked |
-| Interview Question Restart | Question restart lifecycle | Interview Question Restart Succeeded, Interview Question Restart Errored |
-| Interview Question Restart Button | Question restart CTA | Interview Question Restart Button Clicked |
-| Interview Question Skip | Question skip lifecycle | Interview Question Skip Succeeded, Interview Question Skip Rejected |
-| Interview Question Skip Button | Question skip CTA | Interview Question Skip Button Clicked |
-| Interview Screening Response Edit Button | Screening answer edit link | Interview Screening Response Edit Button Clicked |
-| Interview Review Answer Question Button | Answer skipped question on review | Interview Review Answer Question Button Clicked |
+| Candidate Interview Question Restart | Question restart lifecycle | Candidate Interview Question Restart Succeeded, Candidate Interview Question Restart Errored |
+| Candidate Interview Question Restart Button | Question restart CTA | Candidate Interview Question Restart Button Clicked |
+| Candidate Interview Question Skip | Question skip lifecycle | Candidate Interview Question Skip Succeeded, Candidate Interview Question Skip Rejected |
+| Candidate Interview Question Skip Button | Question skip CTA | Candidate Interview Question Skip Button Clicked |
+| Candidate Interview Screening Response Edit Button | Screening answer edit link | Candidate Interview Screening Response Edit Button Clicked |
+| Candidate Interview Review Answer Question Button | Answer skipped question on review | Candidate Interview Review Answer Question Button Clicked |
 | Identity Verification | Third-party identity verification | Identity Verification Succeeded, Identity Verification Errored |
 | Open Identity Check Button | Open identity check CTA | Open Identity Check Button Clicked |
 | Refresh Status Button | Refresh identity check status CTA | Refresh Status Button Clicked |
@@ -655,14 +655,14 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 | Interview Start Button Clicked | Prospect | Interaction | User clicks Start Interview | `action`, `action_value`, `interview_id`, `job_id`, `current_page_context`, `component`, `entity_type` | job | -- |
 | Candidate Interview Started | Prospect | Started | Backend initializes interview session | `interview_id`, `job_id`, `questions_count`, `input_mode`, `has_resume`, `identity_verified` | job | -- |
 | Candidate Interview Question Resolve Succeeded | Prospect | Success | Question reaches terminal state (answered/restarted/skipped) | `interview_id`, `job_id`, `question_number`, `questions_count`, `question_status`, `input_mode`, `response_duration_seconds`, `current_page_context`, `component`, `entity_type` | job | -- |
-| Interview Question Restart Button Clicked | Prospect | Interaction | User clicks Restart on a question | `action`, `action_value`, `interview_id`, `job_id`, `question_number`, `current_page_context`, `component`, `entity_type` | job | -- |
-| Interview Question Restart Succeeded | Prospect | Success | Question restart confirmed | `interview_id`, `job_id`, `question_number` | job | -- |
-| Interview Question Restart Errored | Prospect | Error | Question restart could not initialize | `interview_id`, `job_id`, `question_number`, `error_reason`, `error_category` | job | -- |
-| Interview Question Skip Button Clicked | Prospect | Interaction | User clicks Skip on a question | `action`, `action_value`, `interview_id`, `job_id`, `question_number`, `current_page_context`, `component`, `entity_type` | job | -- |
-| Interview Question Skip Succeeded | Prospect | Success | Skip confirmed | `interview_id`, `job_id`, `question_number` | job | -- |
-| Interview Question Skip Rejected | Prospect | Rejected | User clicks Go back and answer | `action`, `action_value`, `interview_id`, `job_id`, `question_number` | job | -- |
-| Interview Screening Response Edit Button Clicked | Prospect | Interaction | User clicks Edit on a screening answer | `action`, `action_value`, `interview_id`, `job_id`, `entity_type` | job | -- |
-| Interview Review Answer Question Button Clicked | Prospect | Interaction | User clicks Answer Question on review page | `action`, `action_value`, `interview_id`, `job_id`, `question_number`, `entity_type` | job | -- |
+| Candidate Interview Question Restart Button Clicked | Prospect | Interaction | User clicks Restart on a question | `action`, `action_value`, `interview_id`, `job_id`, `question_number`, `current_page_context`, `component`, `entity_type` | job | -- |
+| Candidate Interview Question Restart Succeeded | Prospect | Success | Question restart confirmed | `interview_id`, `job_id`, `question_number` | job | -- |
+| Candidate Interview Question Restart Errored | Prospect | Error | Question restart could not initialize | `interview_id`, `job_id`, `question_number`, `error_reason`, `error_category` | job | -- |
+| Candidate Interview Question Skip Button Clicked | Prospect | Interaction | User clicks Skip on a question | `action`, `action_value`, `interview_id`, `job_id`, `question_number`, `current_page_context`, `component`, `entity_type` | job | -- |
+| Candidate Interview Question Skip Succeeded | Prospect | Success | Skip confirmed | `interview_id`, `job_id`, `question_number` | job | -- |
+| Candidate Interview Question Skip Rejected | Prospect | Rejected | User clicks Go back and answer | `action`, `action_value`, `interview_id`, `job_id`, `question_number` | job | -- |
+| Candidate Interview Screening Response Edit Button Clicked | Prospect | Interaction | User clicks Edit on a screening answer | `action`, `action_value`, `interview_id`, `job_id`, `entity_type` | job | -- |
+| Candidate Interview Review Answer Question Button Clicked | Prospect | Interaction | User clicks Answer Question on review page | `action`, `action_value`, `interview_id`, `job_id`, `question_number`, `entity_type` | job | -- |
 | Candidate Interview Submit Button Clicked | Prospect | Interaction | User clicks Submit Interview | `action`, `action_value`, `interview_id`, `job_id`, `current_page_context`, `component`, `entity_type` | job | -- |
 | Candidate Interview Submit Succeeded | Prospect | Success | Backend confirms interview submitted | `interview_id`, `job_id`, `answered_count`, `skipped_count`, `retaken_count`, `questions_count`, `screening_questions_count`, `has_resume`, `identity_verified`, `input_mode`, `total_duration_seconds` | job | -- |
 | Candidate Interview Submit Rejected | Prospect | Rejected | Backend rejects interview submission | `interview_id`, `job_id`, `error_reason`, `error_category` | job | -- |
@@ -680,8 +680,8 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 | Identity verification | Open Identity Check Button Clicked | Identity Verification Succeeded | -- | Identity Verification Errored |
 | Device access | Allow Access Button Clicked | Device Access Grant Succeeded | Device Access Rejected | -- |
 | Start interview | Interview Start Button Clicked | Candidate Interview Started | -- | -- |
-| Restart question | Interview Question Restart Button Clicked | Interview Question Restart Succeeded | -- | Interview Question Restart Errored |
-| Skip question | Interview Question Skip Button Clicked | Interview Question Skip Succeeded | Interview Question Skip Rejected | -- |
+| Restart question | Candidate Interview Question Restart Button Clicked | Candidate Interview Question Restart Succeeded | -- | Candidate Interview Question Restart Errored |
+| Skip question | Candidate Interview Question Skip Button Clicked | Candidate Interview Question Skip Succeeded | Candidate Interview Question Skip Rejected | -- |
 | Submit interview | Candidate Interview Submit Button Clicked | Candidate Interview Submit Succeeded | Candidate Interview Submit Rejected | -- |
 
 ---
@@ -810,14 +810,14 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 - [ ] Interview Start Button Clicked
 - [ ] Candidate Interview Started
 - [ ] Candidate Interview Question Resolve Succeeded
-- [ ] Interview Question Restart Button Clicked
-- [ ] Interview Question Restart Succeeded
-- [ ] Interview Question Restart Errored
-- [ ] Interview Question Skip Button Clicked
-- [ ] Interview Question Skip Succeeded
-- [ ] Interview Question Skip Rejected
-- [ ] Interview Screening Response Edit Button Clicked
-- [ ] Interview Review Answer Question Button Clicked
+- [ ] Candidate Interview Question Restart Button Clicked
+- [ ] Candidate Interview Question Restart Succeeded
+- [ ] Candidate Interview Question Restart Errored
+- [ ] Candidate Interview Question Skip Button Clicked
+- [ ] Candidate Interview Question Skip Succeeded
+- [ ] Candidate Interview Question Skip Rejected
+- [ ] Candidate Interview Screening Response Edit Button Clicked
+- [ ] Candidate Interview Review Answer Question Button Clicked
 - [ ] Candidate Interview Submit Button Clicked
 - [ ] Candidate Interview Submit Succeeded
 - [ ] Candidate Interview Submit Rejected
@@ -831,5 +831,5 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 
 1. **Handle event A3** — implement the optional `Candidate Handle Add Succeeded` / `Candidate Handle Add Rejected` now, or defer? (Default: defer.)
 2. **Per-question screening detail (D5)** — aggregate-only on submit (current default) vs. per-response `Screening Question Answered`.
-3. **Rejected vs Failed naming** — some failure events use "Rejected" (user/system denied) vs "Failed" (technical error). Validate against naming rules after pulling latest from main.
+3. ~~**Rejected vs Failed naming**~~ — **Resolved.** Applied canonical terminals: `Succeeded` (happy path), `Rejected` (user/system declined), `Errored` (technical fault). `Failed` is no longer used.
 4. **Anonymous → user stitching** — confirm engineering can `alias()` the interview ID to the email at D2b and again to the user ID at signup (D8h). Without it, the interview→signup funnel breaks.
