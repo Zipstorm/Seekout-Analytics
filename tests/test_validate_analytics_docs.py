@@ -22,13 +22,15 @@ def write_tmp_md(body):
     return Path(tmp.name)
 
 
-def run_removal_safety(path):
+def run_removal_safety(path, product="helix"):
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     return subprocess.run(
         [
             sys.executable,
             str(SCRIPT_PATH),
+            "--product",
+            product,
             "--check-removal-safety",
             str(path),
         ],
@@ -38,6 +40,13 @@ def run_removal_safety(path):
         env=env,
         check=False,
     )
+
+
+def stdout_without_banner(result):
+    lines = result.stdout.splitlines()
+    if lines and lines[0].startswith("Validating product: "):
+        return "\n".join(lines[1:]) + ("\n" if len(lines) > 1 else "")
+    return result.stdout
 
 
 class TrackingPlanObjectValidationTests(unittest.TestCase):
@@ -305,7 +314,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "")
+        self.assertEqual(stdout_without_banner(result), "")
 
     def test_blocking_path_outputs_blocking_events(self):
         path = write_tmp_md(
@@ -320,7 +329,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("Auth blocks: Auth Login Succeeded", result.stdout)
+        self.assertIn("Auth blocks: Auth Login Succeeded", stdout_without_banner(result))
         self.assertEqual(result.stderr, "")
 
     def test_no_removed_section_is_noop(self):
@@ -328,7 +337,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "")
+        self.assertEqual(stdout_without_banner(result), "")
 
     def test_missing_file_reports_stderr_only(self):
         fd, tmp_path = tempfile.mkstemp(suffix=".md")
@@ -337,7 +346,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         missing.unlink()
         result = run_removal_safety(missing)
         self.assertEqual(result.returncode, 2)
-        self.assertEqual(result.stdout, "")
+        self.assertEqual(stdout_without_banner(result), "")
         self.assertIn("Tracking plan not found", result.stderr)
 
     def test_parse_error_reports_stderr_only(self):
@@ -353,7 +362,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
         self.assertEqual(result.returncode, 2)
-        self.assertEqual(result.stdout, "")
+        self.assertEqual(stdout_without_banner(result), "")
         self.assertIn("New Standard Objects", result.stderr)
         self.assertIn("must use columns", result.stderr)
 
@@ -371,8 +380,189 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("Auth blocks:", result.stdout)
-        self.assertNotIn("Object With No References blocks:", result.stdout)
+        stdout = stdout_without_banner(result)
+        self.assertIn("Auth blocks:", stdout)
+        self.assertNotIn("Object With No References blocks:", stdout)
+
+
+class ProductCatalogParserTests(unittest.TestCase):
+    def test_event_catalog_slice_excludes_property_dictionary_and_removed_events(self):
+        path = write_tmp_md(
+            """# Test
+
+## Event Catalog
+
+### Account Events
+
+| Event | Area | Type | Trigger | Source | Properties | Group | Property Updates | Status |
+|---|---|---|---|---|---|---|---|---|
+| Account Created | Account | Success | Created | Frontend | `account_id` | -- | -- | Live |
+
+## Property Dictionary
+
+### Enum Properties
+
+| Property | Type | Description | Values | Used In |
+|---|---|---|---|---|
+| Fake Removed Event | Area | Type | Trigger | Source |
+
+## Removed Events
+
+| Event | Area | Type | Trigger | Source | Properties | Group | Property Updates | Status |
+|---|---|---|---|---|---|---|---|---|
+| Removed Event | Account | Success | Old | Frontend | -- | -- | -- | Removed |
+"""
+        )
+        self.addCleanup(path.unlink)
+        events, prop_dict, _ = validator.parse_catalog(path)
+        self.assertEqual(set(events), {"Account Created"})
+        self.assertIn("Fake", prop_dict)
+
+    def test_shared_event_types_override_product_fallback(self):
+        product = write_tmp_md(
+            """# Product
+
+## Event Types
+| Type | Meaning |
+|---|---|
+| `ProductOnly` | Product fallback |
+"""
+        )
+        shared = write_tmp_md(
+            """# Shared
+
+## Event Types
+| Type | Meaning |
+|---|---|
+| `SharedOnly` | Shared source |
+"""
+        )
+        self.addCleanup(product.unlink)
+        self.addCleanup(shared.unlink)
+
+        *_, product_types = validator.parse_schema(product)
+        *_, shared_types = validator.parse_schema(product, shared)
+
+        self.assertEqual(product_types, {"ProductOnly"})
+        self.assertEqual(shared_types, {"SharedOnly"})
+
+
+class ProductConfigTests(unittest.TestCase):
+    def test_parse_supported_frontmatter_config(self):
+        path = write_tmp_md(
+            """---
+confluence:
+  page_id: "123"
+analytics_platform: posthog
+allow_empty_catalog: true
+group_property_rules:
+  - group: job
+    property: job_id
+    catalog_warning_types: [Interaction, Rejected]
+    tracking_plan_severity: warning
+area_property_rules:
+  - area_contains: viral
+    property: referrer_user_id
+persona_rules:
+  - section_contains: hiring
+    property: acting_as
+    applies_if_in_schema: true
+---
+
+# Schema
+"""
+        )
+        self.addCleanup(path.unlink)
+        config = validator.parse_product_config(path)
+        self.assertEqual(config.analytics_platform, "posthog")
+        self.assertTrue(config.allow_empty_catalog)
+        self.assertEqual(config.group_property_rules[0]["group"], "job")
+        self.assertEqual(
+            config.group_property_rules[0]["catalog_warning_types"],
+            ["Interaction", "Rejected"],
+        )
+        self.assertTrue(config.persona_rules[0]["applies_if_in_schema"])
+
+    def test_config_rejects_bad_boolean_and_unknown_rule_field(self):
+        bad_bool = write_tmp_md(
+            """---
+allow_empty_catalog: yes
+---
+"""
+        )
+        bad_field = write_tmp_md(
+            """---
+group_property_rules:
+  - group: job
+    property: job_id
+    surprise: nope
+---
+"""
+        )
+        self.addCleanup(bad_bool.unlink)
+        self.addCleanup(bad_field.unlink)
+
+        with self.assertRaisesRegex(ValueError, "allow_empty_catalog"):
+            validator.parse_product_config(bad_bool)
+        with self.assertRaisesRegex(ValueError, "Unsupported field"):
+            validator.parse_product_config(bad_field)
+
+    def test_no_config_product_specific_rules_emit_no_findings(self):
+        event = {
+            "Job Created": {
+                "section": "Hiring Events",
+                "properties": [],
+                "group": "job",
+                "type": "Success",
+                "area": "Viral Loop",
+            }
+        }
+        errors, warnings = validator.rule_04(event, {"acting_as": {"when": ""}}, validator.ProductConfig())
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+        tp_errors, tp_warnings = validator.tp_rule_05(event, {}, validator.ProductConfig())
+        self.assertEqual(tp_errors, [])
+        self.assertEqual(tp_warnings, [])
+
+
+class ProductCliTests(unittest.TestCase):
+    def run_script(self, *args):
+        env = os.environ.copy()
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        return subprocess.run(
+            [sys.executable, str(SCRIPT_PATH), *args],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            env=env,
+            check=False,
+        )
+
+    def test_product_is_required(self):
+        result = self.run_script()
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--product", result.stderr)
+
+    def test_bogus_product_lists_discovered_products(self):
+        result = self.run_script("--product", "bogus")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Discovered products", result.stderr)
+        self.assertIn("helix", result.stderr)
+
+    def test_product_paths_resolves_helix_namespaced_paths(self):
+        paths = validator.product_paths("helix")
+        self.assertEqual(paths.catalog_path, REPO_ROOT / "docs" / "helix" / "event-catalog.md")
+        self.assertEqual(paths.schema_path, REPO_ROOT / "docs" / "helix" / "event-schema.md")
+        self.assertEqual(paths.dashboard_path, REPO_ROOT / "docs" / "helix" / "dashboards.md")
+        self.assertEqual(paths.shared_event_types_path, REPO_ROOT / "docs" / "shared" / "naming-and-event-types.md")
+        self.assertEqual(paths.tracking_plans_dir, REPO_ROOT / "tracking-plans" / "helix")
+        self.assertEqual(paths.log_path, REPO_ROOT / "logs" / "helix" / "conflicts-log.md")
+
+    def test_recruit_empty_scaffold_validates(self):
+        result = self.run_script("--product", "recruit")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("All clear", result.stdout)
 
 
 if __name__ == "__main__":

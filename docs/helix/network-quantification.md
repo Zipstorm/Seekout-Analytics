@@ -4,13 +4,13 @@
 **Phase:** Phase 1
 **Last Updated:** March 4, 2026
 
-**Related:** [Network Model](../context/network-model.md) (graph structure) | [Entity-Relationship Model](../context/entity-relationship-model.md) (database schema) | [Viral Loop Metrics](./viral-loop-metrics.md) (per-loop funnels and growth tracking)
+**Related:** [Network Model](../../context/helix/network-model.md) (graph structure) | [Entity-Relationship Model](../../context/helix/entity-relationship-model.md) (database schema) | [Viral Loop Metrics](./viral-loop-metrics.md) (per-loop funnels and growth tracking)
 
 ---
 
 ## Purpose
 
-This document defines how to quantify the Helix network. It answers: given the graph defined in the [network model](../context/network-model.md), how do we measure whether it's big enough and healthy enough?
+This document defines how to quantify the Helix network. It answers: given the graph defined in the [network model](../../context/helix/network-model.md), how do we measure whether it's big enough and healthy enough?
 
 Two dimensions, each with its own formula:
 
@@ -82,7 +82,7 @@ Fraction of users participating on BOTH the hiring side and the prospect side. T
 
 ## 3. Network Growth
 
-Network growth is driven by completing viral loops — closed paths through the graph that add new nodes and edges on each completion. The [Network Model](../context/network-model.md) defines these loops as graph paths; the [Viral Loop Metrics](./viral-loop-metrics.md) doc defines the per-loop funnels, metrics, and K-factors.
+Network growth is driven by completing viral loops — closed paths through the graph that add new nodes and edges on each completion. The [Network Model](../../context/helix/network-model.md) defines these loops as graph paths; the [Viral Loop Metrics](./viral-loop-metrics.md) doc defines the per-loop funnels, metrics, and K-factors.
 
 ### Loop Impact on Top-Level Metrics
 
@@ -115,4 +115,4 @@ The [Viral Loop Metrics](./viral-loop-metrics.md) doc tracks per-loop throughput
 
 ---
 
-*This document provides the quantification framework for the network defined in the [Network Model](../context/network-model.md). The formulas use data from the [Entity-Relationship Model](../context/entity-relationship-model.md). Per-loop growth metrics and funnels are defined in [Viral Loop Metrics](./viral-loop-metrics.md).*
+*This document provides the quantification framework for the network defined in the [Network Model](../../context/helix/network-model.md). The formulas use data from the [Entity-Relationship Model](../../context/helix/entity-relationship-model.md). Per-loop growth metrics and funnels are defined in [Viral Loop Metrics](./viral-loop-metrics.md).*
