@@ -1,79 +1,76 @@
 # SeekOut Analytics
 
-Analytics instrumentation, event taxonomy, metric frameworks, and dashboards for Helix (SeekOut.ai).
+Analytics instrumentation, event taxonomy, tracking plans, metric frameworks, and dashboard specs for SeekOut products.
 
 ## Repository Structure
 
-- `docs/` — Source-of-truth analytics documents (event catalog, schema, dashboards, metrics)
-- `context/` — Product context dependencies (entity model, network model, product overview)
-- `tracking-plans/` — Per-feature tracking plans (working documents). `INDEX.md` tracks PRD links and status. `archived/` holds completed plans.
-- `plans/` — Design docs for PRs with follow-up status tracking. Update statuses as follow-ups are completed.
-- `scripts/` — Validation tooling
-- `templates/` — Reusable templates
-- `logs/` — Validator run history
+- `docs/shared/` - shared naming conventions and Event Types enum.
+- `docs/<product>/` - product source-of-truth analytics docs: `event-catalog.md`, `event-schema.md`, `dashboards.md`.
+- `context/<product>/` - product context dependencies.
+- `tracking-plans/<product>/` - active product tracking plans. `archived/` holds completed plans.
+- `plans/` - local design docs for PRs with follow-up status tracking.
+- `templates/` - reusable templates.
+- `scripts/` - validation tooling.
+- `logs/<product>/` - validator run history.
 
 ## Source of Truth
 
-The 3 canonical analytics documents live in `docs/`:
+For any product, read both shared and product docs:
 
-1. **`event-catalog.md`** — Master event taxonomy, property dictionary, implementation status. This is THE source of truth for all Helix analytics events.
-2. **`event-schema.md`** — Naming conventions, standard objects, PostHog config, sample code.
-3. **`dashboards.md`** — Dashboard specs, funnel definitions, platform health flows.
+1. `docs/shared/naming-and-event-types.md` - naming conventions and Event Types enum.
+2. `docs/<product>/event-schema.md` - Standard Objects, product properties, PostHog setup, validator config.
+3. `docs/<product>/event-catalog.md` - product events and Property Dictionary.
+4. `docs/<product>/dashboards.md` - product funnels and dashboard specs.
 
-Supporting metric framework docs (also in `docs/`):
-- `viral-loop-metrics.md` — 4 viral loops with K-factor decomposition
-- `network-quantification.md` — Network health metrics (Helix Size, Liquidity, Activation, Bridging)
-- `tiered-metric-diagrams.md` — 3-tier metric hierarchy with Mermaid diagrams
+`docs/<product>/event-catalog.md` is the source of truth for that product's events.
 
 ## Context-First Rule
 
-Before generating any analytics document, read:
-1. `context/product-overview.md` — Product vision, personas, surfaces
-2. `docs/event-schema.md` — Naming conventions and standard objects
-3. `docs/event-catalog.md` — Existing events and property dictionary
+Before generating any analytics document for a product, read:
+
+1. `context/<product>/` context docs or README.
+2. `docs/shared/naming-and-event-types.md`.
+3. `docs/<product>/event-schema.md`.
+4. `docs/<product>/event-catalog.md`.
 
 ## Tracking Plan Workflow
 
-1. User provides feature context (PRD excerpt, spec, or description)
-2. Generate tracking plan using `templates/tracking-plan.md`
-3. Save to `tracking-plans/[feature-name].md`
-4. Add entry to `tracking-plans/INDEX.md` with PRD link and status **Draft**
-5. Validate with `/validate-analytics`
-6. Update status in `INDEX.md` as the plan progresses (Draft → Review → Approved → Merged)
-7. When user triggers `/merge-tracking-plan`, merge approved events into `docs/event-catalog.md` and update `docs/event-schema.md` / `docs/dashboards.md` as needed
-8. After merge, move the tracking plan file to `tracking-plans/archived/` and mark status as **Merged** in `INDEX.md`
+1. User provides feature context (PRD excerpt, spec, or description).
+2. Generate tracking plan using `templates/tracking-plan.md`.
+3. Save to `tracking-plans/<product>/<feature-name>.md`.
+4. Add entry to `tracking-plans/<product>/INDEX.md` with PRD link and status **Draft**.
+5. Validate with `/validate-analytics --product PRODUCT [tracking-plan]`.
+6. Update status in `INDEX.md` as the plan progresses: Draft -> Review -> Approved -> Merged.
+7. When user triggers `/merge-tracking-plan --product PRODUCT`, merge approved events into `docs/<product>/event-catalog.md` and update `docs/<product>/event-schema.md` / `docs/<product>/dashboards.md` as needed.
+8. After merge, move the tracking plan file to `tracking-plans/<product>/archived/` and mark status as **Merged** in `INDEX.md`.
 
 **Important:** Never auto-merge events into the catalog. Only merge when the user explicitly runs `/merge-tracking-plan`.
 
-## Naming Conventions
+## Validation
 
-- **Events:** Object-Action framework, Proper Case (e.g., `Job Created`, `Interest Expressed`)
-- **Properties:** snake_case (e.g., `signup_context`, `referrer_user_id`)
-- **Verbs:** Past tense only (Created, Viewed, Shared, Submitted). Result events use strict terminals: Succeeded, Rejected, or Errored.
-- **Standard Objects:** Check `docs/event-schema.md` before creating new objects
-- **Property Dictionary:** Check `docs/event-catalog.md` before creating new properties
+The validator requires `--product` for catalog mode, tracking-plan mode, and removal-safety mode. There is no default product.
 
-## Commands
+```bash
+python3 scripts/validate-analytics-docs.py --product helix
+python3 scripts/validate-analytics-docs.py --product helix helix-code-changes-login-onboarding
+python3 scripts/validate-analytics-docs.py --product helix --check-removal-safety tracking-plans/helix/example.md
+```
 
-- `/posthog-analytics` — Generate tracking plans and maintain the event catalog
-- `/validate-analytics` — Run the 17-rule cross-document consistency validator
-- `/merge-tracking-plan` — Manually merge an approved tracking plan's events into `docs/event-catalog.md` (and update schema/dashboards as needed), then archive the plan
+Catalog mode runs 17 rules. Tracking-plan mode runs 13 TP rules. Logs are written to `logs/<product>/conflicts-log.md`.
 
-## Product Context
+## Naming Rules
 
-The `context/` folder contains product structure docs that analytics events are built on. These are copies from the PM OS repo — update them when the originals change (rare, ~1-2x per quarter):
-
-- `entity-relationship-model.md` — Database entities that map to Standard Objects
-- `network-model.md` — Graph structure and viral loop definitions
-- `prospect-structure.md` — Portfolio and link data structures (Loop 4)
-- `product-overview.md` — Personas, surfaces, product vision
+- **Events:** Object-Action framework, Proper Case, past-tense action.
+- **Properties:** snake_case.
+- **Result terminals:** `Succeeded`, `Rejected`, or `Errored`.
+- **Event Types:** `View`, `Interaction`, `Started`, `Success`, `Rejected`, `Error`.
+- **Standard Objects:** Check `docs/<product>/event-schema.md` before creating new objects.
+- **Property Dictionary:** Check `docs/<product>/event-catalog.md` before creating new properties.
 
 ## Key Rules
 
-- `docs/event-catalog.md` is the single source of truth for all events
-- Tracking plans are archived to `tracking-plans/archived/` after merging — never deleted
-- Never place tracking plans in `docs/`
-- Reuse existing events and properties before creating new ones
-- Interaction/Started vs Result: for critical flows, track the UI interaction or process start separately from the processed result
-- Viral attribution: any sharing chain event must carry `referrer_user_id`
-- `acting_as` required on all hiring surface events (role is per-event, never a person property)
+- Reuse existing events and properties before creating new ones.
+- Interaction/Started vs Result: for critical flows, track the UI interaction or process start separately from the processed result.
+- Product-specific property requirements come from `docs/<product>/event-schema.md` frontmatter.
+- Tracking plans are archived to `tracking-plans/<product>/archived/` after merging, never deleted.
+- Never place tracking plans in `docs/`.

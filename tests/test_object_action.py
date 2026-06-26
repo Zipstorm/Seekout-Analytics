@@ -29,6 +29,8 @@ OBJECTS = {
     "Account",
 }
 
+ALLOWED_EVENT_TYPES = {"View", "Interaction", "Started", "Success", "Rejected", "Error"}
+
 
 class ObjectPrefixTests(unittest.TestCase):
     def test_exact_equality(self):
@@ -169,12 +171,6 @@ class ResultTerminalTests(unittest.TestCase):
 
 
 class EventTypeTests(unittest.TestCase):
-    def test_event_type_set(self):
-        self.assertEqual(
-            mod.EVENT_TYPES,
-            {"View", "Interaction", "Started", "Success", "Rejected", "Error"},
-        )
-
     def test_invalid_types_flagged(self):
         typed = [
             ("A B", "--"),
@@ -187,21 +183,21 @@ class EventTypeTests(unittest.TestCase):
             ("O P", "Navigation"),
             ("Q R", "State Change"),
         ]
-        self.assertEqual(len(mod._event_type_errors(typed, mod.EVENT_TYPES)), 9)
+        self.assertEqual(len(mod._event_type_errors(typed, ALLOWED_EVENT_TYPES)), 9)
 
     def test_all_enum_members_pass(self):
-        typed = [(f"Obj{i} Acted", t) for i, t in enumerate(sorted(mod.EVENT_TYPES))]
-        self.assertEqual(mod._event_type_errors(typed, mod.EVENT_TYPES), [])
+        typed = [(f"Obj{i} Acted", t) for i, t in enumerate(sorted(ALLOWED_EVENT_TYPES))]
+        self.assertEqual(mod._event_type_errors(typed, ALLOWED_EVENT_TYPES), [])
 
     def test_none_type_skipped(self):
-        self.assertEqual(mod._event_type_errors([("A B", None)], mod.EVENT_TYPES), [])
+        self.assertEqual(mod._event_type_errors([("A B", None)], ALLOWED_EVENT_TYPES), [])
 
-    def test_rule_17_missing_table_and_row_violations(self):
+    def test_rule_17_missing_table_does_not_use_duplicate_fallback(self):
         catalog = {"Job Created": {"type": "--"}}
         errs, warns = mod.rule_17(catalog, set())
         self.assertEqual(warns, [])
-        self.assertTrue(any("Event Types table not found" in e for e in errs))
-        self.assertTrue(any("Job Created" in e and "Type" in e for e in errs))
+        self.assertEqual(len(errs), 1)
+        self.assertIn("Event Types table not found", errs[0])
 
 
 class ResultPatternParserTests(unittest.TestCase):
@@ -311,12 +307,12 @@ class ParseTrackingPlanTests(unittest.TestCase):
 
     def test_old_format_tp12_missing_column(self):
         events = self._parse(self.OLD_FORMAT).events
-        errs, _ = mod.tp_rule_12(events, mod.EVENT_TYPES)
+        errs, _ = mod.tp_rule_12(events, ALLOWED_EVENT_TYPES)
         self.assertTrue(any('no "Type" column' in e for e in errs))
 
     def test_new_format_tp12_passes(self):
         events = self._parse(self.NEW_FORMAT).events
-        errs, _ = mod.tp_rule_12(events, mod.EVENT_TYPES)
+        errs, _ = mod.tp_rule_12(events, ALLOWED_EVENT_TYPES)
         self.assertEqual(errs, [])
 
 
