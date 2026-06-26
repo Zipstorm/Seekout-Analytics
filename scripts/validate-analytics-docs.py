@@ -1039,9 +1039,6 @@ RESULT_VARIANTS = {
     "Error": "Errored", "Errors": "Errored",
 }
 IRREGULAR_PAST = {"Made", "Sent", "Withdrawn"}
-# Row-validation fallback ONLY. Shared/product Event Types tables are the source
-# of truth; their absence is an error (Rule 17 / TP12), not a silent fallback.
-EVENT_TYPES = {"View", "Interaction", "Started", "Success", "Rejected", "Error"}
 # Type -> required name terminals (Rule 16 / TP11).
 TYPE_TERMINALS = {
     "Started": ("Started",),
@@ -1260,8 +1257,25 @@ def _csv_set(value):
     return {v.strip() for v in str(value).split(",") if v.strip()}
 
 
+def _area_rule_message(area_contains, name, prop, include_loop=False):
+    label = area_contains.capitalize()
+    subject = f"{label} loop event" if include_loop else f"{label} event"
+    return f'{subject} "{name}" missing standard property `{prop}`'
+
+
+def _append_by_severity(rule, errors, warnings, message):
+    if rule.get("severity") == "warning":
+        warnings.append(message)
+    else:
+        errors.append(message)
+
+
 def rule_04(catalog_events, schema_evt_props, config=None):
-    """Standard event properties from product config and schema."""
+    """Standard event properties from product config and schema.
+
+    Area rules intentionally run in catalog mode as well as tracking-plan mode
+    so product-wide required properties stay consistent after merge.
+    """
     errors, warnings = [], []
     config = config or ProductConfig()
     schema_exceptions = {
@@ -1312,9 +1326,11 @@ def rule_04(catalog_events, schema_evt_props, config=None):
             prop = rule.get("property", "")
             area_contains = str(rule.get("area_contains", "")).lower()
             if area_contains and area_contains in ev["area"].lower() and prop not in props:
-                errors.append(
-                    f'{area_contains.capitalize()} event "{name}" missing '
-                    f"standard property `{prop}`"
+                _append_by_severity(
+                    rule,
+                    errors,
+                    warnings,
+                    _area_rule_message(area_contains, name, prop),
                 )
     return errors, warnings
 
@@ -1626,10 +1642,10 @@ def rule_16(catalog_events):
 def rule_17(catalog_events, schema_event_types):
     """Event type validity: every catalog row's Type is a member of the enum."""
     errors = _missing_enum_error(schema_event_types)
-    allowed = schema_event_types or EVENT_TYPES
-    errors += _event_type_errors(
-        ((n, ev["type"]) for n, ev in catalog_events.items()), allowed
-    )
+    if schema_event_types:
+        errors += _event_type_errors(
+            ((n, ev["type"]) for n, ev in catalog_events.items()), schema_event_types
+        )
     return errors, []
 
 
@@ -1738,9 +1754,11 @@ def tp_rule_05(tp_events, schema_evt_props, config=None):
             prop = rule.get("property", "")
             area_contains = str(rule.get("area_contains", "")).lower()
             if area_contains and area_contains in area and prop not in props:
-                errors.append(
-                    f'{area_contains.capitalize()} loop event "{name}" missing '
-                    f"standard property `{prop}`"
+                _append_by_severity(
+                    rule,
+                    errors,
+                    warnings,
+                    _area_rule_message(area_contains, name, prop, include_loop=True),
                 )
 
     return errors, warnings
@@ -1845,10 +1863,11 @@ def tp_rule_12(tp_events, schema_event_types):
             "(see templates/tracking-plan.md)"
         )
     else:
-        allowed = schema_event_types or EVENT_TYPES
-        errors += _event_type_errors(
-            ((n, ev.get("type") or "--") for n, ev in tp_events.items()), allowed
-        )
+        if schema_event_types:
+            errors += _event_type_errors(
+                ((n, ev.get("type") or "--") for n, ev in tp_events.items()),
+                schema_event_types,
+            )
     return errors, []
 
 

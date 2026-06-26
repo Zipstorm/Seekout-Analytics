@@ -525,6 +525,36 @@ group_property_rules:
         self.assertEqual(tp_errors, [])
         self.assertEqual(tp_warnings, [])
 
+    def test_area_property_rule_severity_warning_is_honored(self):
+        config = validator.ProductConfig(
+            area_property_rules=[
+                {
+                    "area_contains": "viral",
+                    "property": "referrer_user_id",
+                    "severity": "warning",
+                }
+            ]
+        )
+        event = {
+            "Custom Link Shared": {
+                "section": "Prospect Events",
+                "properties": [],
+                "group": "--",
+                "type": "Success",
+                "area": "Viral Loop",
+            }
+        }
+
+        errors, warnings = validator.rule_04(event, {}, config)
+        self.assertEqual(errors, [])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("referrer_user_id", warnings[0])
+
+        tp_errors, tp_warnings = validator.tp_rule_05(event, {}, config)
+        self.assertEqual(tp_errors, [])
+        self.assertEqual(len(tp_warnings), 1)
+        self.assertIn("referrer_user_id", tp_warnings[0])
+
 
 class ProductCliTests(unittest.TestCase):
     def run_script(self, *args):
