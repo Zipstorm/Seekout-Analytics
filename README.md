@@ -92,7 +92,7 @@ PRD / Feature Spec
 
 | Command | Description |
 |---------|-------------|
-| `/posthog-analytics --product PRODUCT ...` | Generate tracking plans and maintain a product event catalog |
+| `/create-tracking-plan --product PRODUCT ...` | Generate tracking plans and maintain a product event catalog |
 | `/validate-analytics --product PRODUCT [tracking-plan]` | Run the product-aware validator |
 | `/merge-tracking-plan --product PRODUCT [feature-or-plan]` | Merge an approved tracking plan into the product catalog, then archive it |
 
