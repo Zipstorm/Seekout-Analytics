@@ -1,11 +1,11 @@
 # Tracking Plan: [Feature Name]
 
-**Product:** Helix (SeekOut.ai)  
+**Product:** <product>
 **Feature:** [Feature area]  
 **Date:** [Date]  
 **Related PRD:** [Link to PRD]
 
-> Reference: `docs/event-catalog.md` for naming conventions and existing event catalog.
+> References: `docs/shared/naming-and-event-types.md`, `docs/<product>/event-schema.md`, and `docs/<product>/event-catalog.md`.
 
 ---
 
@@ -25,13 +25,13 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 
 | Event | Area | Type | Trigger | Key Properties | Group | Property Updates |
 |---|---|---|---|---|---|---|
-| [Object Action] | Account / Prospect / Hiring / Viral Loop | View / Interaction / Started / Success / Rejected / Error | [When this fires] | `property_1`, `property_2` | `job` / -- | `$set_once: prop`, `group(job): prop` / -- |
+| [Object Action] | [Product area] | View / Interaction / Started / Success / Rejected / Error | [When this fires] | `property_1`, `property_2` | [group type] / -- | `$set_once: prop`, `group(<group>): prop` / -- |
 
 <!--
 ## New Standard Objects
 
 Use this section when new events introduce an object that is not yet in
-docs/event-schema.md. Rows use the same shape as the schema table so
+docs/<product>/event-schema.md. Rows use the same shape as the schema table so
 /merge-tracking-plan can append them directly.
 
 | Object | Entity | Example Events |
@@ -82,7 +82,7 @@ Detailed property definitions for new events.
 
 ## Catalog Updates
 
-New events from this plan to add to `docs/event-catalog.md`:
+New events from this plan to add to `docs/<product>/event-catalog.md`:
 
-- [ ] [Event Name] → [Catalog section: Account / Prospect / Hiring / Viral Loop]
+- [ ] [Event Name] → [Catalog section: product-specific section]
 - [ ] New object added to Standard Objects table: [Yes / No]

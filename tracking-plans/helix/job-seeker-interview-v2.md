@@ -99,6 +99,55 @@ Fires when the handle the user entered is **unavailable** (taken by another user
 
 > **Recommendation:** Implement A1 + A2 now (they cost nothing — properties on events that already fire). Treat A3a/A3b as a fast-follow only if handle adoption becomes a KPI.
 
+## A4. `Candidate Previous Resume Select Button Clicked`
+
+User clicks "Select" on a previously uploaded resume in the "Or use a previous resume" list on the Build your profile page (`/candidate/portfolio/new`). Distinct from the new-upload flow — this reuses an already-uploaded file.
+
+| Field | Value |
+|---|---|
+| **Event** | `Candidate Previous Resume Select Button Clicked` |
+| **Area** | Prospect |
+| **Type** | Interaction |
+| **Trigger** | User clicks "Select" on a previously uploaded resume in the "Or use a previous resume" list |
+| **Source** | Frontend |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | |
+| `action_value` | string | `select` | Exact button label |
+| `component` | string | `create_profile_resume_section` | Resume section on Build your profile page |
+| `current_page_context` | string | `candidate_create_portfolio` | |
+| `entity_type` | string | `candidate_profile` | |
+| `helix_session_id` | string (UUID) | | Session identifier |
+| `previous_page_context` | string | | Previous page |
+| `resume_id` | string (UUID) | | ID of the selected resume |
+| `resume_file_type` | string | `docx`, `pdf`, `doc`, `txt` | File type of the selected resume |
+
+## A5. `Candidate Custom Link Delete Button Clicked`
+
+User clicks the trash icon on an added link in the "Add links" section on the Build your profile page (`/candidate/portfolio/new`).
+
+| Field | Value |
+|---|---|
+| **Event** | `Candidate Custom Link Delete Button Clicked` |
+| **Area** | Prospect |
+| **Type** | Interaction |
+| **Trigger** | User clicks the trash icon on an added link in the "Add links" section |
+| **Source** | Frontend |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | |
+| `action_value` | string | `delete` | Trash icon action |
+| `component` | string | `create_profile_add_links_section` | "Add links" section on Build your profile page |
+| `current_page_context` | string | `candidate_create_portfolio` | |
+| `entity_type` | string | `candidate_profile` | |
+| `helix_session_id` | string (UUID) | | Session identifier |
+| `previous_page_context` | string | | Previous page |
+| `link_type` | string | `github`, `linkedin`, `portfolio`, `personal`, etc. | Type/platform of the link being deleted |
+
 ---
 
 # Part B — Profile editor / overview (`/candidate/editor/:portfolioId`)
@@ -220,9 +269,22 @@ Mirror of B4b. Carries `portfolio_id`, `is_published = false`.
 
 # Part C — Dashboard: portfolio management (`/candidate/dashboard`)
 
-**Images 5, 6, 7.** The dashboard lists portfolios. The overflow menu has **Rename Portfolio** and **Delete**. Each portfolio has a unique `portfolio_id`.
+**Images 5, 6, 7.** The dashboard lists portfolios, has a header **+ Create** button, and each portfolio card has an overflow menu with **Rename Portfolio** and **Delete**. Each portfolio has a unique `portfolio_id`.
 
-## C1. `Candidate Portfolio Rename Button Clicked` (intent)
+## C1. `Candidate Portfolio Create Button Clicked` (interaction)
+
+User clicks the **+ Create** button in the dashboard header to start creating another candidate portfolio.
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | |
+| `action_value` | string | `create_button` | Exact UI action clicked |
+| `current_page_context` | string | `candidate_dashboard` | |
+| `previous_page_context` | string or null | snake_case or null | Previous page context, if available |
+| `component` | string | `candidate_dashboard_header` | |
+| `entity_type` | string | `candidate_profile` | |
+
+## C2. `Candidate Portfolio Rename Button Clicked` (intent)
 
 Opens the rename modal (Image 7).
 
@@ -235,7 +297,7 @@ Opens the rename modal (Image 7).
 | `component` | string | `portfolio_card_overflow_menu` | |
 | `entity_type` | string | `candidate_profile` | |
 
-## C2. `Candidate Portfolio Rename Succeeded` (success, backend)
+## C3. `Candidate Portfolio Rename Succeeded` (success, backend)
 
 **Only fires when the name actually changed.** If the user clicks Save without editing, this event does **not** fire.
 
@@ -245,7 +307,7 @@ Opens the rename modal (Image 7).
 | `new_name_length` | number | e.g. `42` | Character count of the new name (length only — not the name itself) |
 | `previous_name_length` | number | e.g. `60` | Character count of the previous name |
 
-## C3. `Candidate Portfolio Delete Button Clicked` (intent)
+## C4. `Candidate Portfolio Delete Button Clicked` (intent)
 
 The delete menu item **deletes immediately with no confirmation dialog** (per your note). We still capture the click as intent so it can be paired with the backend outcome.
 
@@ -258,7 +320,7 @@ The delete menu item **deletes immediately with no confirmation dialog** (per yo
 | `component` | string | `portfolio_card_overflow_menu` | |
 | `entity_type` | string | `candidate_profile` | |
 
-## C4. `Candidate Portfolio Delete Succeeded` (success, backend)
+## C5. `Candidate Portfolio Delete Succeeded` (success, backend)
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -266,7 +328,7 @@ The delete menu item **deletes immediately with no confirmation dialog** (per yo
 | `was_published` | boolean | `true` / `false` | Whether the deleted portfolio was published |
 
 > **Gap flagged:** Delete has no confirmation step today, so there is no way to measure accidental deletes or a cancel rate. If a confirmation modal is added later, add a `Delete Portfolio Confirmed` / `Delete Portfolio Cancelled` pair.
-> **Not instrumented (out of scope):** the dashboard's `Create`, `See Analytics`, `Share`, and "Start a session with Max" buttons. Flag for a later plan if needed.
+> **Not instrumented (out of scope):** the dashboard's `See Analytics`, `Share`, and "Start a session with Max" buttons. Flag for a later plan if needed.
 
 ---
 
@@ -282,7 +344,7 @@ All Part D events carry `interview_id`, `job_id`, and the `job` group.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `current_page_context` | string | `interview_landing` | Page |
+| `current_page_context` | string | `candidate_interview_landing` | Page |
 | `previous_page_context` | string | null (external entry typical) | |
 | `start_source` | enum | `interview_link`, `email_invite`, `job_board`, `direct` | How the candidate arrived at the interview (from `?source=` param or referrer) |
 | `interview_id` | string (UUID) | | |
@@ -296,7 +358,7 @@ All Part D events carry `interview_id`, `job_id`, and the `job` group.
 | `action_value` | string | `get_started_button` | |
 | `interview_id` | string (UUID) | | |
 | `job_id` | string (UUID) | | |
-| `current_page_context` | string | `interview_landing` | |
+| `current_page_context` | string | `candidate_interview_landing` | |
 | `component` | string | `interview_landing_ready_card` | |
 | `entity_type` | string | `interview` | |
 
@@ -404,6 +466,34 @@ The backend confirmation that the third-party (Persona) identity check succeeded
 | `verification_vendor` | string | `persona` | |
 | `error_reason` | string | | Truncated to 256 chars |
 | `error_category` | enum | `vendor`, `timeout`, `mismatch`, `server` | Why verification failed |
+
+### D4f. `Candidate Interview Privacy Email Link Clicked` (interaction)
+
+User clicks the "privacy@seekout.ai" link in the identity check card.
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | |
+| `action_value` | string | `privacy@seekout.ai` | Exact link text |
+| `interview_id` | string (UUID) | | |
+| `job_id` | string (UUID) | | |
+| `current_page_context` | string | `interview_verify_identity` | |
+| `component` | string | `secure_identity_check_card` | |
+| `entity_type` | string | `identity_check` | |
+
+### D4g. `Candidate Interview Persona Privacy Policy Link Clicked` (interaction)
+
+User clicks the "Persona's privacy policy" link in the "What to expect" section.
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | |
+| `action_value` | string | `personas_privacy_policy` | Exact link text |
+| `interview_id` | string (UUID) | | |
+| `job_id` | string (UUID) | | |
+| `current_page_context` | string | `interview_verify_identity` | |
+| `component` | string | `secure_identity_check_what_to_expect` | "What to expect" section within identity check card |
+| `entity_type` | string | `identity_check` | |
 
 ## D5. Screening questions (Images 16, 17)
 
@@ -590,6 +680,7 @@ The "Sign up to find out…" card is the existing signup flow. **Reuse `Account 
 | Candidate Portfolio Publish Button | Portfolio publish CTA | Candidate Portfolio Publish Button Clicked |
 | Candidate Portfolio Unpublish | Portfolio unpublish lifecycle | Candidate Portfolio Unpublish Succeeded |
 | Candidate Portfolio Unpublish Button | Portfolio unpublish CTA | Candidate Portfolio Unpublish Button Clicked |
+| Candidate Portfolio Create Button | Portfolio creation CTA on candidate dashboard | Candidate Portfolio Create Button Clicked |
 | Candidate Portfolio Rename | Portfolio rename lifecycle | Candidate Portfolio Rename Succeeded |
 | Candidate Portfolio Rename Button | Portfolio rename CTA | Candidate Portfolio Rename Button Clicked |
 | Candidate Portfolio Delete | Portfolio delete lifecycle | Candidate Portfolio Delete Succeeded |
@@ -636,6 +727,7 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 | Candidate Portfolio Publish Errored | Prospect | Error | Backend publish error | `portfolio_id`, `error_reason`, `error_category` | -- | -- |
 | Candidate Portfolio Unpublish Button Clicked | Prospect | Interaction | User clicks Unpublish in editor header | `action`, `action_value`, `portfolio_id`, `current_page_context`, `component`, `entity_type` | -- | -- |
 | Candidate Portfolio Unpublish Succeeded | Prospect | Success | Backend confirms unpublish | `portfolio_id`, `is_published` | -- | -- |
+| Candidate Portfolio Create Button Clicked | Prospect | Interaction | User clicks + Create on the candidate dashboard | `action`, `action_value`, `current_page_context`, `previous_page_context`, `component`, `entity_type` | -- | -- |
 | Candidate Portfolio Rename Button Clicked | Prospect | Interaction | User clicks Rename in overflow menu | `action`, `action_value`, `portfolio_id`, `current_page_context`, `component`, `entity_type` | -- | -- |
 | Candidate Portfolio Rename Succeeded | Prospect | Success | Backend confirms rename (name changed) | `portfolio_id`, `new_name_length`, `previous_name_length` | -- | -- |
 | Candidate Portfolio Delete Button Clicked | Prospect | Interaction | User clicks Delete in overflow menu | `action`, `action_value`, `portfolio_id`, `current_page_context`, `component`, `entity_type` | -- | -- |
@@ -675,6 +767,7 @@ Events introduced by this feature. All follow Object-Action, Proper Case.
 |---|---|---|---|---|
 | Publish portfolio | Candidate Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | -- | Candidate Portfolio Publish Errored |
 | Unpublish portfolio | Candidate Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | -- | -- |
+| Create portfolio from dashboard | Candidate Portfolio Create Button Clicked | -- | -- | -- |
 | Rename portfolio | Candidate Portfolio Rename Button Clicked | Candidate Portfolio Rename Succeeded | -- | -- |
 | Delete portfolio | Candidate Portfolio Delete Button Clicked | Candidate Portfolio Delete Succeeded | -- | -- |
 | Identity verification | Open Identity Check Button Clicked | Identity Verification Succeeded | -- | Identity Verification Errored |
@@ -788,6 +881,7 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 - [ ] Candidate Portfolio Unpublish Succeeded
 
 **Part C — Prospect:**
+- [ ] Candidate Portfolio Create Button Clicked
 - [ ] Candidate Portfolio Rename Button Clicked
 - [ ] Candidate Portfolio Rename Succeeded
 - [ ] Candidate Portfolio Delete Button Clicked
@@ -822,7 +916,7 @@ New events from this plan to add to `docs/event-catalog.md` (do **not** merge au
 - [ ] Candidate Interview Submit Succeeded
 - [ ] Candidate Interview Submit Rejected
 
-- [ ] New objects added to Standard Objects table: **Yes** (8 — see New Standard Objects)
+- [ ] New objects added to Standard Objects table: **Yes** (see New Standard Objects)
 - [ ] Reuse confirmed: `Resume Upload Button Clicked`, `Resume Uploaded`, `Resume Upload Failed`, `Resume Removed`, `LinkedIn Export Learn How Link Clicked`, `Account Created` (with `entry_point=interview`)
 
 ---

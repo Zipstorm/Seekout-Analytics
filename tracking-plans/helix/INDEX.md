@@ -16,5 +16,5 @@
 - **Draft** — Tracking plan in progress
 - **Review** — Awaiting stakeholder review
 - **Approved** — Ready to implement
-- **Merged** — Events merged into `docs/event-catalog.md`; tracking plan moved to `archived/`
+- **Merged** — Events merged into `docs/helix/event-catalog.md`; tracking plan moved to `archived/`
 - **Reverted** — Was merged but subsequently reverted; superseded by a newer version
