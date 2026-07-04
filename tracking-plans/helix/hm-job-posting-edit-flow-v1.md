@@ -7,8 +7,8 @@
 **Helix PR:** [Zipstorm/helix#619](https://github.com/Zipstorm/helix/pull/619)
 **Scope:** 34 new events + 7 existing event modifications. Covers: dashboard state + tab switching (2), archive failure (1), Post Interview button + link copy (2), job post navigation (1), posted job page header actions (4), recruiter invite lifecycle (4), intro video flow (10), edit interview (3), delete job (3), share modal additions (3), interview link (1), backend republish (1). Also modifies all wizard events to support edit mode via `wizard_mode` + `job_post_status` properties.
 
-> Reference: `docs/event-catalog.md` for naming conventions and existing event catalog.
-> Reference: `tracking-plans/archived/hm-job-creation-wizard-v3.md` for the v3 wizard tracking plan.
+> Reference: `docs/helix/event-catalog.md` for naming conventions and existing event catalog.
+> Reference: `tracking-plans/helix/archived/hm-job-creation-wizard-v3.md` for the v3 wizard tracking plan.
 
 ---
 
@@ -74,11 +74,11 @@ HM Login (current role: Hiring Manager)
        │    └─ User clicks channel → fires: Job Share Channel Clicked (existing, Live)
        │
        ├─ User clicks a job card (dashboard list)
-       │    → fires: Job Post Clicked (entry_point: dashboard_job_card)  ← NEW
+       │    → fires: Job Post Clicked (click_source: dashboard_job_card)  ← NEW
        │    → navigates to posted job page
        │
        └─ User clicks a job name (Recent sidebar)
-            → fires: Job Post Clicked (entry_point: recent_sidebar)  ← NEW
+            → fires: Job Post Clicked (click_source: recent_sidebar)  ← NEW
             → navigates to posted job page
 
 
@@ -94,7 +94,7 @@ Posted Job Page  (/jobs/{job_id}/candidates)
   │    → Job Details side panel opens
   │    │
   │    ├─ User clicks "Edit" (pencil icon)
-  │    │    → fires: Edit Job Posting Button Clicked (entry_point: job_details_panel)  ← NEW
+  │    │    → fires: Edit Job Posting Button Clicked (click_source: job_details_panel)  ← NEW
   │    │    → navigates to wizard in edit mode
   │    │
   │    ├─ User clicks "Open preview"
@@ -119,7 +119,7 @@ Posted Job Page  (/jobs/{job_id}/candidates)
   │    → fires: More Actions Button Clicked  ← NEW
   │    │
   │    ├─ "Edit job posting"
-  │    │    → fires: Edit Job Posting Button Clicked (entry_point: chevron_menu)  ← NEW
+  │    │    → fires: Edit Job Posting Button Clicked (click_source: chevron_menu)  ← NEW
   │    │    → navigates to wizard in edit mode
   │    │
   │    ├─ "Edit interview"
@@ -462,7 +462,7 @@ User clicks a job to navigate to the posted job detail page. Two entry points: d
 | `component` | string | `job_postings_job_card_list` | Where the click happened |
 | `current_page_context` | string | `hiring_manager_job_postings` | Dashboard page |
 | `entity_type` | string | `job` | Business object context |
-| `entry_point` | enum | `dashboard_job_card` | Which UI element was clicked |
+| `click_source` | enum | `dashboard_job_card` | Which UI element was clicked |
 | `has_intro_video` | boolean | `true`/`false` | Whether job has recorded intro video |
 | `job_id` | string | UUID | Job identifier |
 | `job_post_status` | enum | `draft`, `active`, `null` | Job lifecycle state |
@@ -478,7 +478,7 @@ User clicks a job to navigate to the posted job detail page. Two entry points: d
 | `component` | string | `recent_sidebar_nav` | Where the click happened |
 | `current_page_context` | string | dynamic (route-derived) | Current page when sidebar link clicked |
 | `entity_type` | string | `job` | Business object context |
-| `entry_point` | enum | `recent_sidebar` | Which UI element was clicked |
+| `click_source` | enum | `recent_sidebar` | Which UI element was clicked |
 | `job_id` | string | UUID | Job identifier |
 | `job_title` | string | e.g., `Product Manager` | Job title |
 | `previous_page_context` | string | dynamic or null | Previous page |
@@ -776,7 +776,7 @@ User clicks "Edit" in Job Details panel or "Edit job posting" in chevron menu.
 | `component` | string | `posted_job_chevron_menu` or `job_details_sheet` | Where the click happened |
 | `current_page_context` | string | `hm_job_posting_detail` | Posted job page |
 | `entity_type` | string | `job` | Business object context |
-| `entry_point` | enum | `chevron_menu`, `job_details_panel` | Which UI surface |
+| `click_source` | enum | `chevron_menu`, `job_details_panel` | Which UI surface |
 | `has_candidates` | boolean | `true`/`false` | Whether job has candidates |
 | `is_email_verified` | boolean | `true`/`false` | Whether HM has completed email verification |
 | `job_id` | string | UUID | Job identifier |
@@ -1041,7 +1041,7 @@ User clicks "Record" in Job Details panel (no existing video). Navigates to intr
 | `component` | string | `job_details_intro_video_section` | Intro video section in panel |
 | `current_page_context` | string | `hm_job_posting_detail` | Posted job page |
 | `entity_type` | string | `job` | Business object context |
-| `entry_point` | string | `job_details_panel` | Where initiated |
+| `click_source` | string | `job_details_panel` | Where initiated |
 | `has_existing_video` | boolean | `false` | Always false for this event |
 | `intro_video_status` | enum | `create` | Always create for this event |
 | `job_id` | string | UUID | Job identifier |
@@ -1449,7 +1449,7 @@ Already in catalog (Not Started, Backend, has `job_id`). Now fires from frontend
 | `component` | string | `job_details_intro_video_menu` | Where the delete happened |
 | `current_page_context` | string | `hm_job_posting_detail` | Posted job page |
 | `entity_type` | string | `job` | Business object context |
-| `entry_point` | string | `job_details_panel` | Where initiated |
+| `click_source` | string | `job_details_panel` | Where initiated |
 | `has_existing_video` | boolean | `true` | Always true for delete |
 | `intro_video_status` | enum | `edit` | Always edit for delete |
 | `job_id` | string | UUID | Job identifier (already in catalog) |
@@ -1530,7 +1530,7 @@ Same as original plan. `Invite Button Clicked` (Not Started, never implemented) 
 | `assessment_questions_count` | number | -- | Assessment question count | Interview Saved |
 | `candidates_count` | number | -- | Total candidates | Job Deleted |
 | `days_since_creation` | number | -- | Days between creation and action | Job Deleted |
-| `entry_point` | enum | (append) `dashboard_job_card`, `recent_sidebar`, `job_details_panel`, `chevron_menu` | UI surface origin | Job Post Clicked, Edit Job Posting Button Clicked, Intro Video Record/Edit/Delete Button Clicked |
+| `click_source` | enum | `dashboard_job_card`, `recent_sidebar`, `job_details_panel`, `chevron_menu` | Which UI surface the user clicked | Job Post Clicked, Edit Job Posting Button Clicked, Intro Video Record/Edit/Delete Button Clicked |
 | `existing_invites_count` | number | -- | Pending invite emails at time of click | Invite Recruiter Button Clicked |
 | `from_status` | string | job status values | Status before failed change | Job Status Change Failed |
 | `has_ai_instruction` | boolean | true/false | Whether user provided guidance text in the regenerate modal | Intro Script Updated (M3) |
@@ -1567,7 +1567,7 @@ Same as original plan. `Invite Button Clicked` (Not Started, never implemented) 
 
 ---
 
-## New Events
+## New Events Summary
 
 All events tested locally.
 
@@ -1578,7 +1578,7 @@ All events tested locally.
 | Job Status Change Failed | Hiring | Status change API returns error | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `error_category`, `error_reason`, `from_status`, `to_status` | `job` | -- |
 | Post Interview Button Clicked | Hiring | User clicks "+ Post Interview" on job card | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `job_title`, `is_email_verified`, `has_intro_video` | `job` | -- |
 | Post Interview Link Copied | Hiring | User clicks "Copy link" in share modal | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id` | `job` | -- |
-| Job Post Clicked | Hiring | User clicks a job card or recent sidebar link | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `entry_point`, `job_id`, `job_title`, `has_intro_video`, `job_post_status` | `job` | -- |
+| Job Post Clicked | Hiring | User clicks a job card or recent sidebar link | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `click_source`, `job_id`, `job_title`, `has_intro_video`, `job_post_status` | `job` | -- |
 | Invite Recruiter Button Clicked | Hiring | User clicks "Invite recruiter" on posted job page | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `existing_invites_count`, `team_members_count` | `job` | -- |
 | View Interview Button Clicked | Hiring | User clicks "View Interview" on posted job page | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `questions_count`, `team_members_count` | `job` | -- |
 | Recruiter Invites Sent | Hiring | "Send invites" API confirms | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `invite_count`, `pending_invites_count` | `job` | -- |
@@ -1587,7 +1587,7 @@ All events tested locally.
 | Recruiter Invite Revoked | Hiring | Revoke API confirms | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `invite_status` | `job` | -- |
 | Job Details Button Clicked | Hiring | User clicks "Job details" | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `team_members_count` | `job` | -- |
 | More Actions Button Clicked | Hiring | User opens more actions dropdown | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `job_title`, `has_candidates`, `team_members_count` | `job` | -- |
-| Edit Job Posting Button Clicked | Hiring | User clicks "Edit" or "Edit job posting" | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `job_title`, `entry_point`, `is_email_verified`, `has_candidates`, `team_members_count` | `job` | -- |
+| Edit Job Posting Button Clicked | Hiring | User clicks "Edit" or "Edit job posting" | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `job_title`, `click_source`, `is_email_verified`, `has_candidates`, `team_members_count` | `job` | -- |
 | Open Preview Button Clicked | Hiring | User clicks "Open preview" | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `has_intro_video` | `job` | -- |
 | Edit Interview Button Clicked | Hiring | User clicks "Edit interview" | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `team_members_count` | `job` | -- |
 | Interview Details Completed | Hiring | User clicks "Next" on edit interview step 1 | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `interview_name`, `resume_upload_option`, `identity_verification_mode` | `job` | -- |
@@ -1595,9 +1595,9 @@ All events tested locally.
 | Delete Job Button Clicked | Hiring | User clicks "Delete" in chevron menu | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `job_title`, `team_members_count` | `job` | -- |
 | Job Deleted | Hiring | Delete API confirms | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `job_title`, `previous_status`, `candidates_count`, `views_count`, `days_since_creation` | `job` | -- |
 | Job Delete Failed | Hiring | Delete API fails | `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `error_category`, `error_reason` | `job` | -- |
-| Intro Video Record Button Clicked | Hiring | User clicks "Record" in Job Details panel (no video) | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `entry_point`, `has_existing_video`, `intro_video_status`, `job_post_status` | `job` | -- |
-| Intro Video Edit Button Clicked | Hiring | User clicks "Edit intro video" in Job Details panel | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `entry_point`, `has_existing_video`, `intro_video_status`, `job_post_status` | `job` | -- |
-| Intro Video Delete Button Clicked | Hiring | User clicks "Delete" on intro video | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `entry_point`, `has_existing_video`, `intro_video_status`, `job_post_status` | `job` | -- |
+| Intro Video Record Button Clicked | Hiring | User clicks "Record" in Job Details panel (no video) | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `click_source`, `has_existing_video`, `intro_video_status`, `job_post_status` | `job` | -- |
+| Intro Video Edit Button Clicked | Hiring | User clicks "Edit intro video" in Job Details panel | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `click_source`, `has_existing_video`, `intro_video_status`, `job_post_status` | `job` | -- |
+| Intro Video Delete Button Clicked | Hiring | User clicks "Delete" on intro video | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `click_source`, `has_existing_video`, `intro_video_status`, `job_post_status` | `job` | -- |
 | Intro Video Script Regenerate Button Clicked | Hiring | User clicks "Regenerate" on intro video page | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `has_existing_video`, `intro_video_status`, `script_length` | `job` | -- |
 | Intro Video Script Edit Button Clicked | Hiring | User clicks "Edit" on intro video script | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `has_existing_video`, `intro_video_status`, `script_length` | `job` | -- |
 | Intro Video Recording Started | Hiring | User clicks red "Record" on intro video page | `action`, `action_value`, `component`, `current_page_context`, `previous_page_context`, `entity_type`, `job_id`, `has_existing_video`, `intro_video_status`, `script_length`, `takes_count` | `job` | -- |

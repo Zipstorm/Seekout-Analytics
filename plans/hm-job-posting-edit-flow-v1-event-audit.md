@@ -5,10 +5,10 @@
 **Purpose:** Comprehensive inventory of every user action, system event, and analytics event across the HM job posting management flows. Identifies gaps, cross-plan sync issues, and property improvements.
 
 **Sources:**
-- `docs/event-catalog.md` — existing Live and Not Started events
-- `tracking-plans/archived/hm-job-creation-wizard-v2.md` — 27 wizard events (Merged)
-- `tracking-plans/hm-job-creation-wizard-v3.md` — 18 events (Draft)
-- `tracking-plans/hm-job-posting-edit-flow-v1.md` — 23 events (Draft)
+- `docs/helix/event-catalog.md` — existing Live and Not Started events
+- `tracking-plans/helix/archived/hm-job-creation-wizard-v2.md` — 27 wizard events (Merged)
+- `tracking-plans/helix/archived/hm-job-creation-wizard-v3.md` — 18 events (Merged)
+- `tracking-plans/helix/hm-job-posting-edit-flow-v1.md` — 34 new events + 7 modifications (Review)
 
 ---
 

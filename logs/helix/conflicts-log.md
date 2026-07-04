@@ -16,81 +16,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-05-27 10:50:02 UTC
-
-**Result: 13 errors**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
-- **[Rule 10]** `activated_personas` lists "Account Created" in "Used In" but that event does not reference this property
-
-*(1 known warning suppressed)*
-
-
----
-
-## Run: 2026-05-27 10:50:55 UTC
-
-**Result: 12 errors**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Schema Intent-Outcome row (Auth Phone Submitted / *(implicit — accepted)* / Auth Phone Submit Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Auth Email Verify Code Sent / Auth Email Verified / Auth Email Verify Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (*(implicit — on app load)* / Auth Session Restore Succeeded / Auth Session Restore Failed) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Intent-Outcome row (Login Started / Account Created (new) or Auth Login Succeeded (returning) / Login Cancelled, Auth Login Failed) not in Dashboard Platform Health table
-
-*(1 known warning suppressed)*
-
-
----
-
-## Run: 2026-06-05 06:50:02 UTC — Tracking Plan: hm-job-creation-wizard-v3
-
-**Result: 16 errors**
-
-### Errors
-
-- **[Rule TP4]** "Sam Session Setup Failed": property `mic_enabled` not found in catalog Property Dictionary or tracking plan Property Details
-- **[Rule TP4]** "Sam Session Setup Failed": property `session_id` not found in catalog Property Dictionary or tracking plan Property Details
-- **[Rule TP5]** Event "Job Description Evaluated" missing standard property `surface`
-- **[Rule TP5]** Hiring event "Job Description Evaluated" missing standard property `acting_as`
-- **[Rule TP5]** Event "Job Description Evaluation Failed" missing standard property `surface`
-- **[Rule TP5]** Hiring event "Job Description Evaluation Failed" missing standard property `acting_as`
-- **[Rule TP5]** Event "Job Description Details Toggled" missing standard property `surface`
-- **[Rule TP5]** Hiring event "Job Description Details Toggled" missing standard property `acting_as`
-- **[Rule TP5]** Event "Job Description Field Edited" missing standard property `surface`
-- **[Rule TP5]** Hiring event "Job Description Field Edited" missing standard property `acting_as`
-- **[Rule TP5]** Event "Sam Session Setup Failed" missing standard property `surface`
-- **[Rule TP5]** Hiring event "Sam Session Setup Failed" missing standard property `acting_as`
-- **[Rule TP6]** Intent vs Outcome: "Text paste (debounced)" (intent for "Job description AI evaluation") not found in catalog or tracking plan
-- **[Rule TP7]** Event "Sam Session Setup Failed" uses an object prefix not in Standard Objects table
-- **[Rule TP8]** Funnel "JD Evaluation → Step Completion": step "Job Post Wizard Job Details Completed" not found in catalog or tracking plan
-- **[Rule TP8]** Funnel "Evaluation Success Rate": step "Job Description Evaluated / (Job Description Evaluated + Job Description Evaluation Failed)" not found in catalog or tracking plan
-
-
----
-
 ## Run: 2026-06-05 06:53:49 UTC — Tracking Plan: hm-job-creation-wizard-v3
 
 **Result: 13 errors**
@@ -1231,3 +1156,55 @@ Reviewed and suppressed. Remove a line to re-surface it.
 **Result: All clear**
 
 All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-04 07:30:06 UTC — Tracking Plan: hm-job-posting-edit-flow-v1
+
+**Result: 12 errors**
+
+### Errors
+
+- **[Rule TP1]** Event "Refine with AI Button Clicked": word "with" should be capitalized (Proper Case)
+- **[Rule TP11]** Result event "Job Status Change Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule TP11]** Result event "Job Delete Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule TP11]** Result event "Job Share Message AI Refine Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule TP12]** New Events table has no "Type" column — add one (see templates/tracking-plan.md)
+- **[Rule TP6]** /Users/soumabrata_skr/Documents/GitHub/Seekout-Analytics/tracking-plans/hm-job-posting-edit-flow-v1.md uses old "Intent vs Outcome" table heading; use "Interaction / Started / Result Pattern".
+- **[Rule TP7]** Event "Post Interview Button Clicked": object "Post Interview Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Post Interview Button" in ## New Standard Objects.
+- **[Rule TP7]** Event "Post Interview Link Copied": object "Post Interview Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Post Interview Link" in ## New Standard Objects.
+- **[Rule TP7]** Event "Recruiter Invites Sent": object "Recruiter Invites" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Recruiter Invites" in ## New Standard Objects.
+- **[Rule TP7]** Event "Recruiter Invite Link Copied": object "Recruiter Invite Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Recruiter Invite Link" in ## New Standard Objects.
+- **[Rule TP7]** Event "Intro Video Script Regenerate Button Clicked": object "Intro Video Script Regenerate Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Video Script Regenerate Button" in ## New Standard Objects.
+- **[Rule TP7]** Event "Intro Video Script Edit Button Clicked": object "Intro Video Script Edit Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Video Script Edit Button" in ## New Standard Objects.
+
+
+---
+
+## Run: 2026-07-04 07:30:07 UTC — Tracking Plan: job-seeker-interview-v2
+
+**Result: All clear**
+
+All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-04 07:42:07 UTC — Tracking Plan: hm-job-posting-edit-flow-v1
+
+**Result: 12 errors**
+
+### Errors
+
+- **[Rule TP1]** Event "Refine with AI Button Clicked": word "with" should be capitalized (Proper Case)
+- **[Rule TP11]** Result event "Job Status Change Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule TP11]** Result event "Job Delete Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule TP11]** Result event "Job Share Message AI Refine Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule TP12]** New Events table has no "Type" column — add one (see templates/tracking-plan.md)
+- **[Rule TP6]** /Users/soumabrata_skr/Documents/GitHub/Seekout-Analytics/tracking-plans/helix/hm-job-posting-edit-flow-v1.md uses old "Intent vs Outcome" table heading; use "Interaction / Started / Result Pattern".
+- **[Rule TP7]** Event "Post Interview Button Clicked": object "Post Interview Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Post Interview Button" in ## New Standard Objects.
+- **[Rule TP7]** Event "Post Interview Link Copied": object "Post Interview Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Post Interview Link" in ## New Standard Objects.
+- **[Rule TP7]** Event "Recruiter Invites Sent": object "Recruiter Invites" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Recruiter Invites" in ## New Standard Objects.
+- **[Rule TP7]** Event "Recruiter Invite Link Copied": object "Recruiter Invite Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Recruiter Invite Link" in ## New Standard Objects.
+- **[Rule TP7]** Event "Intro Video Script Regenerate Button Clicked": object "Intro Video Script Regenerate Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Video Script Regenerate Button" in ## New Standard Objects.
+- **[Rule TP7]** Event "Intro Video Script Edit Button Clicked": object "Intro Video Script Edit Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Video Script Edit Button" in ## New Standard Objects.
+
