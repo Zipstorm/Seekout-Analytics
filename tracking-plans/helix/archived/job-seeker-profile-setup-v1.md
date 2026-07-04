@@ -7,7 +7,7 @@
 **Scope:** v1 — Create Profile page events only. Editor (B) and Dashboard (C) events deferred to v2.
 **Status:** Implementation complete — pending tracking plan merge
 
-> Reference: `docs/event-catalog.md` for naming conventions and existing event catalog.
+> Reference: `docs/helix/event-catalog.md` for naming conventions and existing event catalog.
 >
 > This is the production implementation reference for the job seeker profile setup analytics. It covers 13 new events across the resume upload, profile photo, and AI profile creation flows on `/candidate/create-profile`, plus modifications to 6 existing events (surface removal, Custom Link rename, Profile Section Updated enum fix). Each event includes the exact property schema, file paths, and capture call code for the Helix codebase.
 
@@ -74,7 +74,7 @@ Onboarding (existing events — no changes)
 
 ## Existing Events (reused, no changes needed)
 
-These events already fire in the Helix codebase and are documented in `docs/event-catalog.md`. No modifications required.
+These events already fire in the Helix codebase and are documented in `docs/helix/event-catalog.md`. No modifications required.
 
 | Event | Status | File | Notes |
 |-------|--------|------|-------|
@@ -1467,7 +1467,7 @@ export const CUSTOM_LINK_ADDED = 'Custom Link Added';  // was CUSTOM_LINK_CREATE
 
 ## Catalog & Schema Updates Required on `/merge-tracking-plan`
 
-### `docs/event-catalog.md`
+### `docs/helix/event-catalog.md`
 
 **Prospect Persona Events table — replace existing events:**
 
@@ -1528,7 +1528,7 @@ All 13 new events listed in the New Events Summary table above should be inserte
 | Profile Created | Candidate Profile Created | Enriched with resume, photo, and link state; same trigger point | June 2026 |
 | Custom Link Created | Custom Link Added | Renamed for clearer action wording; properties updated from `surface` to `current_persona` | June 2026 |
 
-### `docs/event-schema.md`
+### `docs/helix/event-schema.md`
 
 **Standard Objects table — add:**
 
@@ -1560,7 +1560,7 @@ Add `candidate_profile` as a valid value for job seeker profile setup events.
 | Profile photo | Add Profile Photo Button Clicked | Profile Photo Added | Profile Photo Upload Failed |
 | Profile creation | Build Profile Button Clicked | Candidate Profile Created | Candidate Profile Creation Failed |
 
-### `docs/dashboards.md`
+### `docs/helix/dashboards.md`
 
 **Prospect Dashboard — append to bullet list:**
 
