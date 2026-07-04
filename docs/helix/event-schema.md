@@ -45,12 +45,12 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Login | Auth flow initiation | Login Started, Login Cancelled |
 | Account | User (account-level actions) | Account Created, Account Activated |
 | Intro | Onboarding intro screen | Intro Completed |
-| Profile | Prospect's career profile | Profile Created, Profile Section Updated |
+| Profile | Prospect's career profile | Profile Section Updated |
 | Job | Job posting | Job Posting Draft Created, Job Shared |
 | Interest | Expression of Interest | Interest Expressed, Interest Reviewed |
 | Review | Interest Review | Review Decision Made |
 | Team Member | JobTeamMember | Team Member Invited, Team Member Joined |
-| Custom Link | Prospect's named shareable link (general or job-specific) | Custom Link Created, Custom Link Shared |
+| Custom Link | Prospect's named shareable link (general or job-specific) | Custom Link Added, Custom Link Shared |
 | Career Coach | AI Career Coach agent | Career Coach Session Started |
 | Persona | User persona (hiring_manager, recruiter, job_seeker) | Switch Persona Button Clicked, Persona Updated |
 | Job Link | Shared job posting link viewed by anonymous visitors | Job Link Viewed, Job Link Engaged |
@@ -77,6 +77,12 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Question | AI-generated interview question | Question Add Button Clicked |
 | Intro Script | Intro video script | Intro Script Updated |
 | Chat | Chat/WebSocket connection for messaging | Chat WebSocket Connected, Chat WebSocket Error |
+| Resume Upload | User's resume upload flow | Resume Upload Button Clicked, Resume Upload Failed |
+| Resume | User's uploaded resume document | Resume Uploaded, Resume Removed |
+| Profile Photo | User's profile headshot image | Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed |
+| LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Link Clicked |
+| Build Profile | AI profile generation process | Build Profile Button Clicked, Build Profile Snapshot |
+| Candidate Profile | Job seeker's AI-generated career profile | Candidate Profile Created, Candidate Profile Creation Failed |
 
 When introducing a new object, add it to this table before using it in events.
 

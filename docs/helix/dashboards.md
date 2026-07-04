@@ -71,6 +71,10 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Interest expressions per user; withdrawal rate and `reason` distribution
 - Career coach session frequency, `session_type` (first_time vs. returning), `input_mode` (text vs. voice)
 - Career coach message volume by `topic` (profile_improvement / job_application / career_advice)
+- Onboarding to profile creation funnel: Account Created → Intro Completed → Page Viewed (filter `current_page_context` = `candidate_create_profile`) → Build Profile Button Clicked → Candidate Profile Created
+- Resume upload conversion: Resume Upload Button Clicked → Resume Uploaded
+- Profile photo adoption: Add Profile Photo Button Clicked → Profile Photo Added
+- Profile completeness: Build Profile Snapshot filtered by `has_resume` = true, `has_photo` = true, `links_count` > 0
 
 ### Hiring Dashboard (HM/Recruiter Team)
 - Jobs created and published per user
@@ -112,6 +116,9 @@ Tracks rejected-result and technical-error rates across the Interaction / Starte
 | Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed | -- |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed | -- |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed | -- |
+| Resume upload | Resume Upload Button Clicked | Resume Uploaded | Resume Upload Failed | -- |
+| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Added | Profile Photo Upload Failed | -- |
+| Profile creation | Build Profile Button Clicked | Candidate Profile Created | Candidate Profile Creation Failed | -- |
 
 - Rejected rate per flow (rejected results / interactions or starts) over time
 - Technical error rate where an `Error Event` exists
