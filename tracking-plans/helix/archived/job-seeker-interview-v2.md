@@ -7,6 +7,18 @@
 **Repo:** Zipstorm/helix
 **Branch:** job-seeker-interview-v2
 **PR:** https://github.com/Zipstorm/helix/pull/739
+**Status:** Merged
+
+## Status History
+
+| Status | Date | Trigger |
+|---|---|---|
+| Draft | 2026-06-12 | Plan created |
+| Review | 2026-07-02 | seekout-analytics#30 |
+| Approved | 2026-07-04 | PR #30 merged by @SoumabrataSarkar |
+| Merged | 2026-07-04 | /merge-tracking-plan |
+
+## Workflow
 
 - [x] Draft created — 2026-06-12
 - [x] Validated — 2026-06-12, 13/13 rules pass
@@ -14,8 +26,8 @@
 - [x] Absorbed from codebase — 2026-07-02, 65 events
 - [x] Re-validated — 2026-07-02, 13/13 rules pass
 - [x] PR raised — seekout-analytics#30
-- [ ] PR approved
-- [ ] Merged to catalog
+- [x] PR approved — 2026-07-04
+- [x] Merged to catalog — 2026-07-04
 - [ ] Squash merged to main
 
 > References: `docs/shared/naming-and-event-types.md`, `docs/helix/event-schema.md`, and `docs/helix/event-catalog.md`.

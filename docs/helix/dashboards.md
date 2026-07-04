@@ -9,7 +9,7 @@ confluence:
 
 **Product:** Helix (SeekOut.ai)  
 **Analytics Platform:** PostHog  
-**Last Updated:** June 2026
+**Last Updated:** July 2026
 
 For event definitions and properties, see [Helix Analytics Events Tracker](./event-catalog.md).
 For naming conventions and PostHog setup, see [Helix Analytics Events Schema](./event-schema.md).
@@ -53,6 +53,7 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 | Growth Dashboard | Platform Team | Not Started |
 | Prospect Dashboard | Prospect Team | Not Started |
 | Hiring Dashboard | HM/Recruiter Team | Not Started |
+| Interview Dashboard | Prospect / Hiring Team | Not Started |
 | Viral Loop Dashboard | Platform Team | Not Started |
 | Platform Health Dashboard | Platform Team | Not Started |
 
@@ -71,10 +72,12 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Interest expressions per user; withdrawal rate and `reason` distribution
 - Career coach session frequency, `session_type` (first_time vs. returning), `input_mode` (text vs. voice)
 - Career coach message volume by `topic` (profile_improvement / job_application / career_advice)
-- Onboarding to profile creation funnel: Account Created → Intro Completed → Page Viewed (filter `current_page_context` = `candidate_create_profile`) → Build Profile Button Clicked → Candidate Profile Created
-- Resume upload conversion: Resume Upload Button Clicked → Resume Uploaded
+- Onboarding to profile creation funnel: Account Created → Intro Completed → Page Viewed (filter: `current_page_context` value = `"candidate_create_profile"`) → Build Profile Button Clicked → Candidate Profile Created
+- Resume upload conversion: Candidate Resume Upload Button Clicked → Candidate Resume Upload Succeeded
 - Profile photo adoption: Add Profile Photo Button Clicked → Profile Photo Added
-- Profile completeness: Build Profile Snapshot filtered by `has_resume` = true, `has_photo` = true, `links_count` > 0
+- Profile completeness: Candidate Profile Overview Load Succeeded filtered by `profile_completeness_rate`
+- Portfolio publish conversion: Candidate Portfolio Publish Button Clicked → Candidate Portfolio Publish Succeeded
+- Handle adoption rate: Candidate Profile Created filtered by `has_handle` = true
 
 ### Hiring Dashboard (HM/Recruiter Team)
 - Jobs created and published per user
@@ -94,6 +97,20 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Intro video adoption — % of jobs with intro video (`has_intro_video`), recording completion rate (Record Video Button Clicked → Intro Video Created)
 - Candidate review depth — avg tabs viewed per candidate, % of candidates where recording was played. Time-to-decision: median seconds from Candidate Viewed timestamp to Review Decision Made timestamp (computed per-candidate, not a funnel).
 
+### Interview Dashboard (Prospect / Hiring Team)
+- Interview completion funnel: Page Viewed (filter `current_page_context = candidate_interview_landing`) → Get Started Interview Button Clicked → Candidate Interview Info Next Button Clicked → Candidate Interview Resume Next Button Clicked → Candidate Interview Identity Verification Succeeded → Candidate Interview Screening Response Submit Succeeded → Candidate Interview Started → Candidate Interview Submit Succeeded
+- Identity verification funnel: Open Identity Check Link Clicked → Candidate Interview Identity Verification Succeeded
+- Device → start funnel: Allow Device Access Button Clicked → Device Access Grant Succeeded → Candidate Interview Started
+- Per-question completion funnel: Candidate Interview Started → Candidate Interview Question Answer Succeeded → Candidate Interview Submit Succeeded (breakdown by `question_number` and `question_status`)
+- Interview → signup funnel: Candidate Interview Submit Succeeded → Account Created (filter `entry_point = interview`)
+- Publish conversion funnel: Candidate Portfolio Publish Button Clicked → Candidate Portfolio Publish Succeeded
+- Screening response edit funnel: Candidate Interview Screening Response Edit Button Clicked → Candidate Interview Screening Response Edit Succeeded
+- Question skip rate: Candidate Interview Question Skip Succeeded trend by `question_number`
+- Question retake rate: Candidate Interview Question Answer Succeeded (`question_status = answered_restarted`) trend by `question_number`, `job_id`
+- Resume attach rate at interview: Candidate Interview Resume Next Button Clicked trend by `has_resume`
+- AI conversation completion rate: Candidate Interview Question Answer Succeeded trend by `ai_conversation_completed`, `question_number`
+- Test run vs real interview: Candidate Interview Submit Succeeded trend by `is_test_run`
+
 ### Viral Loop Dashboard (Platform Team)
 - Shares per user (i) — segmented by channel
 - View-to-signup conversion (c) — decomposed into c_view, c_click, c_form, c_complete, c_activate
@@ -110,15 +127,32 @@ Tracks rejected-result and technical-error rates across the Interaction / Starte
 | Sharing a job | Share Button Clicked | Job Shared | Job Share Failed | -- |
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed | -- |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed | -- |
+| Creating a job (wizard start) | Create Job Button Clicked, Job Post Wizard Started | -- | -- | -- |
 | Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed | -- |
+| Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- | -- |
+| Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- | -- |
+| Publishing a job (skipped) | Job Post Wizard Verification Skipped | Job Posting Published | -- | -- |
 | Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed | -- |
 | Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed | -- |
 | Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed | -- |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed | -- |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed | -- |
-| Resume upload | Resume Upload Button Clicked | Resume Uploaded | Resume Upload Failed | -- |
+| Resume upload | Candidate Resume Upload Button Clicked | Candidate Resume Upload Succeeded | Candidate Resume Upload Rejected | Candidate Resume Upload Errored |
 | Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Added | Profile Photo Upload Failed | -- |
 | Profile creation | Build Profile Button Clicked | Candidate Profile Created | Candidate Profile Creation Failed | -- |
+| Portfolio publish | Candidate Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | -- | Candidate Portfolio Publish Errored |
+| Unpublish portfolio | Candidate Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | -- | -- |
+| Rename portfolio | Candidate Portfolio Rename Button Clicked | Candidate Portfolio Rename Succeeded | -- | -- |
+| Delete portfolio | Candidate Portfolio Delete Button Clicked | Candidate Portfolio Delete Succeeded | -- | -- |
+| Profile photo remove | Candidate Profile Photo Remove Button Clicked | Candidate Profile Photo Remove Succeeded | -- | Candidate Profile Photo Remove Errored |
+| Custom link delete | Candidate Custom Link Delete Button Clicked | Candidate Custom Link Delete Succeeded | -- | Candidate Custom Link Delete Errored |
+| Identity verification | Open Identity Check Link Clicked | Candidate Interview Identity Verification Succeeded | Candidate Interview Identity Verification Rejected | Candidate Interview Identity Verification Errored |
+| Device access | Allow Device Access Button Clicked | Device Access Grant Succeeded | Device Access Rejected | -- |
+| Start interview | Candidate Interview Start Button Clicked | Candidate Interview Started | -- | -- |
+| Question restart | Candidate Interview Question Restart Button Clicked | Candidate Interview Question Restart Succeeded | -- | Candidate Interview Question Restart Errored |
+| Question skip | Candidate Interview Question Skip Button Clicked | Candidate Interview Question Skip Succeeded | Candidate Interview Question Skip Rejected | Candidate Interview Question Skip Errored |
+| Screening response edit | Candidate Interview Screening Response Edit Button Clicked | Candidate Interview Screening Response Edit Succeeded | -- | -- |
+| Submit interview | -- | Candidate Interview Submit Succeeded | Candidate Interview Submit Rejected | -- |
 
 - Rejected rate per flow (rejected results / interactions or starts) over time
 - Technical error rate where an `Error Event` exists
