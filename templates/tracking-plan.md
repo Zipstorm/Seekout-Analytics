@@ -7,14 +7,33 @@
 **Repo:** —
 **Branch:** —
 **PR:** —
+**Status:** Draft
+
+## Status History
+
+| Status | Date | Trigger |
+|---|---|---|
+| Draft | [Date] | Plan created |
+
+## Workflow
+
+- [ ] Draft created
+- [ ] Validated
+- [ ] Codebase implemented
+- [ ] Absorbed from codebase
+- [ ] Re-validated
+- [ ] PR raised
+- [ ] PR approved
+- [ ] Merged to catalog
+- [ ] Squash merged to main
 
 > References: `docs/shared/naming-and-event-types.md`, `docs/<product>/event-schema.md`, and `docs/<product>/event-catalog.md`.
 
 ---
 
-## New Events
+## New Events Summary
 
-Events introduced by this feature. All follow Object-Action, Proper Case.
+Overview of all events introduced by this feature. All follow Object-Action, Proper Case.
 
 | Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
 |---|---|---|---|---|---|---|---|---|---|
@@ -32,7 +51,7 @@ Detailed property definitions for new events. Properties shared across multiple 
 
 ---
 
-## Event Schema
+## Event Specifications
 
 Detailed per-event specs. Initially filled during event design (from screenshots / PRD). Updated in-place after codebase absorption to reflect actuals.
 
