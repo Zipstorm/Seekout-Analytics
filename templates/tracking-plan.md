@@ -9,13 +9,13 @@
 **PR:** —
 **Status:** Draft
 
-### Status History
+## Status History
 
 | Status | Date | Trigger |
 |---|---|---|
 | Draft | [Date] | Plan created |
 
-### Workflow
+## Workflow
 
 - [ ] Draft created
 - [ ] Validated
