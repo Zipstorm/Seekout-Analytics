@@ -9,7 +9,7 @@
 | HM Job Post Wizard v2 | — | Merged | [archived/hm-job-creation-wizard-v2.md](./archived/hm-job-creation-wizard-v2.md) | 2026-05-28 |
 | HM Job Creation Wizard v3 | — | Merged | [archived/hm-job-creation-wizard-v3.md](./archived/hm-job-creation-wizard-v3.md) | 2026-06-05 |
 | HM Job Posting Edit Flow v1 | [helix#619](https://github.com/Zipstorm/helix/pull/619) | Review | [hm-job-posting-edit-flow-v1.md](./hm-job-posting-edit-flow-v1.md) | 2026-06-07 |
-| Job Seeker Interview v2 | — | Draft | [job-seeker-interview-v2.md](./job-seeker-interview-v2.md) | 2026-06-12 |
+| Job Seeker Profile Setup v1 | — | Review | [job-seeker-profile-setup-v1.md](./job-seeker-profile-setup-v1.md) | 2026-06-02 |
 
 ### Status Legend
 
