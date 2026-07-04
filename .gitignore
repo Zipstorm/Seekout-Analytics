@@ -1,2 +1,5 @@
 .claude/settings.local.json
+.plans/
+plans/
 __pycache__/
+*.pyc

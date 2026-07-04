@@ -3,6 +3,19 @@ confluence:
   page_id: "1749319717"
   space_id: "Helix"
   parent_id: "1749745665"
+analytics_platform: posthog
+group_property_rules:
+  - group: job
+    property: job_id
+    catalog_warning_types: [Interaction, Rejected]
+    tracking_plan_severity: warning
+area_property_rules:
+  - area_contains: viral
+    property: referrer_user_id
+persona_rules:
+  - section_contains: hiring
+    property: acting_as
+    applies_if_in_schema: true
 ---
 
 # Helix Analytics Events Schema
@@ -13,42 +26,15 @@ confluence:
 
 For the event catalog and implementation status, see [Helix Analytics Events Tracker](./event-catalog.md).
 For dashboards and funnel mappings, see [Helix Analytics Dashboards & Funnels](./dashboards.md).
+For shared naming conventions and event types, see [Shared Analytics Naming and Event Types](../shared/naming-and-event-types.md).
 
 ---
 
-## Naming Conventions
+## Shared Naming Conventions and Event Types
 
-### Event Names: Object-Action Framework
+Naming conventions, property-name casing, and the Event Types enum are shared across products in [Shared Analytics Naming and Event Types](../shared/naming-and-event-types.md). The validator reads the shared Event Types table for Rule 17 / TP12.
 
-Every event follows the pattern: **Object Action**
-
-- **Object**: What the user interacted with (e.g., Job, Profile, Interest, Team Member)
-- **Action**: What happened, in past tense (e.g., Created, Shared, Viewed, Expressed)
-- **Casing**: Proper Case (e.g., `Job Created`, `Interest Expressed`)
-
-**Rules:**
-
-1. **Past-tense verbs only** — Created, Viewed, Submitted, Shared (not Create, View, Submit, Share)
-2. **Descriptive and meaningful** — Event name should represent intent. No generic names like `Action1` or `User Event`. Every name must be meaningful to anyone reading it.
-   `Account Created`, `Create Job Button Clicked`, `Record Video Button Clicked`.
-3. **Consistent object names** — Always refer to the same object the same way. Use `Team Member` everywhere, never `TeamMember` or `team member`.
-4. **No special characters or trailing spaces** — Letters, numbers, and spaces only. No `/`, `&`, `@`, `#` or other special characters.
-5. **Separate intent from outcome** — Track the user's action (intent) and whether it succeeded or failed:
-   - Intent: `Share Button Clicked`
-   - Success: `Job Shared`
-   - Failure: `Job Share Failed`
-6. **Intent events use present tense** — Intent events follow the pattern
-   `[Action] [Object] Button Clicked` where the action is present tense:
-   `Share Button Clicked`, `Create Job Button Clicked`,
-   `Record Video Button Clicked`. This is exception to the past-tense rule.
-
-### Property Names: snake_case
-
-All event and person properties use `snake_case`: `job_id`, `current_persona`, `signup_context`, `share_channel`. No Proper Case or camelCase for properties.
-
-For `current_page_context` and `previous_page_context` values, use underscores (_) for hierarchy, not slashes (/): `hm_job_creation_wizard_interview_questions`, `onboarding_role_selection`. URL paths must be transformed to snake_case — strip the leading `/`, replace `/` and `-` with `_` (e.g., `/onboarding/role-selection` → `onboarding_role_selection`).
-
-### Standard Objects
+## Standard Objects
 
 These are the canonical object names for Helix. Always use these exact names in events.
 
@@ -354,10 +340,10 @@ posthog.capture(
 )
 ```
 
-### Intent vs outcome pair
+### Interaction vs result pair
 
 ```javascript
-// Intent (fired on button click — frontend)
+// Interaction (fired on button click — frontend)
 posthog.capture('Share Button Clicked', {
   action: 'click',
   action_value: 'share_job_button',
@@ -372,9 +358,9 @@ posthog.capture('Share Button Clicked', {
 ```
 
 ```python
-# Outcome - success (fired on server confirmation — backend)
+# Result - success (fired on server confirmation — backend)
 posthog.capture(
-    event='Job Shared',
+    event='Job Share Succeeded',
     distinct_id=str(user.user_id),
     properties={
         'job_id': str(job_id),
@@ -384,9 +370,9 @@ posthog.capture(
     groups={'job': str(job_id)},
 )
 
-# Outcome - failure (fired on error — backend)
+# Result - rejected (fired when the system rejects the request — backend)
 posthog.capture(
-    event='Job Share Failed',
+    event='Job Share Rejected',
     distinct_id=str(user.user_id),
     properties={
         'job_id': str(job_id),
@@ -399,17 +385,19 @@ posthog.capture(
 
 ---
 
-## Intent vs Outcome Pattern
+## Interaction / Started / Result Pattern
 
-For critical flows, track the UI interaction (intent) and the server-confirmed result (outcome) as separate events. This isolates frontend UX issues from backend failures in funnel analysis.
+For critical flows, track the UI interaction or process start separately from the processed result. This isolates frontend UX issues from rejected requests and technical errors in funnel analysis.
 
-| Flow | Intent Event | Success Event | Failure Event |
-|------|-------------|---------------|---------------|
+Current catalog examples that still use old result terminals or non-result names are deferred rename debt. New or renamed result events must use `Succeeded`, `Rejected`, or `Errored`.
+
+| Flow | Interaction / Started Event | Success Event | Rejected Event |
+|------|-----------------------------|---------------|----------------|
 | Login / Signup | Login Started | Account Created (new) or Auth Login Succeeded (returning) | Login Cancelled, Auth Login Failed |
 | Sharing a job | Share Button Clicked | Job Shared | Job Share Failed |
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
-| Creating a job (wizard start) | Create Job Button Clicked | Job Post Wizard Started | -- |
+| Creating a job (wizard start) | Create Job Button Clicked, Job Post Wizard Started | -- | -- |
 | Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
 | Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- |
 | Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- |
@@ -420,4 +408,4 @@ For critical flows, track the UI interaction (intent) and the server-confirmed r
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
 
-> **Exception:** `Sam Session Setup Failed` captures voice setup failures separately from `Sam Session Started`, which is success-only.
+> **Exception:** `Sam Session Setup Failed` captures voice setup rejection separately from `Sam Session Started`, which is start-only.
