@@ -4,13 +4,13 @@
 **Phase:** Phase 1
 **Last Updated:** March 4, 2026
 
-**Related:** [Network Model](../context/network-model.md) (loop definitions, graph paths) | [Network Quantification](./network-quantification.md) (Helix Size and health)
+**Related:** [Network Model](../../context/helix/network-model.md) (loop definitions, graph paths) | [Network Quantification](./network-quantification.md) (Helix Size and health)
 
 ---
 
 ## Purpose
 
-This document defines the metrics framework for each viral loop in Helix. The [Network Model](../context/network-model.md) defines the loops as graph paths — what they look like structurally. This doc defines how to measure whether they're working — the funnel stages, volume metrics, rate metrics, and K-factors for each loop.
+This document defines the metrics framework for each viral loop in Helix. The [Network Model](../../context/helix/network-model.md) defines the loops as graph paths — what they look like structurally. This doc defines how to measure whether they're working — the funnel stages, volume metrics, rate metrics, and K-factors for each loop.
 
 ### Per-Loop Framework
 
@@ -148,7 +148,7 @@ This loop has no trigger frequency lever — it depends on life circumstances an
 
 ## Loop 4: Link Virality (Custom Link)
 
-A prospect has portfolios (P) and adds links (C) to them; they use a link when applying to external jobs. The hiring contact at the external company clicks the link, views the prospect's profile, discovers the platform, and signs up. See [Prospect structure](../context/prospect-structure.md).
+A prospect has portfolios (P) and adds links (C) to them; they use a link when applying to external jobs. The hiring contact at the external company clicks the link, views the prospect's profile, discovers the platform, and signs up. See [Prospect structure](../../context/helix/prospect-structure.md).
 
 ### Funnel
 
@@ -207,4 +207,4 @@ Each loop operates independently — Job Sharing does not require Team Invite or
 
 **Assumption: f and c are treated as independent.** In practice, as trigger frequency increases (more shares, more custom links), per-impression conversion may decrease due to recipient fatigue. The framework does not model this interaction. If observed in data, throughput ceilings will need to account for the f-c relationship.
 
-*This document defines per-loop growth metrics for the viral loops defined in the [Network Model](../context/network-model.md). Helix Size and health metrics are in [Network Quantification](./network-quantification.md).*
+*This document defines per-loop growth metrics for the viral loops defined in the [Network Model](../../context/helix/network-model.md). Helix Size and health metrics are in [Network Quantification](./network-quantification.md).*

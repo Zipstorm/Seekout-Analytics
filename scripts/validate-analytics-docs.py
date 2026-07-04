@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Validates consistency across the 3 Helix analytics markdown documents:
+Validates consistency across product-scoped analytics markdown documents:
   - event-catalog.md   (Event Catalog)
   - event-schema.md    (Schema)
   - dashboards.md      (Dashboards)
 
-Run:  python scripts/validate-analytics-docs.py
+Run:  python scripts/validate-analytics-docs.py --product helix
 Exit: 0 = all clear, 1 = errors found, 2 = parse failure
 """
 
+import argparse
 import re
 import sys
 from dataclasses import dataclass, field
@@ -17,15 +18,17 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_DIR = REPO_ROOT / "docs"
-CATALOG_PATH = DOCS_DIR / "event-catalog.md"
-SCHEMA_PATH = DOCS_DIR / "event-schema.md"
-DASHBOARD_PATH = DOCS_DIR / "dashboards.md"
-LOG_PATH = REPO_ROOT / "logs" / "conflicts-log.md"
+TRACKING_PLANS_DIR = REPO_ROOT / "tracking-plans"
+LOGS_DIR = REPO_ROOT / "logs"
 MAX_LOG_RUNS = 20
+PRODUCT_LABELS = {
+    "helix": "Helix",
+    "recruit": "Recruit",
+}
 
 RULE_NAMES = {
     1: "Object coverage",
-    2: "Intent-Outcome alignment",
+    2: "Interaction / Started / Result alignment",
     3: "Person property alignment",
     4: "Standard property compliance",
     5: "Funnel event existence",
@@ -38,6 +41,9 @@ RULE_NAMES = {
     12: "Naming conventions",
     13: "Event property coverage",
     14: "No duplicate names",
+    15: "Action validity",
+    16: "Result terminal form",
+    17: "Event type validity",
 }
 
 TP_RULE_NAMES = {
@@ -47,10 +53,13 @@ TP_RULE_NAMES = {
     "TP3": "No duplicate events vs catalog",
     "TP4": "Property coverage (catalog + tracking plan)",
     "TP5": "Standard property compliance",
-    "TP6": "Intent vs Outcome completeness",
+    "TP6": "Interaction / Started / Result completeness",
     "TP7": "Standard Object usage",
     "TP8": "Funnel event validity",
     "TP9": "Inline enum consistency",
+    "TP10": "Action validity",
+    "TP11": "Result terminal form",
+    "TP12": "Event type validity",
 }
 
 NEW_OBJECTS_SECTION = "New Standard Objects"
@@ -60,12 +69,82 @@ REMOVED_OBJECTS_SECTION = "Removed Standard Objects"
 @dataclass
 class TrackingPlanData:
     events: dict = field(default_factory=dict)
-    intent_outcome: list = field(default_factory=list)
+    result_pattern: list = field(default_factory=list)
+    result_pattern_errors: list = field(default_factory=list)
     funnels: dict = field(default_factory=dict)
     prop_dict: dict = field(default_factory=dict)
     added_objects: dict = field(default_factory=dict)
     removed_objects: dict = field(default_factory=dict)
     declaration_errors: list = field(default_factory=list)
+
+
+@dataclass
+class ProductConfig:
+    analytics_platform: str = ""
+    allow_empty_catalog: bool = False
+    group_property_rules: list = field(default_factory=list)
+    area_property_rules: list = field(default_factory=list)
+    persona_rules: list = field(default_factory=list)
+
+
+@dataclass
+class ProductPaths:
+    product: str
+    docs_dir: Path
+    catalog_path: Path
+    schema_path: Path
+    dashboard_path: Path
+    shared_event_types_path: Path
+    tracking_plans_dir: Path
+    log_path: Path
+    config: ProductConfig = field(default_factory=ProductConfig)
+
+
+class ProductPathError(ValueError):
+    pass
+
+
+REQUIRED_PRODUCT_DOCS = ("event-catalog.md", "event-schema.md", "dashboards.md")
+
+
+def _discovered_products():
+    products = []
+    if not DOCS_DIR.exists():
+        return products
+    for p in sorted(DOCS_DIR.iterdir()):
+        if p.name == "shared" or not p.is_dir():
+            continue
+        if all((p / doc).exists() for doc in REQUIRED_PRODUCT_DOCS):
+            products.append(p.name)
+    return products
+
+
+def product_paths(product):
+    if product == "shared":
+        raise ProductPathError('"shared" is reserved and cannot be validated as a product')
+
+    docs_dir = DOCS_DIR / product
+    missing = [doc for doc in REQUIRED_PRODUCT_DOCS if not (docs_dir / doc).exists()]
+    if missing:
+        discovered = _discovered_products()
+        listing = ", ".join(discovered) if discovered else "(none)"
+        raise ProductPathError(
+            f'Unknown or incomplete product "{product}". '
+            f"Discovered products: {listing}"
+        )
+
+    schema_path = docs_dir / "event-schema.md"
+    return ProductPaths(
+        product=product,
+        docs_dir=docs_dir,
+        catalog_path=docs_dir / "event-catalog.md",
+        schema_path=schema_path,
+        dashboard_path=docs_dir / "dashboards.md",
+        shared_event_types_path=DOCS_DIR / "shared" / "naming-and-event-types.md",
+        tracking_plans_dir=TRACKING_PLANS_DIR / product,
+        log_path=LOGS_DIR / product / "conflicts-log.md",
+        config=parse_product_config(schema_path),
+    )
 
 # ── Markdown Parsing ─────────────────────────────────────────────────────────
 
@@ -76,6 +155,136 @@ def strip_frontmatter(text):
         if end != -1:
             return text[end + 3 :]
     return text
+
+
+def _frontmatter_text(text):
+    if not text.startswith("---"):
+        return ""
+    end = text.find("---", 3)
+    if end == -1:
+        raise ValueError("Frontmatter starts with --- but has no closing ---")
+    return text[3:end].strip("\n")
+
+
+def _parse_config_scalar(raw):
+    value = raw.strip()
+    if not value:
+        return ""
+    if value in ("true", "false"):
+        return value == "true"
+    if value.startswith("[") and value.endswith("]"):
+        inner = value[1:-1].strip()
+        if not inner:
+            return []
+        return [_parse_config_scalar(part.strip()) for part in inner.split(",")]
+    if (
+        (value.startswith('"') and value.endswith('"'))
+        or (value.startswith("'") and value.endswith("'"))
+    ):
+        return value[1:-1]
+    return value
+
+
+def _parse_frontmatter_list(lines, start_index, key):
+    items = []
+    item = None
+    i = start_index
+    while i < len(lines):
+        line = lines[i]
+        if not line.strip():
+            i += 1
+            continue
+        if not line.startswith(" "):
+            break
+        stripped = line.strip()
+        if stripped.startswith("- "):
+            if item is not None:
+                items.append(item)
+            item = {}
+            stripped = stripped[2:].strip()
+            if stripped:
+                if ":" not in stripped:
+                    raise ValueError(f"Invalid {key} list item: {line.strip()}")
+                field, raw = stripped.split(":", 1)
+                item[field.strip()] = _parse_config_scalar(raw)
+        else:
+            if item is None:
+                raise ValueError(f"Invalid {key} list indentation: {line.strip()}")
+            if ":" not in stripped:
+                raise ValueError(f"Invalid {key} field: {line.strip()}")
+            field, raw = stripped.split(":", 1)
+            item[field.strip()] = _parse_config_scalar(raw)
+        i += 1
+    if item is not None:
+        items.append(item)
+    return items, i
+
+
+def _validate_config_keys(key, rows, allowed_fields):
+    for row in rows:
+        unknown = sorted(set(row) - set(allowed_fields))
+        if unknown:
+            raise ValueError(
+                f"Unsupported field(s) in {key}: {', '.join(unknown)}"
+            )
+
+
+def parse_product_config(path):
+    """Parse the small, supported config subset from schema frontmatter."""
+    text = path.read_text()
+    frontmatter = _frontmatter_text(text)
+    if not frontmatter:
+        return ProductConfig()
+
+    scalar_keys = {"analytics_platform", "allow_empty_catalog"}
+    list_keys = {"group_property_rules", "area_property_rules", "persona_rules"}
+    config = ProductConfig()
+    lines = frontmatter.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not line.strip() or line.lstrip().startswith("#"):
+            i += 1
+            continue
+        if line.startswith(" "):
+            i += 1
+            continue
+        if ":" not in line:
+            raise ValueError(f"Invalid frontmatter line: {line.strip()}")
+        key, raw = line.split(":", 1)
+        key = key.strip()
+        raw = raw.strip()
+        if key in scalar_keys:
+            value = _parse_config_scalar(raw)
+            if key == "allow_empty_catalog" and not isinstance(value, bool):
+                raise ValueError("allow_empty_catalog must be true or false")
+            setattr(config, key, value)
+            i += 1
+            continue
+        if key in list_keys:
+            if raw:
+                raise ValueError(f"{key} must be an indented list")
+            rows, i = _parse_frontmatter_list(lines, i + 1, key)
+            setattr(config, key, rows)
+            continue
+        i += 1
+
+    _validate_config_keys(
+        "group_property_rules",
+        config.group_property_rules,
+        {"group", "property", "catalog_warning_types", "tracking_plan_severity"},
+    )
+    _validate_config_keys(
+        "area_property_rules",
+        config.area_property_rules,
+        {"area_contains", "property", "severity"},
+    )
+    _validate_config_keys(
+        "persona_rules",
+        config.persona_rules,
+        {"section_contains", "property", "applies_if_in_schema"},
+    )
+    return config
 
 
 _PIPE_PLACEHOLDER = "\x00"
@@ -129,6 +338,163 @@ def _find_table(tables, pattern):
         if pattern.lower() in h.lower():
             return header, rows
     return None, None
+
+
+RESULT_PATTERN_HEADING = "Interaction / Started / Result Pattern"
+RESULT_PATTERN_REQUIRED_COLUMNS = [
+    "Flow",
+    "Interaction / Started Event",
+    "Success Event",
+    "Rejected Event",
+]
+RESULT_PATTERN_OPTIONAL_COLUMNS = ["Error Event"]
+RESULT_PATTERN_EVENT_KEYS = ("interaction_started", "success", "rejected", "error")
+RESULT_PATTERN_ROLE_LABELS = {
+    "interaction_started": "interaction / started",
+    "success": "success",
+    "rejected": "rejected",
+    "error": "error",
+}
+
+
+def _normalize_table_header(cell):
+    return re.sub(r"\s+", " ", cell.strip())
+
+
+def _result_pattern_column_error(source_label):
+    return (
+        f'{source_label} "{RESULT_PATTERN_HEADING}" table must use columns: '
+        "Flow | Interaction / Started Event | Success Event | Rejected Event "
+        "(optional: Error Event)."
+    )
+
+
+def _parse_result_pattern_table(tables, source_label):
+    rows_out = []
+    errors = []
+    found = False
+
+    for heading, header, rows in tables:
+        normalized_heading = heading.strip()
+        lower_heading = normalized_heading.lower()
+        if "intent" in lower_heading and (
+            "outcome" in lower_heading or "pattern" in lower_heading
+        ):
+            errors.append(
+                f'{source_label} uses old "Intent vs Outcome" table heading; '
+                f'use "{RESULT_PATTERN_HEADING}".'
+            )
+            continue
+        if normalized_heading != RESULT_PATTERN_HEADING:
+            continue
+
+        found = True
+        normalized_header = [_normalize_table_header(h) for h in header]
+        col = {h: i for i, h in enumerate(normalized_header)}
+        allowed_columns = set(RESULT_PATTERN_REQUIRED_COLUMNS) | set(
+            RESULT_PATTERN_OPTIONAL_COLUMNS
+        )
+        if (
+            any(c not in col for c in RESULT_PATTERN_REQUIRED_COLUMNS)
+            or "Intent Event" in col
+            or "Failure Event" in col
+            or any(c not in allowed_columns for c in normalized_header)
+        ):
+            errors.append(_result_pattern_column_error(source_label))
+            continue
+
+        for row in rows:
+            flow = row[col["Flow"]].strip() if col["Flow"] < len(row) else ""
+            if not flow or flow.startswith("["):
+                continue
+            rows_out.append(
+                dict(
+                    flow=flow,
+                    interaction_started=(
+                        row[col["Interaction / Started Event"]].strip()
+                        if col["Interaction / Started Event"] < len(row)
+                        else ""
+                    ),
+                    success=(
+                        row[col["Success Event"]].strip()
+                        if col["Success Event"] < len(row)
+                        else ""
+                    ),
+                    rejected=(
+                        row[col["Rejected Event"]].strip()
+                        if col["Rejected Event"] < len(row)
+                        else ""
+                    ),
+                    error=(
+                        row[col["Error Event"]].strip()
+                        if "Error Event" in col and col["Error Event"] < len(row)
+                        else "--"
+                    ),
+                )
+            )
+
+    if not found and not errors:
+        errors.append(
+            f'{source_label} is missing "{RESULT_PATTERN_HEADING}" table.'
+        )
+    return rows_out, errors
+
+
+def _parse_platform_health_table(tables):
+    rows_out = []
+    errors = []
+    header, rows = _find_table(tables, "Platform Health")
+    if rows is None:
+        return rows_out, errors
+
+    normalized_header = [_normalize_table_header(h) for h in (header or [])]
+    col = {h: i for i, h in enumerate(normalized_header)}
+    allowed_columns = set(RESULT_PATTERN_REQUIRED_COLUMNS) | set(
+        RESULT_PATTERN_OPTIONAL_COLUMNS
+    )
+    if (
+        any(c not in col for c in RESULT_PATTERN_REQUIRED_COLUMNS)
+        or "Intent Event" in col
+        or "Failure Event" in col
+        or any(c not in allowed_columns for c in normalized_header)
+    ):
+        errors.append(
+            "Platform Health table must use columns: "
+            "Flow | Interaction / Started Event | Success Event | Rejected Event "
+            "(optional: Error Event)."
+        )
+        return rows_out, errors
+
+    for row in rows:
+        flow = row[col["Flow"]].strip() if col["Flow"] < len(row) else ""
+        if not flow or flow.startswith("["):
+            continue
+        rows_out.append(
+            dict(
+                flow=flow,
+                interaction_started=(
+                    row[col["Interaction / Started Event"]].strip()
+                    if col["Interaction / Started Event"] < len(row)
+                    else ""
+                ),
+                success=(
+                    row[col["Success Event"]].strip()
+                    if col["Success Event"] < len(row)
+                    else ""
+                ),
+                rejected=(
+                    row[col["Rejected Event"]].strip()
+                    if col["Rejected Event"] < len(row)
+                    else ""
+                ),
+                error=(
+                    row[col["Error Event"]].strip()
+                    if "Error Event" in col and col["Error Event"] < len(row)
+                    else "--"
+                ),
+            )
+        )
+    return rows_out, errors
 
 
 def _is_table_separator(line):
@@ -329,18 +695,15 @@ def parse_property_updates(cell):
 
 # ── Document Parsers ─────────────────────────────────────────────────────────
 
-EVENT_SECTION_KEYS = [
-    "login & onboarding",
-    "auth lifecycle",
-    "auth dev",
-    "email verification",
-    "phone collection",
-    "account & persona",
-    "anonymous user",
-    "prospect persona",
-    "hiring persona",
-    "chat websocket",
-]
+
+def _catalog_event_section(text):
+    match = re.search(r"^##\s+Event Catalog\s*$", text, flags=re.MULTILINE)
+    if not match:
+        return ""
+    next_h2 = re.search(r"^##\s+", text[match.end() :], flags=re.MULTILINE)
+    if next_h2:
+        return text[match.start() : match.end() + next_h2.start()]
+    return text[match.start() :]
 
 
 def parse_catalog(path):
@@ -352,11 +715,10 @@ def parse_catalog(path):
     """
     text = strip_frontmatter(path.read_text())
     tables = parse_tables(text)
+    event_tables = parse_tables(_catalog_event_section(text))
     events = {}
     duplicate_events = {}
-    for heading, _header, rows in tables:
-        if not any(k in heading.lower() for k in EVENT_SECTION_KEYS):
-            continue
+    for heading, _header, rows in event_tables:
         for row in rows:
             if len(row) < 9:
                 continue
@@ -415,13 +777,31 @@ def parse_catalog(path):
     return events, prop_dict, duplicate_events
 
 
-def parse_schema(path):
+def parse_shared_event_types(path):
+    event_types = set()
+    if not path.exists():
+        return event_types
+    text = strip_frontmatter(path.read_text())
+    tables = parse_tables(text)
+    _, et_rows = _find_table(tables, "Event Types")
+    if et_rows:
+        for r in et_rows:
+            if r:
+                t = r[0].strip().strip("`").strip()
+                if t:
+                    event_types.add(t)
+    return event_types
+
+
+def parse_schema(path, shared_event_types_path=None):
     """
     Returns:
       std_objects    – dict[obj, {entity, example_events}]
       person_props   – dict[prop, {type, method}]
       std_event_props – dict[prop, {when}]
-      intent_outcome – list[{flow, intent, success, failure}]
+      result_pattern – list[{flow, interaction_started, success, rejected, error}]
+      result_pattern_errors – list[str]
+      event_types    – set[str] of allowed event types (empty if table absent)
     """
     text = strip_frontmatter(path.read_text())
     tables = parse_tables(text)
@@ -459,30 +839,41 @@ def parse_schema(path):
                 prop = r[0].strip().strip("`")
                 std_event_props[prop] = dict(when=r[3].strip())
 
-    intent_outcome = []
-    for heading, _h, rows in tables:
-        h = heading.lower()
-        if "intent" in h and ("outcome" in h or "pattern" in h):
-            for r in rows:
-                if len(r) >= 4:
-                    intent_outcome.append(
-                        dict(
-                            flow=r[0].strip(),
-                            intent=r[1].strip(),
-                            success=r[2].strip(),
-                            failure=r[3].strip(),
-                        )
-                    )
-            break
+    source_label = path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
+    result_pattern, result_pattern_errors = _parse_result_pattern_table(
+        tables, f"{source_label}"
+    )
 
-    return std_objects, person_props, std_event_props, intent_outcome
+    # Event Types enum (first column -> set of allowed types).
+    event_types = set()
+    _, et_rows = _find_table(tables, "Event Types")
+    if et_rows:
+        for r in et_rows:
+            if r:
+                t = r[0].strip().strip("`").strip()
+                if t:
+                    event_types.add(t)
+    if shared_event_types_path is not None:
+        shared_types = parse_shared_event_types(shared_event_types_path)
+        if shared_types:
+            event_types = shared_types
+
+    return (
+        std_objects,
+        person_props,
+        std_event_props,
+        result_pattern,
+        result_pattern_errors,
+        event_types,
+    )
 
 
 def parse_dashboards(path):
     """
     Returns:
       funnels        – dict[name, list[{stage, event, defined_in}]]
-      platform_health – list[{flow, intent, success, failure}]
+      platform_health – list[{flow, interaction_started, success, rejected, error}]
+      platform_health_errors – list[str]
       dashboard_props – dict[dashboard, {properties, property_values}]
     """
     text = strip_frontmatter(path.read_text())
@@ -503,19 +894,7 @@ def parse_dashboards(path):
                     )
             funnels[heading] = entries
 
-    platform_health = []
-    _, ph_rows = _find_table(tables, "Platform Health")
-    if ph_rows:
-        for r in ph_rows:
-            if len(r) >= 4:
-                platform_health.append(
-                    dict(
-                        flow=r[0].strip(),
-                        intent=r[1].strip(),
-                        success=r[2].strip(),
-                        failure=r[3].strip(),
-                    )
-                )
+    platform_health, platform_health_errors = _parse_platform_health_table(tables)
 
     dashboard_props = {}
     sections = re.split(r"^(###\s+.+)$", text, flags=re.MULTILINE)
@@ -554,7 +933,7 @@ def parse_dashboards(path):
             properties=list(set(props)), property_values=prop_values
         )
 
-    return funnels, platform_health, dashboard_props
+    return funnels, platform_health, platform_health_errors, dashboard_props
 
 
 def parse_tracking_plan(path):
@@ -562,8 +941,10 @@ def parse_tracking_plan(path):
     Parse a tracking plan markdown file.
 
     Returns:
-      TrackingPlanData with events, intent/outcome rows, funnels, property
-      details, object declarations, and declaration parse errors.
+      TrackingPlanData with events, result-pattern rows, funnels, property
+      details, object declarations, and declaration parse errors. Each event in
+      `.events` carries a `type` key (None when the New Events table has no
+      Type column).
     """
     text = strip_frontmatter(path.read_text())
     tables = parse_tables(text)
@@ -571,47 +952,37 @@ def parse_tracking_plan(path):
         text
     )
 
-    # ── New Events table ──
+    # ── New Events table (header-keyed: tolerant of extra/reordered columns) ──
     tp_events = {}
-    _, ev_rows = _find_table(tables, "New Events")
+    ev_header, ev_rows = _find_table(tables, "New Events")
     if ev_rows:
+        col = {h.strip().lower(): i for i, h in enumerate(ev_header or [])}
+        has_type = "type" in col
+
+        def _cell(row, key):
+            i = col.get(key)
+            return row[i].strip() if i is not None and i < len(row) else ""
+
         for row in ev_rows:
-            if len(row) < 6:
-                continue
-            name = row[0].strip()
+            name = _cell(row, "event")
             if not name or name.startswith("["):
                 continue
-            area = row[1].strip()
-            props, inline_enums = extract_props(row[3])
-            group = row[4].strip()
-            person, grp = parse_property_updates(row[5])
+            props, inline_enums = extract_props(_cell(row, "key properties"))
+            person, grp = parse_property_updates(_cell(row, "property updates"))
             tp_events[name] = dict(
-                area=area,
+                area=_cell(row, "area"),
+                type=_cell(row, "type") if has_type else None,
                 properties=props,
                 inline_enums=inline_enums,
-                group=group,
+                group=_cell(row, "group"),
                 person_props=person,
                 group_props=grp,
             )
 
-    # ── Intent vs Outcome table ──
-    tp_intent_outcome = []
-    _, io_rows = _find_table(tables, "Intent vs Outcome")
-    if io_rows:
-        for row in io_rows:
-            if len(row) < 4:
-                continue
-            flow = row[0].strip()
-            if not flow or flow.startswith("["):
-                continue
-            tp_intent_outcome.append(
-                dict(
-                    flow=flow,
-                    intent=row[1].strip(),
-                    success=row[2].strip(),
-                    failure=row[3].strip(),
-                )
-            )
+    # ── Interaction / Started / Result Pattern table ──
+    tp_result_pattern, tp_result_pattern_errors = _parse_result_pattern_table(
+        tables, f"{path}"
+    )
 
     # ── Funnels table ──
     tp_funnels = {}
@@ -646,7 +1017,8 @@ def parse_tracking_plan(path):
 
     return TrackingPlanData(
         events=tp_events,
-        intent_outcome=tp_intent_outcome,
+        result_pattern=tp_result_pattern,
+        result_pattern_errors=tp_result_pattern_errors,
         funnels=tp_funnels,
         prop_dict=tp_prop_dict,
         added_objects=added_objects,
@@ -657,13 +1029,71 @@ def parse_tracking_plan(path):
 
 # ── Validation Rules ─────────────────────────────────────────────────────────
 
+# Canonical result terminals. "Failed"/"Error"/"Success"/"Failure" are invalid.
+RESULT_TERMINALS = {"Succeeded", "Rejected", "Errored"}
+# Non-canonical result words -> required canonical form (Rule 16 / TP11).
+RESULT_VARIANTS = {
+    "Fail": "Rejected", "Fails": "Rejected", "Failed": "Rejected",
+    "Failure": "Rejected", "Failures": "Rejected",
+    "Succeed": "Succeeded", "Succeeds": "Succeeded", "Success": "Succeeded",
+    "Error": "Errored", "Errors": "Errored",
+}
+IRREGULAR_PAST = {"Made", "Sent", "Withdrawn"}
+# Type -> required name terminals (Rule 16 / TP11).
+TYPE_TERMINALS = {
+    "Started": ("Started",),
+    "Success": ("Succeeded",),
+    "Rejected": ("Rejected",),
+    "Error": ("Errored",),
+}
+
 
 def _object_prefix(event_name, known_objects):
-    """Match the longest known object that is a prefix of the event name."""
+    """Match the longest known object that is a prefix of the event name.
+    Exact equality counts — the event is then all object, no action
+    (Rule 15 / TP10 flag the missing action)."""
     for obj in sorted(known_objects, key=len, reverse=True):
-        if event_name.startswith(obj + " "):
+        if event_name == obj or event_name.startswith(obj + " "):
             return obj
     return None
+
+
+def _split_object_action(event_name, known_objects):
+    """Segregate an event name into (object, action).
+    Object = longest known Standard Object prefix (or exact match);
+    action = remainder ('' on exact match).
+    Returns (None, None) when no known object matches."""
+    obj = _object_prefix(event_name, known_objects)
+    if not obj:
+        return None, None
+    return obj, event_name[len(obj):].strip()
+
+
+def _candidate_object(event_name):
+    """Suggest the likely object for an event whose prefix is unknown.
+    Result events ('... Publish Rejected') carry a verb-noun before the
+    terminal — that word belongs to the ACTION, so drop two words; plain
+    events drop only the trailing verb."""
+    words = event_name.split()
+    if not words:
+        return None
+    result_words = RESULT_TERMINALS | set(RESULT_VARIANTS)
+    drop = 2 if words[-1] in result_words else 1
+    return " ".join(words[:-drop]) if len(words) > drop else None
+
+
+def _unknown_object_error(name):
+    """Message for an event whose object prefix is not a known Standard Object,
+    with a candidate-object suggestion when one can be derived."""
+    msg = f'Event "{name}" uses an object prefix not in Standard Objects table'
+    cand = _candidate_object(name)
+    if cand:
+        msg += (
+            f' (likely object: "{cand}" — add it to the product event-schema.md, or '
+            f"rename the event; the verb-noun before Succeeded/Rejected/Errored is "
+            f"part of the action)"
+        )
+    return msg
 
 
 def _is_general_usage(text):
@@ -684,8 +1114,8 @@ def _parse_exceptions(when_text):
     return {e.strip() for e in m.group(1).split(",")}
 
 
-def _object_for_intent_event(event_name, known_objects):
-    """Intent events use verb-first naming (e.g. 'Share Button Clicked').
+def _object_for_interaction_event(event_name, known_objects):
+    """Interaction events may use verb-first naming (e.g. 'Share Button Clicked').
     Try to find a known object embedded anywhere in the name."""
     for obj in sorted(known_objects, key=len, reverse=True):
         if f" {obj} " in f" {event_name} ":
@@ -718,7 +1148,7 @@ def validate_object_declarations(added_objects, removed_objects, schema_objects,
         if obj not in schema_names and obj not in added_names:
             warnings.append(
                 f'## Removed Standard Objects lists "{obj}", which is not in '
-                f"docs/event-schema.md Standard Objects nor declared in "
+                f"the product event-schema.md Standard Objects nor declared in "
                 f"## New Standard Objects. Removal has no effect."
             )
 
@@ -726,7 +1156,7 @@ def validate_object_declarations(added_objects, removed_objects, schema_objects,
         if obj in schema_names:
             warnings.append(
                 f'## New Standard Objects lists "{obj}", which already exists in '
-                f"docs/event-schema.md Standard Objects. Declaration is redundant."
+                f"the product event-schema.md Standard Objects. Declaration is redundant."
             )
 
     return errors, warnings
@@ -739,13 +1169,11 @@ def rule_01(catalog_events, schema_objects):
     for name in catalog_events:
         obj = _object_prefix(name, schema_objects)
         if not obj and name.endswith("Button Clicked"):
-            obj = _object_for_intent_event(name, schema_objects)
+            obj = _object_for_interaction_event(name, schema_objects)
         if obj:
             found.add(obj)
         elif not name.endswith("Button Clicked"):
-            errors.append(
-                f'Event "{name}" uses an object prefix not in Standard Objects table'
-            )
+            errors.append(_unknown_object_error(name))
     for obj in schema_objects:
         if obj not in found:
             warnings.append(
@@ -754,36 +1182,42 @@ def rule_01(catalog_events, schema_objects):
     return errors, warnings
 
 
-def rule_02(schema_io, catalog_events):
-    """Schema Intent vs Outcome events must exist in catalog.
+def _iter_result_pattern_events(flow):
+    for role in RESULT_PATTERN_EVENT_KEYS:
+        cell = flow.get(role, "")
+        if cell == "--":
+            continue
+        if "implicit" in cell.lower():
+            continue
+        # Split on commas and "or" to get individual event candidates.
+        parts = re.split(r",|\bor\b", cell)
+        for part in parts:
+            ev = part.strip()
+            # Strip trailing parenthetical qualifiers like "(new)" / "(returning)".
+            ev = re.sub(r"\s*\([^)]*\)\s*$", "", ev).strip()
+            # Strip markdown emphasis.
+            ev = ev.strip("*").strip()
+            if not ev or ev == "--":
+                continue
+            yield role, ev
+
+
+def rule_02(schema_result_pattern, schema_result_pattern_errors, catalog_events):
+    """Schema Interaction / Started / Result events must exist in catalog.
 
     Schema cells may be placeholders (`*(implicit — ...)*`) or compound values
     (`A, B` / `A (new) or B (returning)`). Split on commas and " or ", strip
     parenthetical qualifiers, and skip implicit placeholders.
     """
-    errors, warnings = [], []
-    for flow in schema_io:
-        for role in ("intent", "success", "failure"):
-            cell = flow[role]
-            if cell == "--":
-                continue
-            if "implicit" in cell.lower():
-                continue
-            # Split on commas and "or" to get individual event candidates.
-            parts = re.split(r",|\bor\b", cell)
-            for part in parts:
-                ev = part.strip()
-                # Strip trailing parenthetical qualifiers like "(new)" / "(returning)".
-                ev = re.sub(r"\s*\([^)]*\)\s*$", "", ev).strip()
-                # Strip markdown emphasis.
-                ev = ev.strip("*").strip()
-                if not ev or ev == "--":
-                    continue
-                if ev not in catalog_events:
-                    errors.append(
-                        f'Intent-Outcome table: "{ev}" ({role} for '
-                        f'"{flow["flow"]}") not found in Event Catalog'
-                    )
+    errors, warnings = list(schema_result_pattern_errors), []
+    for flow in schema_result_pattern:
+        for role, ev in _iter_result_pattern_events(flow):
+            if ev not in catalog_events:
+                errors.append(
+                    f'Result pattern table: "{ev}" '
+                    f'({RESULT_PATTERN_ROLE_LABELS[role]} for "{flow["flow"]}") '
+                    f"not found in Event Catalog"
+                )
     return errors, warnings
 
 
@@ -815,39 +1249,88 @@ def rule_03(schema_person, catalog_events):
     return errors, warnings
 
 
-def rule_04(catalog_events, schema_evt_props):
-    """Standard event properties (per Schema): enforce only what Schema still defines.
+def _csv_set(value):
+    if isinstance(value, list):
+        return {str(v).strip() for v in value if str(v).strip()}
+    if not value:
+        return set()
+    return {v.strip() for v in str(value).split(",") if v.strip()}
 
-    acting_as was removed from Schema in favor of the `current_persona` person
-    property ($set), so we skip the hiring acting_as check unless Schema
-    explicitly reinstates it.
+
+def _area_rule_message(area_contains, name, prop, include_loop=False):
+    label = area_contains.capitalize()
+    subject = f"{label} loop event" if include_loop else f"{label} event"
+    return f'{subject} "{name}" missing standard property `{prop}`'
+
+
+def _append_by_severity(rule, errors, warnings, message):
+    if rule.get("severity") == "warning":
+        warnings.append(message)
+    else:
+        errors.append(message)
+
+
+def rule_04(catalog_events, schema_evt_props, config=None):
+    """Standard event properties from product config and schema.
+
+    Area rules intentionally run in catalog mode as well as tracking-plan mode
+    so product-wide required properties stay consistent after merge.
     """
     errors, warnings = [], []
-    acting_as_in_schema = "acting_as" in schema_evt_props
-    acting_as_when = schema_evt_props.get("acting_as", {}).get("when", "")
-    acting_as_exceptions = _parse_exceptions(acting_as_when)
+    config = config or ProductConfig()
+    schema_exceptions = {
+        prop: _parse_exceptions(info.get("when", ""))
+        for prop, info in schema_evt_props.items()
+    }
     for name, ev in catalog_events.items():
         section = ev["section"].lower()
         props = ev["properties"]
-        if (
-            acting_as_in_schema
-            and "hiring" in section
-            and "acting_as" not in props
-            and name not in acting_as_exceptions
-        ):
-            errors.append(
-                f'Hiring event "{name}" missing standard property `acting_as`'
-            )
         group = ev["group"].strip("`")
-        if group == "job" and "job_id" not in props:
-            if ev["type"] in ("Intent", "Failure"):
+
+        for rule in config.persona_rules:
+            prop = rule.get("property", "")
+            if not prop:
+                continue
+            if rule.get("applies_if_in_schema") is True and prop not in schema_evt_props:
+                continue
+            section_contains = str(rule.get("section_contains", "")).lower()
+            if (
+                section_contains
+                and section_contains in section
+                and prop not in props
+                and name not in schema_exceptions.get(prop, set())
+            ):
+                label = section_contains.capitalize()
+                errors.append(
+                    f'{label} event "{name}" missing standard property `{prop}`'
+                )
+
+        for rule in config.group_property_rules:
+            if group != rule.get("group"):
+                continue
+            prop = rule.get("property", "")
+            if not prop or prop in props:
+                continue
+            warning_types = _csv_set(rule.get("catalog_warning_types"))
+            if ev["type"] in warning_types:
                 warnings.append(
                     f'Job-grouped {ev["type"].lower()} event "{name}" missing '
-                    f"`job_id` (may be intentional for creation flow)"
+                    f"`{prop}` (may be intentional for creation flow)"
                 )
             else:
                 errors.append(
-                    f'Job-grouped event "{name}" missing standard property `job_id`'
+                    f'Job-grouped event "{name}" missing standard property `{prop}`'
+                )
+
+        for rule in config.area_property_rules:
+            prop = rule.get("property", "")
+            area_contains = str(rule.get("area_contains", "")).lower()
+            if area_contains and area_contains in ev["area"].lower() and prop not in props:
+                _append_by_severity(
+                    rule,
+                    errors,
+                    warnings,
+                    _area_rule_message(area_contains, name, prop),
                 )
     return errors, warnings
 
@@ -917,24 +1400,41 @@ def rule_08(dashboard_props, prop_dict):
     return errors, warnings
 
 
-def rule_09(dash_ph, schema_io):
-    """Dashboard Platform Health table must match Schema Intent vs Outcome (for flows with failures)."""
-    errors, warnings = [], []
+def _result_pattern_tuple(row):
+    return (
+        row.get("interaction_started", ""),
+        row.get("success", ""),
+        row.get("rejected", ""),
+        row.get("error", "--"),
+    )
 
-    def _event_tuple(row):
-        return (row["intent"], row["success"], row["failure"])
 
-    schema_with_failure = [r for r in schema_io if r["failure"] != "--"]
-    dash_set = {_event_tuple(r) for r in dash_ph}
-    schema_set = {_event_tuple(r) for r in schema_with_failure}
+def _format_result_tuple(row_tuple):
+    cells = list(row_tuple)
+    if cells[-1] == "--":
+        cells = cells[:-1]
+    return " / ".join(cells)
+
+
+def rule_09(dash_ph, dash_ph_errors, schema_result_pattern):
+    """Dashboard Platform Health table must match Schema result rows."""
+    errors, warnings = list(dash_ph_errors), []
+
+    schema_with_result = [
+        r
+        for r in schema_result_pattern
+        if r.get("rejected") != "--" or r.get("error", "--") != "--"
+    ]
+    dash_set = {_result_pattern_tuple(r) for r in dash_ph}
+    schema_set = {_result_pattern_tuple(r) for r in schema_with_result}
     for t in dash_set - schema_set:
         errors.append(
-            f"Platform Health row ({t[0]} / {t[1]} / {t[2]}) "
-            f"not in Schema Intent-Outcome table"
+            f"Platform Health row ({_format_result_tuple(t)}) "
+            f"not in Schema Interaction / Started / Result table"
         )
     for t in schema_set - dash_set:
         errors.append(
-            f"Schema Intent-Outcome row ({t[0]} / {t[1]} / {t[2]}) "
+            f"Schema Interaction / Started / Result row ({_format_result_tuple(t)}) "
             f"not in Dashboard Platform Health table"
         )
     return errors, warnings
@@ -1051,6 +1551,104 @@ def rule_14(duplicate_events, prop_dict):
     return errors, warnings
 
 
+def _action_errors(event_names, known_objects):
+    """Shared Rule 15 / TP10 logic — syntactic action validity only.
+    Splits object from action, requires a non-empty action whose final word is
+    past tense (ends 'ed') or an allowed irregular. No semantics, no allow-list.
+    """
+    errors = []
+    for name in event_names:
+        if name.endswith("Button Clicked"):        # interaction events may be verb-first
+            continue
+        last_word = name.split()[-1]
+        if last_word in RESULT_VARIANTS:            # Rule 16 owns the better message
+            continue
+        obj, action = _split_object_action(name, known_objects)
+        if obj is None:                             # Rule 1 / TP7 owns this error
+            continue
+        if not action:
+            errors.append(f'Event "{name}" is only an object — missing an action')
+            continue
+        last = action.split()[-1]
+        if not (last.endswith("ed") or last in IRREGULAR_PAST):
+            errors.append(
+                f'Event "{name}": action "{action}" must end in a past-tense verb '
+                f"(Created, Started, Succeeded, Rejected, Errored)"
+            )
+    return errors
+
+
+def _result_terminal_errors(typed_events):
+    """Shared Rule 16 / TP11 logic — type-driven terminal form.
+    typed_events: iterable of (event_name, event_type). Flags non-canonical
+    trailing words type-independently, then enforces the type's required
+    terminal. One message per event."""
+    errors = []
+    for name, etype in typed_events:
+        last = name.split()[-1]
+        if last in RESULT_VARIANTS:                 # type-independent; one message per event
+            errors.append(
+                f'Result event "{name}" must end with "{RESULT_VARIANTS[last]}", '
+                f'not "{last}" (result terminals are Succeeded/Rejected/Errored)'
+            )
+            continue
+        allowed = TYPE_TERMINALS.get(etype)
+        if allowed and last not in allowed:
+            errors.append(
+                f'Event "{name}" has Type {etype} but does not end in '
+                + " / ".join(allowed)
+            )
+    return errors
+
+
+def _event_type_errors(typed_events, allowed_types):
+    """Shared Rule 17 / TP12 row-level logic. None type => missing column,
+    handled at the table level, not here."""
+    errors = []
+    for name, etype in typed_events:
+        if etype is None:
+            continue
+        if etype not in allowed_types:
+            errors.append(
+                f'Event "{name}" has Type "{etype}" — must be one of: '
+                + ", ".join(sorted(allowed_types))
+            )
+    return errors
+
+
+def _missing_enum_error(schema_event_types):
+    """Shared/product Event Types table is the source of truth."""
+    if schema_event_types:
+        return []
+    return [
+        "Event Types table not found in docs/shared/naming-and-event-types.md or "
+        "the product event-schema.md — it is the source of truth for the "
+        "event type enum"
+    ]
+
+
+def rule_15(catalog_events, schema_objects):
+    """Action validity: every catalog event needs a syntactically valid action."""
+    return _action_errors(catalog_events, schema_objects), []
+
+
+def rule_16(catalog_events):
+    """Result terminal form: type-driven canonical terminals."""
+    return _result_terminal_errors(
+        (n, ev["type"]) for n, ev in catalog_events.items()
+    ), []
+
+
+def rule_17(catalog_events, schema_event_types):
+    """Event type validity: every catalog row's Type is a member of the enum."""
+    errors = _missing_enum_error(schema_event_types)
+    if schema_event_types:
+        errors += _event_type_errors(
+            ((n, ev["type"]) for n, ev in catalog_events.items()), schema_event_types
+        )
+    return errors, []
+
+
 # ── Tracking Plan Validation Rules ────────────────────────────────────────────
 
 
@@ -1127,43 +1725,56 @@ def tp_rule_04(tp_events, prop_dict, tp_prop_dict):
     return errors, warnings
 
 
-def tp_rule_05(tp_events, schema_evt_props):
-    """Standard property compliance: job_id, referrer_user_id."""
+def tp_rule_05(tp_events, schema_evt_props, config=None):
+    """Standard property compliance from product config."""
     errors, warnings = [], []
+    config = config or ProductConfig()
     for name, ev in tp_events.items():
         area = ev["area"].lower()
         props = ev["properties"]
         group = ev["group"].strip("`")
 
-        # job_id required on job-grouped events
-        if group == "job" and "job_id" not in props:
-            warnings.append(
-                f'Job-grouped event "{name}" missing `job_id` '
-                f"(may be intentional for creation flow)"
-            )
+        for rule in config.group_property_rules:
+            if group != rule.get("group"):
+                continue
+            prop = rule.get("property", "")
+            if not prop or prop in props:
+                continue
+            if rule.get("tracking_plan_severity") == "warning":
+                warnings.append(
+                    f'Job-grouped event "{name}" missing `{prop}` '
+                    f"(may be intentional for creation flow)"
+                )
+            else:
+                errors.append(
+                    f'Job-grouped event "{name}" missing standard property `{prop}`'
+                )
 
-        # referrer_user_id required on viral loop events
-        if "viral" in area and "referrer_user_id" not in props:
-            errors.append(
-                f'Viral loop event "{name}" missing standard property `referrer_user_id`'
-            )
+        for rule in config.area_property_rules:
+            prop = rule.get("property", "")
+            area_contains = str(rule.get("area_contains", "")).lower()
+            if area_contains and area_contains in area and prop not in props:
+                _append_by_severity(
+                    rule,
+                    errors,
+                    warnings,
+                    _area_rule_message(area_contains, name, prop, include_loop=True),
+                )
 
     return errors, warnings
 
 
-def tp_rule_06(tp_intent_outcome, tp_events, catalog_events):
-    """All events in Intent vs Outcome table must exist in catalog or tracking plan."""
-    errors, warnings = [], []
+def tp_rule_06(tp_result_pattern, tp_result_pattern_errors, tp_events, catalog_events):
+    """All result-pattern events must exist in catalog or tracking plan."""
+    errors, warnings = list(tp_result_pattern_errors), []
     all_known = set(catalog_events.keys()) | set(tp_events.keys())
-    for flow in tp_intent_outcome:
-        for role in ("intent", "success", "failure"):
-            ev = flow[role]
-            if ev == "--" or not ev:
-                continue
+    for flow in tp_result_pattern:
+        for role, ev in _iter_result_pattern_events(flow):
             if ev not in all_known:
                 errors.append(
-                    f'Intent vs Outcome: "{ev}" ({role} for '
-                    f'"{flow["flow"]}") not found in catalog or tracking plan'
+                    f'Result pattern: "{ev}" '
+                    f'({RESULT_PATTERN_ROLE_LABELS[role]} for "{flow["flow"]}") '
+                    f"not found in catalog or tracking plan"
                 )
     return errors, warnings
 
@@ -1187,7 +1798,7 @@ def tp_rule_07(tp_events, schema_objects, added_objects=None, removed_objects=No
         elif obj not in known:
             errors.append(
                 f'Event "{name}": object "{obj}" is not in '
-                f"docs/event-schema.md Standard Objects or this plan's "
+                f"the product event-schema.md Standard Objects or this plan's "
                 f'## New Standard Objects section. Either rename the event to use '
                 f'a registered object, or declare "{obj}" in ## New Standard Objects.'
             )
@@ -1229,15 +1840,48 @@ def tp_rule_09(tp_events, prop_dict):
     return errors, warnings
 
 
+def tp_rule_10(tp_events, schema_objects):
+    """Action validity: every new event needs a syntactically valid action."""
+    return _action_errors(tp_events, schema_objects), []
+
+
+def tp_rule_11(tp_events):
+    """Result terminal form: type-driven canonical terminals.
+    With no Type column, type is None — the variant-terminal name check still
+    runs, but no type-driven terminal is enforced."""
+    return _result_terminal_errors(
+        (n, ev.get("type")) for n, ev in tp_events.items()
+    ), []
+
+
+def tp_rule_12(tp_events, schema_event_types):
+    """Event type validity: New Events table must carry a valid Type per row."""
+    errors = _missing_enum_error(schema_event_types)
+    if tp_events and all(ev.get("type") is None for ev in tp_events.values()):
+        errors.append(
+            'New Events table has no "Type" column — add one '
+            "(see templates/tracking-plan.md)"
+        )
+    else:
+        if schema_event_types:
+            errors += _event_type_errors(
+                ((n, ev.get("type") or "--") for n, ev in tp_events.items()),
+                schema_event_types,
+            )
+    return errors, []
+
+
 # ── Logging ──────────────────────────────────────────────────────────────────
 
-LOG_HEADER = (
-    "# Helix Analytics Docs — Validation Log\n\n"
-    "Auto-generated by `scripts/validate-analytics-docs.py`.  \n"
-    "Each run validates consistency across the 3 Helix analytics documents.\n\n"
-    "## Known Warnings\n\n"
-    "Reviewed and suppressed. Remove a line to re-surface it.\n"
-)
+def log_header(product):
+    label = PRODUCT_LABELS.get(product, product.replace("-", " ").title())
+    return (
+        f"# {label} Analytics Docs - Validation Log\n\n"
+        "Auto-generated by `scripts/validate-analytics-docs.py`.  \n"
+        f"Each run validates consistency across the 3 {label} analytics documents.\n\n"
+        "## Known Warnings\n\n"
+        "Reviewed and suppressed. Remove a line to re-surface it.\n"
+    )
 
 
 def load_known_warnings(log_path):
@@ -1260,7 +1904,7 @@ def load_known_warnings(log_path):
     return known
 
 
-def write_log(all_errors, all_warnings, suppressed_count=0, mode_label=None, rule_names=None):
+def write_log(paths, all_errors, all_warnings, suppressed_count=0, mode_label=None, rule_names=None):
     if rule_names is None:
         rule_names = RULE_NAMES
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -1312,10 +1956,11 @@ def write_log(all_errors, all_warnings, suppressed_count=0, mode_label=None, rul
 
     new_entry = "\n".join(lines)
 
-    if LOG_PATH.exists():
-        existing = LOG_PATH.read_text()
+    paths.log_path.parent.mkdir(parents=True, exist_ok=True)
+    if paths.log_path.exists():
+        existing = paths.log_path.read_text()
     else:
-        existing = LOG_HEADER
+        existing = log_header(paths.product)
 
     parts = re.split(r"(?=\n---\n\n## Run:)", existing)
     header = parts[0]
@@ -1323,13 +1968,13 @@ def write_log(all_errors, all_warnings, suppressed_count=0, mode_label=None, rul
     runs.append(new_entry)
     if len(runs) > MAX_LOG_RUNS:
         runs = runs[-MAX_LOG_RUNS:]
-    LOG_PATH.write_text(header + "".join(runs) + "\n")
+    paths.log_path.write_text(header + "".join(runs) + "\n")
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 
-def _run_rules(rules, known, rule_names, mode_label=None):
+def _run_rules(paths, rules, known, rule_names, mode_label=None):
     """Run a list of (rule_id, fn, args) rules, suppress known warnings, log, and exit."""
     all_errors, all_warnings = {}, {}
     for rid, fn, args in rules:
@@ -1349,7 +1994,7 @@ def _run_rules(rules, known, rule_names, mode_label=None):
         if not all_warnings[rid]:
             del all_warnings[rid]
 
-    write_log(all_errors, all_warnings, suppressed, mode_label=mode_label, rule_names=rule_names)
+    write_log(paths, all_errors, all_warnings, suppressed, mode_label=mode_label, rule_names=rule_names)
 
     ec = sum(len(e) for e in all_errors.values())
     wc = sum(len(w) for w in all_warnings.values())
@@ -1359,7 +2004,7 @@ def _run_rules(rules, known, rule_names, mode_label=None):
         if suppressed:
             msg += f" ({suppressed} known warnings suppressed)"
         print(msg)
-        print(f"Log: {LOG_PATH.relative_to(REPO_ROOT)}")
+        print(f"Log: {paths.log_path.relative_to(REPO_ROOT)}")
         sys.exit(0)
 
     if ec:
@@ -1377,17 +2022,19 @@ def _run_rules(rules, known, rule_names, mode_label=None):
     if suppressed:
         print(f"\n({suppressed} known warnings suppressed)")
 
-    print(f"\nLog updated: {LOG_PATH.relative_to(REPO_ROOT)}")
+    print(f"\nLog updated: {paths.log_path.relative_to(REPO_ROOT)}")
     sys.exit(1 if ec else 0)
 
 
-def _resolve_tracking_plan_path(arg):
+def _resolve_tracking_plan_path(paths, arg):
     candidate = Path(arg)
     if candidate.exists():
         return candidate
     for alt in (
-        REPO_ROOT / "tracking-plans" / f"{arg}.md",
-        REPO_ROOT / "tracking-plans" / arg,
+        paths.tracking_plans_dir / f"{arg}.md",
+        paths.tracking_plans_dir / arg,
+        TRACKING_PLANS_DIR / f"{arg}.md",
+        TRACKING_PLANS_DIR / arg,
         REPO_ROOT / arg,
     ):
         if alt.exists():
@@ -1398,7 +2045,7 @@ def _resolve_tracking_plan_path(arg):
 def _catalog_object_for_event(event_name, schema_objects):
     obj = _object_prefix(event_name, schema_objects)
     if not obj and event_name.endswith("Button Clicked"):
-        obj = _object_for_intent_event(event_name, schema_objects)
+        obj = _object_for_interaction_event(event_name, schema_objects)
     return obj
 
 
@@ -1414,7 +2061,7 @@ def removal_safety_blockers(removed_objects, catalog_events, schema_objects):
     return sorted(blockers)
 
 
-def check_removal_safety(tp_path):
+def check_removal_safety(paths, tp_path):
     if not tp_path.exists():
         print(f"ERROR: Tracking plan not found: {tp_path}", file=sys.stderr)
         return 2
@@ -1422,13 +2069,13 @@ def check_removal_safety(tp_path):
         print(f"ERROR: Tracking plan must be a markdown file: {tp_path}", file=sys.stderr)
         return 2
 
-    for p in (CATALOG_PATH, SCHEMA_PATH):
+    for p in (paths.catalog_path, paths.schema_path):
         if not p.exists():
             print(f"ERROR: File not found: {p}", file=sys.stderr)
             return 2
 
-    catalog_events, _, _ = parse_catalog(CATALOG_PATH)
-    schema_objects, _, _, _ = parse_schema(SCHEMA_PATH)
+    catalog_events, _, _ = parse_catalog(paths.catalog_path)
+    schema_objects, _, _, _, _, _ = parse_schema(paths.schema_path, paths.shared_event_types_path)
     tp_data = parse_tracking_plan(tp_path)
     declaration_errors, declaration_warnings = validate_object_declarations(
         tp_data.added_objects,
@@ -1451,65 +2098,75 @@ def check_removal_safety(tp_path):
     return 1 if blockers else 0
 
 
-def validate_catalog():
+def validate_catalog(paths):
     """Validate consistency across the 3 source-of-truth docs."""
-    for p in (CATALOG_PATH, SCHEMA_PATH, DASHBOARD_PATH):
+    for p in (paths.catalog_path, paths.schema_path, paths.dashboard_path):
         if not p.exists():
             print(f"ERROR: File not found: {p}", file=sys.stderr)
             sys.exit(2)
 
-    catalog_events, prop_dict, dup_events = parse_catalog(CATALOG_PATH)
-    schema_objects, schema_person, schema_evt_props, schema_io = parse_schema(
-        SCHEMA_PATH
-    )
-    funnels, dash_ph, dash_props = parse_dashboards(DASHBOARD_PATH)
+    catalog_events, prop_dict, dup_events = parse_catalog(paths.catalog_path)
+    (
+        schema_objects,
+        schema_person,
+        schema_evt_props,
+        schema_result_pattern,
+        schema_result_pattern_errors,
+        schema_event_types,
+    ) = parse_schema(paths.schema_path, paths.shared_event_types_path)
+    funnels, dash_ph, dash_ph_errors, dash_props = parse_dashboards(paths.dashboard_path)
 
-    if not catalog_events:
+    if not catalog_events and not paths.config.allow_empty_catalog:
         print("ERROR: No events parsed from catalog", file=sys.stderr)
         sys.exit(2)
 
-    known = load_known_warnings(LOG_PATH)
+    known = load_known_warnings(paths.log_path)
 
     rules = [
         (1, rule_01, (catalog_events, schema_objects)),
-        (2, rule_02, (schema_io, catalog_events)),
+        (2, rule_02, (schema_result_pattern, schema_result_pattern_errors, catalog_events)),
         (3, rule_03, (schema_person, catalog_events)),
-        (4, rule_04, (catalog_events, schema_evt_props)),
+        (4, rule_04, (catalog_events, schema_evt_props, paths.config)),
         (5, rule_05, (funnels, catalog_events)),
         (6, rule_06, (funnels, catalog_events)),
         (7, rule_07, (dash_props, prop_dict)),
         (8, rule_08, (dash_props, prop_dict)),
-        (9, rule_09, (dash_ph, schema_io)),
+        (9, rule_09, (dash_ph, dash_ph_errors, schema_result_pattern)),
         (10, rule_10, (catalog_events, prop_dict)),
         (11, rule_11, (catalog_events, prop_dict)),
         (12, rule_12, (catalog_events, prop_dict)),
         (13, rule_13, (catalog_events, prop_dict)),
         (14, rule_14, (dup_events, prop_dict)),
+        (15, rule_15, (catalog_events, schema_objects)),
+        (16, rule_16, (catalog_events,)),
+        (17, rule_17, (catalog_events, schema_event_types)),
     ]
 
-    _run_rules(rules, known, RULE_NAMES)
+    _run_rules(paths, rules, known, RULE_NAMES)
 
 
-def validate_tracking_plan(tp_path):
+def validate_tracking_plan(paths, tp_path):
     """Validate a tracking plan against catalog and schema context."""
     if not tp_path.exists():
         print(f"ERROR: Tracking plan not found: {tp_path}", file=sys.stderr)
         sys.exit(2)
 
-    for p in (CATALOG_PATH, SCHEMA_PATH):
+    for p in (paths.catalog_path, paths.schema_path):
         if not p.exists():
             print(f"ERROR: File not found: {p}", file=sys.stderr)
             sys.exit(2)
 
-    catalog_events, prop_dict, _ = parse_catalog(CATALOG_PATH)
-    schema_objects, _, schema_evt_props, _ = parse_schema(SCHEMA_PATH)
+    catalog_events, prop_dict, _ = parse_catalog(paths.catalog_path)
+    schema_objects, _, schema_evt_props, _, _, schema_event_types = parse_schema(
+        paths.schema_path, paths.shared_event_types_path
+    )
     tp_data = parse_tracking_plan(tp_path)
 
     if not tp_data.events:
         print("ERROR: No events parsed from tracking plan", file=sys.stderr)
         sys.exit(2)
 
-    known = load_known_warnings(LOG_PATH)
+    known = load_known_warnings(paths.log_path)
     plan_name = tp_path.stem
     declaration_errors, declaration_warnings = validate_object_declarations(
         tp_data.added_objects,
@@ -1524,8 +2181,17 @@ def validate_tracking_plan(tp_path):
         ("TP2", tp_rule_02, (tp_data.events, tp_data.prop_dict)),
         ("TP3", tp_rule_03, (tp_data.events, catalog_events)),
         ("TP4", tp_rule_04, (tp_data.events, prop_dict, tp_data.prop_dict)),
-        ("TP5", tp_rule_05, (tp_data.events, schema_evt_props)),
-        ("TP6", tp_rule_06, (tp_data.intent_outcome, tp_data.events, catalog_events)),
+        ("TP5", tp_rule_05, (tp_data.events, schema_evt_props, paths.config)),
+        (
+            "TP6",
+            tp_rule_06,
+            (
+                tp_data.result_pattern,
+                tp_data.result_pattern_errors,
+                tp_data.events,
+                catalog_events,
+            ),
+        ),
         (
             "TP7",
             tp_rule_07,
@@ -1538,25 +2204,51 @@ def validate_tracking_plan(tp_path):
         ),
         ("TP8", tp_rule_08, (tp_data.funnels, tp_data.events, catalog_events)),
         ("TP9", tp_rule_09, (tp_data.events, prop_dict)),
+        ("TP10", tp_rule_10, (tp_data.events, schema_objects)),
+        ("TP11", tp_rule_11, (tp_data.events,)),
+        ("TP12", tp_rule_12, (tp_data.events, schema_event_types)),
     ]
 
-    _run_rules(rules, known, TP_RULE_NAMES, mode_label=f"Tracking Plan: {plan_name}")
+    _run_rules(paths, rules, known, TP_RULE_NAMES, mode_label=f"Tracking Plan: {plan_name}")
 
 
 def main():
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "--check-removal-safety":
-            if len(sys.argv) != 3:
-                print(
-                    "ERROR: Usage: validate-analytics-docs.py "
-                    "--check-removal-safety <tp-path>",
-                    file=sys.stderr,
-                )
-                sys.exit(2)
-            sys.exit(check_removal_safety(_resolve_tracking_plan_path(sys.argv[2])))
-        validate_tracking_plan(_resolve_tracking_plan_path(sys.argv[1]))
+    parser = argparse.ArgumentParser(
+        description="Validate product-scoped analytics docs and tracking plans."
+    )
+    parser.add_argument(
+        "--product",
+        required=True,
+        help="Product namespace under docs/ (for example: helix, recruit).",
+    )
+    parser.add_argument(
+        "--check-removal-safety",
+        metavar="TP",
+        help="Check whether removed Standard Objects are still referenced by catalog events.",
+    )
+    parser.add_argument(
+        "tracking_plan",
+        nargs="?",
+        help="Tracking plan path, basename, or file under tracking-plans/<product>/.",
+    )
+    args = parser.parse_args()
+
+    if args.check_removal_safety and args.tracking_plan:
+        parser.error("tracking_plan positional cannot be combined with --check-removal-safety")
+
+    try:
+        paths = product_paths(args.product)
+    except (ProductPathError, ValueError) as exc:
+        parser.error(str(exc))
+
+    print(f"Validating product: {paths.product}")
+    if args.check_removal_safety:
+        tp_path = _resolve_tracking_plan_path(paths, args.check_removal_safety)
+        sys.exit(check_removal_safety(paths, tp_path))
+    if args.tracking_plan:
+        validate_tracking_plan(paths, _resolve_tracking_plan_path(paths, args.tracking_plan))
     else:
-        validate_catalog()
+        validate_catalog(paths)
 
 
 if __name__ == "__main__":
