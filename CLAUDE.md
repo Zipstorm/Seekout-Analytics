@@ -12,6 +12,7 @@ Analytics instrumentation, event taxonomy, tracking plans, metric frameworks, an
 - `templates/` - reusable templates.
 - `scripts/` - validation tooling.
 - `logs/<product>/` - validator run history.
+- `backlog/<product>/` - known issues and future fixes (naming cleanup, dashboard fixes).
 
 ## Source of Truth
 
@@ -45,6 +46,17 @@ Before generating any analytics document for a product, read:
 8. After merge, move the tracking plan file to `tracking-plans/<product>/archived/` and mark status as **Merged** in `INDEX.md`.
 
 **Important:** Never auto-merge events into the catalog. Only merge when the user explicitly runs `/merge-tracking-plan`.
+
+## Merge Conflict Resolution
+
+During `/merge-tracking-plan`, the **tracking plan wins** for its own events. The catalog gets updated to match, not the other way around.
+
+- Tracking plan renames an event → update the catalog event name and add old name to Removed Events.
+- Tracking plan adds/removes properties on an event → update the catalog event's Properties column.
+- Tracking plan extends existing Property Dictionary enums → append new values, don't replace.
+- Property Dictionary "Used In" is out of sync after merge → fix the catalog (add missing cross-references), never change the tracking plan.
+- Duplicate events after merge → remove the older catalog entry, keep the tracking plan version.
+- Pre-existing catalog issues (naming conventions, stale funnels) unrelated to the tracking plan → document in `backlog/<product>/`, don't fix during merge.
 
 ## Validation
 
