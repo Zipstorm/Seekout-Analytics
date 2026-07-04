@@ -7,6 +7,15 @@
 **Repo:** —
 **Branch:** —
 **PR:** —
+**Status:** Draft
+
+## Status History
+
+| Status | Date | Trigger |
+|---|---|---|
+| Draft | [Date] | Plan created |
+
+## Workflow
 
 - [ ] Draft created
 - [ ] Validated
