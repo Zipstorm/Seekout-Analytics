@@ -8,6 +8,16 @@
 **Branch:** job-seeker-interview-v2
 **PR:** https://github.com/Zipstorm/helix/pull/739
 
+- [x] Draft created — 2026-06-12
+- [x] Validated — 2026-06-12, 13/13 rules pass
+- [x] Codebase implemented — helix#739
+- [x] Absorbed from codebase — 2026-07-02, 65 events
+- [x] Re-validated — 2026-07-02, 13/13 rules pass
+- [x] PR raised — seekout-analytics#30
+- [ ] PR approved
+- [ ] Merged to catalog
+- [ ] Squash merged to main
+
 > References: `docs/shared/naming-and-event-types.md`, `docs/helix/event-schema.md`, and `docs/helix/event-catalog.md`.
 
 This plan builds on **Job Seeker Profile Setup v1** (`tracking-plan/job-seeker-v1` branch). It picks up the editor (B) and dashboard (C) events that v1 explicitly deferred to v2, adds the handle field (A) to the v1 create-profile flow, and instruments the brand-new anonymous AI interview flow (D).
@@ -36,9 +46,9 @@ The interview candidate **does not need to be a Helix user**. PostHog's native a
 
 ---
 
-## New Events
+## New Events Summary
 
-Events introduced by this feature. All follow Object-Action, Proper Case.
+Overview of all events introduced by this feature. All follow Object-Action, Proper Case.
 
 | Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
 |---|---|---|---|---|---|---|---|---|---|
@@ -179,7 +189,7 @@ Detailed property definitions for new events. Properties shared across multiple 
 
 ---
 
-## Event Schema
+## Event Specifications
 
 Detailed per-event specs organized by Part. All property tables include only the properties specific to that event; standard context properties (`current_page_context`, `previous_page_context`, `entity_type`, `helix_session_id`) follow the global schema.
 
