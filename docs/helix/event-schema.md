@@ -22,7 +22,7 @@ persona_rules:
 
 **Product:** Helix (SeekOut.ai)  
 **Analytics Platform:** PostHog  
-**Last Updated:** June 2026
+**Last Updated:** July 2026
 
 For the event catalog and implementation status, see [Helix Analytics Events Tracker](./event-catalog.md).
 For dashboards and funnel mappings, see [Helix Analytics Dashboards & Funnels](./dashboards.md).
@@ -77,12 +77,65 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Question | AI-generated interview question | Question Add Button Clicked |
 | Intro Script | Intro video script | Intro Script Updated |
 | Chat | Chat/WebSocket connection for messaging | Chat WebSocket Connected, Chat WebSocket Error |
-| Resume Upload | User's resume upload flow | Resume Upload Button Clicked, Resume Upload Failed |
-| Resume | User's uploaded resume document | Resume Uploaded, Resume Removed |
 | Profile Photo | User's profile headshot image | Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed |
 | LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Link Clicked |
 | Build Profile | AI profile generation process | Build Profile Button Clicked, Build Profile Snapshot |
 | Candidate Profile | Job seeker's AI-generated career profile | Candidate Profile Created, Candidate Profile Creation Failed |
+| Candidate Handle Add | Job seeker handle add action | Candidate Handle Add Succeeded, Candidate Handle Add Rejected |
+| Candidate Previous Resume Select Button | Previous resume select CTA | Candidate Previous Resume Select Button Clicked |
+| Candidate Custom Link Delete | Custom link deletion lifecycle | Candidate Custom Link Delete Succeeded, Candidate Custom Link Delete Errored |
+| Candidate Custom Link Delete Button | Custom link delete CTA | Candidate Custom Link Delete Button Clicked |
+| Candidate Profile Overview Load | Profile overview load state | Candidate Profile Overview Load Succeeded |
+| Candidate Profile Tab | Editor tab navigation | Candidate Profile Tab Switched |
+| Candidate Resume Download | Resume download action | Candidate Resume Download Succeeded |
+| Candidate Portfolio Publish | Portfolio publish lifecycle | Candidate Portfolio Publish Succeeded, Candidate Portfolio Publish Errored |
+| Candidate Portfolio Publish Button | Portfolio publish CTA | Candidate Portfolio Publish Button Clicked |
+| Candidate Portfolio Unpublish | Portfolio unpublish lifecycle | Candidate Portfolio Unpublish Succeeded |
+| Candidate Portfolio Unpublish Button | Portfolio unpublish CTA | Candidate Portfolio Unpublish Button Clicked |
+| Change Profile Photo Button | Change profile photo CTA | Change Profile Photo Button Clicked |
+| Candidate Profile Photo Remove | Profile photo removal lifecycle | Candidate Profile Photo Remove Succeeded, Candidate Profile Photo Remove Errored |
+| Candidate Profile Photo Remove Button | Profile photo remove CTA | Candidate Profile Photo Remove Button Clicked |
+| Candidate Portfolio Create Button | Portfolio creation CTA on dashboard | Candidate Portfolio Create Button Clicked |
+| Candidate Portfolio Rename | Portfolio rename lifecycle | Candidate Portfolio Rename Succeeded |
+| Candidate Portfolio Rename Button | Portfolio rename CTA | Candidate Portfolio Rename Button Clicked |
+| Candidate Portfolio Delete | Portfolio delete lifecycle | Candidate Portfolio Delete Succeeded |
+| Candidate Portfolio Delete Button | Portfolio delete CTA | Candidate Portfolio Delete Button Clicked |
+| Candidate Resume Upload | Resume upload in create-profile context | Candidate Resume Upload Button Clicked, Candidate Resume Upload Succeeded, Candidate Resume Upload Rejected, Candidate Resume Upload Errored |
+| Candidate Resume Remove Button | Resume remove CTA | Candidate Resume Remove Button Clicked |
+| Candidate Profile Custom Link Add | Custom link add lifecycle | Candidate Profile Custom Link Add Succeeded |
+| Get Started Interview Button | Interview landing CTA | Get Started Interview Button Clicked |
+| Candidate Interview Info Next Button | Interview info form CTA | Candidate Interview Info Next Button Clicked |
+| What To Expect Link | Interview info expander | What To Expect Link Clicked |
+| Candidate Interview Resume Next Button | Resume step CTA | Candidate Interview Resume Next Button Clicked |
+| Candidate Interview Resume Upload | Resume upload lifecycle in interview | Candidate Interview Resume Upload Succeeded, Candidate Interview Resume Upload Errored |
+| Open Identity Check Link | Open identity check CTA | Open Identity Check Link Clicked |
+| Refresh Status Button | Refresh identity check status CTA | Refresh Status Button Clicked |
+| Candidate Interview Identity Verification | Third-party identity verification lifecycle | Candidate Interview Identity Verification Succeeded, Candidate Interview Identity Verification Errored, Candidate Interview Identity Verification Rejected |
+| Candidate Interview Identity Verification Auto Redirect | Auto-redirect after verification | Candidate Interview Identity Verification Auto Redirect Succeeded, Candidate Interview Identity Verification Auto Redirect Errored, Candidate Interview Identity Verification Auto Redirect Rejected |
+| Candidate Interview Identity Verification Continue Button | Continue after verification CTA | Candidate Interview Identity Verification Continue Button Clicked |
+| Candidate Interview Privacy Email Link | Privacy email link | Candidate Interview Privacy Email Link Clicked |
+| Candidate Interview Persona Privacy Policy Link | Persona privacy policy link | Candidate Interview Persona Privacy Policy Link Clicked |
+| Candidate Interview Screening Response Next Button | Screening next CTA | Candidate Interview Screening Response Next Button Clicked |
+| Candidate Interview Screening Response Submit | Screening response submission | Candidate Interview Screening Response Submit Succeeded |
+| Candidate Interview Screening Response Save And Review Button | Screening save-and-review CTA | Candidate Interview Screening Response Save And Review Button Clicked |
+| Allow Device Access Button | Camera/mic permission CTA | Allow Device Access Button Clicked |
+| Device Access Grant | Camera/mic grant result | Device Access Grant Succeeded |
+| Device Access | Camera/mic permission rejection | Device Access Rejected |
+| Candidate Interview Start Button | Start interview CTA | Candidate Interview Start Button Clicked |
+| Candidate Interview | Anonymous AI screening interview session | Candidate Interview Started |
+| Candidate Interview Question Answer | Per-question answer result | Candidate Interview Question Answer Succeeded |
+| Candidate Interview Question Restart | Question restart lifecycle | Candidate Interview Question Restart Succeeded, Candidate Interview Question Restart Errored |
+| Candidate Interview Question Restart Button | Question restart CTA | Candidate Interview Question Restart Button Clicked |
+| Candidate Interview Question Skip | Question skip lifecycle | Candidate Interview Question Skip Succeeded, Candidate Interview Question Skip Errored, Candidate Interview Question Skip Rejected |
+| Candidate Interview Question Skip Button | Question skip CTA | Candidate Interview Question Skip Button Clicked |
+| Candidate Interview Screening Response Edit Button | Screening answer edit link | Candidate Interview Screening Response Edit Button Clicked |
+| Candidate Interview Review Answer Button | Answer skipped question on review | Candidate Interview Review Answer Button Clicked |
+| Candidate Interview Retake Question Button | Retake question on review | Candidate Interview Retake Question Button Clicked |
+| Candidate Interview Review Answer Expand | Answer card expand on review | Candidate Interview Review Answer Expand Clicked |
+| Candidate Interview Answers Submit | End-of-recording submission | Candidate Interview Answers Submit Succeeded |
+| Candidate Interview Answer Retake | Retake completion result | Candidate Interview Answer Retake Succeeded |
+| Candidate Interview Screening Response Edit | Screening edit completion | Candidate Interview Screening Response Edit Succeeded |
+| Candidate Interview Submit | Full interview submission lifecycle | Candidate Interview Submit Succeeded, Candidate Interview Submit Rejected |
 
 When introducing a new object, add it to this table before using it in events.
 
@@ -397,21 +450,37 @@ For critical flows, track the UI interaction or process start separately from th
 
 Current catalog examples that still use old result terminals or non-result names are deferred rename debt. New or renamed result events must use `Succeeded`, `Rejected`, or `Errored`.
 
-| Flow | Interaction / Started Event | Success Event | Rejected Event |
-|------|-----------------------------|---------------|----------------|
-| Login / Signup | Login Started | Account Created (new) or Auth Login Succeeded (returning) | Login Cancelled, Auth Login Failed |
-| Sharing a job | Share Button Clicked | Job Shared | Job Share Failed |
-| Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed |
-| Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed |
-| Creating a job (wizard start) | Create Job Button Clicked, Job Post Wizard Started | -- | -- |
-| Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed |
-| Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- |
-| Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- |
-| Publishing a job (skipped) | Job Post Wizard Verification Skipped | Job Posting Published | -- |
-| Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed |
-| Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed |
-| Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed |
-| Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed |
-| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed |
+| Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
+|------|-----------------------------|---------------|----------------|-------------|
+| Login / Signup | Login Started | Account Created (new) or Auth Login Succeeded (returning) | Login Cancelled, Auth Login Failed | -- |
+| Sharing a job | Share Button Clicked | Job Shared | Job Share Failed | -- |
+| Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed | -- |
+| Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed | -- |
+| Creating a job (wizard start) | Create Job Button Clicked, Job Post Wizard Started | -- | -- | -- |
+| Creating a job (draft save) | Job Post Wizard Job Details Completed | Job Posting Draft Created | Job Creation Failed | -- |
+| Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- | -- |
+| Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- | -- |
+| Publishing a job (skipped) | Job Post Wizard Verification Skipped | Job Posting Published | -- | -- |
+| Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed | -- |
+| Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed | -- |
+| Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed | -- |
+| Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed | -- |
+| Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed | -- |
+| Resume upload | Candidate Resume Upload Button Clicked | Candidate Resume Upload Succeeded | Candidate Resume Upload Rejected | Candidate Resume Upload Errored |
+| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Added | Profile Photo Upload Failed | -- |
+| Profile creation | Build Profile Button Clicked | Candidate Profile Created | Candidate Profile Creation Failed | -- |
+| Publish portfolio | Candidate Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | -- | Candidate Portfolio Publish Errored |
+| Unpublish portfolio | Candidate Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | -- | -- |
+| Rename portfolio | Candidate Portfolio Rename Button Clicked | Candidate Portfolio Rename Succeeded | -- | -- |
+| Delete portfolio | Candidate Portfolio Delete Button Clicked | Candidate Portfolio Delete Succeeded | -- | -- |
+| Remove profile photo (editor) | Candidate Profile Photo Remove Button Clicked | Candidate Profile Photo Remove Succeeded | -- | Candidate Profile Photo Remove Errored |
+| Delete custom link | Candidate Custom Link Delete Button Clicked | Candidate Custom Link Delete Succeeded | -- | Candidate Custom Link Delete Errored |
+| Identity verification | Open Identity Check Link Clicked | Candidate Interview Identity Verification Succeeded | Candidate Interview Identity Verification Rejected | Candidate Interview Identity Verification Errored |
+| Device access | Allow Device Access Button Clicked | Device Access Grant Succeeded | Device Access Rejected | -- |
+| Start interview | Candidate Interview Start Button Clicked | Candidate Interview Started | -- | -- |
+| Restart question | Candidate Interview Question Restart Button Clicked | Candidate Interview Question Restart Succeeded | -- | Candidate Interview Question Restart Errored |
+| Skip question | Candidate Interview Question Skip Button Clicked | Candidate Interview Question Skip Succeeded | Candidate Interview Question Skip Rejected | Candidate Interview Question Skip Errored |
+| Screening response edit | Candidate Interview Screening Response Edit Button Clicked | Candidate Interview Screening Response Edit Succeeded | -- | -- |
+| Submit interview | -- | Candidate Interview Submit Succeeded | Candidate Interview Submit Rejected | -- |
 
 > **Exception:** `Sam Session Setup Failed` captures voice setup rejection separately from `Sam Session Started`, which is start-only.
