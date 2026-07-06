@@ -16,103 +16,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-07-02 12:47:56 UTC — Tracking Plan: job-seeker-interview-v2
-
-**Result: All clear**
-
-All 13 validation rules passed.
-
----
-
-## Run: 2026-07-04 07:30:06 UTC — Tracking Plan: hm-job-posting-edit-flow-v1
-
-**Result: 12 errors**
-
-### Errors
-
-- **[Rule TP1]** Event "Refine with AI Button Clicked": word "with" should be capitalized (Proper Case)
-- **[Rule TP11]** Result event "Job Status Change Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP11]** Result event "Job Delete Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP11]** Result event "Job Share Message AI Refine Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP12]** New Events table has no "Type" column — add one (see templates/tracking-plan.md)
-- **[Rule TP6]** /Users/soumabrata_skr/Documents/GitHub/Seekout-Analytics/tracking-plans/hm-job-posting-edit-flow-v1.md uses old "Intent vs Outcome" table heading; use "Interaction / Started / Result Pattern".
-- **[Rule TP7]** Event "Post Interview Button Clicked": object "Post Interview Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Post Interview Button" in ## New Standard Objects.
-- **[Rule TP7]** Event "Post Interview Link Copied": object "Post Interview Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Post Interview Link" in ## New Standard Objects.
-- **[Rule TP7]** Event "Recruiter Invites Sent": object "Recruiter Invites" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Recruiter Invites" in ## New Standard Objects.
-- **[Rule TP7]** Event "Recruiter Invite Link Copied": object "Recruiter Invite Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Recruiter Invite Link" in ## New Standard Objects.
-- **[Rule TP7]** Event "Intro Video Script Regenerate Button Clicked": object "Intro Video Script Regenerate Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Video Script Regenerate Button" in ## New Standard Objects.
-- **[Rule TP7]** Event "Intro Video Script Edit Button Clicked": object "Intro Video Script Edit Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Video Script Edit Button" in ## New Standard Objects.
-
-
----
-
-## Run: 2026-07-04 07:30:07 UTC — Tracking Plan: job-seeker-interview-v2
-
-**Result: All clear**
-
-All 13 validation rules passed.
-
----
-
-## Run: 2026-07-04 07:42:07 UTC — Tracking Plan: hm-job-posting-edit-flow-v1
-
-**Result: 12 errors**
-
-### Errors
-
-- **[Rule TP1]** Event "Refine with AI Button Clicked": word "with" should be capitalized (Proper Case)
-- **[Rule TP11]** Result event "Job Status Change Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP11]** Result event "Job Delete Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP11]** Result event "Job Share Message AI Refine Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP12]** New Events table has no "Type" column — add one (see templates/tracking-plan.md)
-- **[Rule TP6]** /Users/soumabrata_skr/Documents/GitHub/Seekout-Analytics/tracking-plans/helix/hm-job-posting-edit-flow-v1.md uses old "Intent vs Outcome" table heading; use "Interaction / Started / Result Pattern".
-- **[Rule TP7]** Event "Post Interview Button Clicked": object "Post Interview Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Post Interview Button" in ## New Standard Objects.
-- **[Rule TP7]** Event "Post Interview Link Copied": object "Post Interview Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Post Interview Link" in ## New Standard Objects.
-- **[Rule TP7]** Event "Recruiter Invites Sent": object "Recruiter Invites" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Recruiter Invites" in ## New Standard Objects.
-- **[Rule TP7]** Event "Recruiter Invite Link Copied": object "Recruiter Invite Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Recruiter Invite Link" in ## New Standard Objects.
-- **[Rule TP7]** Event "Intro Video Script Regenerate Button Clicked": object "Intro Video Script Regenerate Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Video Script Regenerate Button" in ## New Standard Objects.
-- **[Rule TP7]** Event "Intro Video Script Edit Button Clicked": object "Intro Video Script Edit Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Video Script Edit Button" in ## New Standard Objects.
-
-
----
-
-## Run: 2026-07-04 09:07:54 UTC — Tracking Plan: job-seeker-interview-v2
-
-**Result: All clear**
-
-All 13 validation rules passed.
-
----
-
-## Run: 2026-07-04 10:01:20 UTC — Tracking Plan: job-seeker-profile-setup-v1
-
-**Result: 11 errors**
-
-### Errors
-
-- **[Rule TP11]** Result event "Resume Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP11]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP11]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule TP12]** New Events table has no "Type" column — add one (see templates/tracking-plan.md)
-- **[Rule TP6]** /Users/soumabrata_skr/Documents/GitHub/Seekout-Analytics/tracking-plans/helix/job-seeker-profile-setup-v1.md uses old "Intent vs Outcome" table heading; use "Interaction / Started / Result Pattern".
-- **[Rule TP7]** Event "Resume Upload Button Clicked": object "Resume Upload Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Resume Upload Button" in ## New Standard Objects.
-- **[Rule TP7]** Event "LinkedIn Export Learn How Link Clicked": object "LinkedIn Export Learn How Link" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "LinkedIn Export Learn How Link" in ## New Standard Objects.
-- **[Rule TP7]** Event "Add Profile Photo Button Clicked": object "Add Profile Photo Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Add Profile Photo Button" in ## New Standard Objects.
-- **[Rule TP7]** Event "Profile Photo Upload Failed": object "Profile Photo Upload" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Profile Photo Upload" in ## New Standard Objects.
-- **[Rule TP7]** Event "Build Profile Button Clicked": object "Build Profile Button" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Build Profile Button" in ## New Standard Objects.
-- **[Rule TP7]** Event "Candidate Profile Creation Failed": object "Candidate Profile Creation" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Candidate Profile Creation" in ## New Standard Objects.
-
-
----
-
-## Run: 2026-07-04 13:25:56 UTC — Tracking Plan: job-seeker-interview-v2
-
-**Result: All clear**
-
-All 13 validation rules passed.
-
----
-
 ## Run: 2026-07-04 14:10:09 UTC
 
 **Result: 120 errors, 3 warnings**
@@ -1573,3 +1476,119 @@ All 13 validation rules passed.
 
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
 
+
+---
+
+## Run: 2026-07-06 11:03:43 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
+
+**Result: 17 errors**
+
+### Errors
+
+- **[Rule TP0]** Tracking plan section "New Standard Objects" must use columns: Object | Entity | Example Events.
+- **[Rule TP11]** Event "Onboarding Completed" has Type Success but does not end in Succeeded
+- **[Rule TP4]** "Onboarding Role Card Clicked": property `role_card` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Onboarding Completed": property `persona` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Onboarding Completed": property `onboarding_duration_seconds` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Onboarding Completed": property `steps_completed` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP6]** Result pattern: "Account Create Succeeded" (success for "Login / Signup") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Login Cancel Succeeded" (rejected for "Login / Signup") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Auth Login Rejected" (rejected for "Login / Signup") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Auth Email Verify Code Send Succeeded" (success for "Email verification") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Auth Email Verify Rejected" (rejected for "Email verification") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Auth Email Verify Code Send Errored" (error for "Email verification") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Auth Phone Submit Succeeded" (success for "Phone collection") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Auth Phone Submit Errored" (error for "Phone collection") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Account Create Succeeded" (success for "Role selection") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Intro Complete Succeeded" (success for "Intro completion") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Auth Session Restore Errored" (error for "Session restore") not found in catalog or tracking plan
+
+
+---
+
+## Run: 2026-07-06 11:09:34 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
+
+**Result: 17 errors**
+
+### Errors
+
+- **[Rule TP0]** Tracking plan section "New Standard Objects" must use columns: Object | Entity | Example Events.
+- **[Rule TP4]** "Auth Login Rejected": property `clerk_strategy` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP7]** Event "Onboarding Complete Succeeded": object "Onboarding Complete" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Onboarding Complete" in ## New Standard Objects.
+- **[Rule TP7]** Event "Account Create Succeeded": object "Account Create" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Account Create" in ## New Standard Objects.
+- **[Rule TP7]** Event "Intro Complete Succeeded": object "Intro Complete" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Complete" in ## New Standard Objects.
+- **[Rule TP7]** Event "Login Cancel Succeeded": object "Login Cancel" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Login Cancel" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Login Rejected": object "Auth Login" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Login" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Email Verify Code Send Succeeded": object "Auth Email Verify Code Send" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Email Verify Code Send" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Email Verify Code Send Errored": object "Auth Email Verify Code Send" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Email Verify Code Send" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Email Verify Succeeded": object "Auth Email Verify" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Email Verify" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Email Verify Rejected": object "Auth Email Verify" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Email Verify" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Phone Submit Succeeded": object "Auth Phone Submit" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Phone Submit" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Phone Submit Errored": object "Auth Phone Submit" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Phone Submit" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Phone Skip Succeeded": object "Auth Phone Skip" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Phone Skip" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Logout Succeeded": object "Auth Logout" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Logout" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Session Restore Errored": object "Auth Session Restore" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Session Restore" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Refresh Errored": object "Auth Refresh" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Refresh" in ## New Standard Objects.
+
+
+---
+
+## Run: 2026-07-06 11:12:06 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
+
+**Result: 17 errors**
+
+### Errors
+
+- **[Rule TP0]** Tracking plan section "New Standard Objects" must use columns: Object | Entity | Example Events.
+- **[Rule TP7]** Event "Onboarding Role Card Clicked": object "Onboarding Role Card" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Onboarding Role Card" in ## New Standard Objects.
+- **[Rule TP7]** Event "Onboarding Complete Succeeded": object "Onboarding Complete" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Onboarding Complete" in ## New Standard Objects.
+- **[Rule TP7]** Event "Account Create Succeeded": object "Account Create" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Account Create" in ## New Standard Objects.
+- **[Rule TP7]** Event "Intro Complete Succeeded": object "Intro Complete" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Intro Complete" in ## New Standard Objects.
+- **[Rule TP7]** Event "Login Cancel Succeeded": object "Login Cancel" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Login Cancel" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Login Rejected": object "Auth Login" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Login" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Email Verify Code Send Succeeded": object "Auth Email Verify Code Send" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Email Verify Code Send" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Email Verify Code Send Errored": object "Auth Email Verify Code Send" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Email Verify Code Send" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Email Verify Succeeded": object "Auth Email Verify" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Email Verify" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Email Verify Rejected": object "Auth Email Verify" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Email Verify" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Phone Submit Succeeded": object "Auth Phone Submit" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Phone Submit" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Phone Submit Errored": object "Auth Phone Submit" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Phone Submit" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Phone Skip Succeeded": object "Auth Phone Skip" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Phone Skip" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Logout Succeeded": object "Auth Logout" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Logout" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Session Restore Errored": object "Auth Session Restore" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Session Restore" in ## New Standard Objects.
+- **[Rule TP7]** Event "Auth Refresh Errored": object "Auth Refresh" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Refresh" in ## New Standard Objects.
+
+
+---
+
+## Run: 2026-07-06 11:12:57 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
+
+**Result: 1 error**
+
+### Errors
+
+- **[Rule TP0]** Tracking plan section "New Standard Objects" must use columns: Object | Entity | Example Events.
+
+
+---
+
+## Run: 2026-07-06 11:21:19 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-06 11:31:16 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-06 11:58:06 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.
