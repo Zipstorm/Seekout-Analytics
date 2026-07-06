@@ -37,14 +37,14 @@
 
 This plan covers the entire onboarding funnel for all personas. It:
 
-1. **Adds 2 new events** — role card interaction, onboarding completion terminal
+1. **Adds 2 new events** — persona card interaction, onboarding completion terminal
 2. **Extends Page Viewed** to 3 pages that currently have no page-view tracking
 3. **Fixes Login Started** to fire on production Clerk auth paths (currently dev-only)
 4. **Adds `mode` property** to events shared between onboarding and post-onboarding
 5. **Renames 12 onboarding events** to follow Succeeded/Rejected/Errored terminal rules
 6. **Removes 6 dead events** — phone collection (not wired), Login Cancelled (dead code), catalog-only handle names
 7. **Fixes properties** — replaces `role` with `current_persona` as event property, moves $set_once attribution, removes deprecated fields
-8. **Adds `current_persona` as event property** on all post-role-selection events so persona is frozen at capture time
+8. **Adds `current_persona` as event property** on all post-persona-selection events so persona is frozen at capture time
 9. **Defines 6 funnels** mapped to the user's analytics requirements
 
 ### Supersedes
@@ -59,7 +59,7 @@ This plan supersedes `tracking-plans/helix/helix-code-changes-login-onboarding.m
 
 | Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| Onboarding Role Card Clicked | Account | Interaction | Frontend | User clicks "I'm a professional" or "I'm hiring" or a hiring sub-option (Hiring Manager / Recruiter) on `/onboarding/role` | Tracks which role cards users explore before committing. Fires before persona is set. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Not Started |
+| Onboarding Persona Card Clicked | Account | Interaction | Frontend | User clicks "I'm a professional" or "I'm hiring" or a hiring sub-option (Hiring Manager / Recruiter) on `/onboarding/role` | Tracks which persona cards users explore before committing. Fires before persona is set. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Not Started |
 | Onboarding Complete Succeeded | Account | Success | Backend | User completes all onboarding steps and lands on the first post-onboarding page | Terminal event marking the end of onboarding. Backend confirms onboarding state is complete. | `current_page_context`, `previous_page_context`, `current_persona`, `first_persona`, `auth_method`, `onboarding_duration_seconds`, `steps_completed` | -- | -- | Not Started |
 | Account Create Succeeded | Account | Success | Backend | Server confirms role set via PATCH /users/me on first role selection (rename of Account Created) | Backend fires after persisting the user's first persona. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entry_point`, `entity_type`, `component`, `first_persona`, `auth_method`, `referred_by` | -- | `$set: current_persona, activated_personas`; `$set_once: first_persona, account_created_at, referred_by` | Not Started |
 | Onboarding Intro Complete Succeeded | Account | Success | Frontend | User clicks "Let's go" on onboarding intro page (rename of Intro Completed) | Pure UI transition — no backend call. Frontend-only because there is no server-side state change. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `auth_method`, `current_persona` | -- | -- | Not Started |
@@ -283,14 +283,14 @@ These events currently violate the naming rules from `docs/shared/naming-and-eve
 
 ## Event Specifications
 
-### Onboarding Role Card Clicked
+### Onboarding Persona Card Clicked
 
 | Field | Value |
 |---|---|
-| **Event** | Onboarding Role Card Clicked |
+| **Event** | Onboarding Persona Card Clicked |
 | **Area** | Account |
 | **Type** | Interaction |
-| **Trigger** | User clicks "I'm a professional" card, "I'm hiring" card, "Hiring Manager" sub-option, or "Recruiter" sub-option on the role selection page |
+| **Trigger** | User clicks "I'm a professional" card, "I'm hiring" card, "Hiring Manager" sub-option, or "Recruiter" sub-option on the persona selection page |
 | **Source** | Frontend |
 | **Group** | — |
 
@@ -336,7 +336,7 @@ These events currently violate the naming rules from `docs/shared/naming-and-eve
 
 | Object | Entity | Example Events |
 |---|---|---|
-| Onboarding Role Card | Role selection card on onboarding page | Onboarding Role Card Clicked |
+| Onboarding Persona Card | Persona selection card on onboarding page | Onboarding Persona Card Clicked |
 | Onboarding Complete | Full onboarding flow lifecycle | Onboarding Complete Succeeded |
 | Account Create | User account creation (rename of Account) | Account Create Succeeded |
 | Onboarding Intro Complete | Onboarding intro screen completion (rename of Intro) | Onboarding Intro Complete Succeeded |
@@ -352,9 +352,9 @@ These events currently violate the naming rules from `docs/shared/naming-and-eve
 
 New events from this plan to add to `docs/helix/event-catalog.md`:
 
-- [ ] Onboarding Role Card Clicked → Login & Onboarding Events
+- [ ] Onboarding Persona Card Clicked → Login & Onboarding Events
 - [ ] Onboarding Complete Succeeded → Login & Onboarding Events
-- [ ] New object added to Standard Objects table: Yes — Onboarding Role Card, Onboarding
+- [ ] New object added to Standard Objects table: Yes — Onboarding Persona Card, Onboarding
 - [ ] `mode` property extended with values `onboarding`, `editor`, `dashboard`
 - [ ] 14 events renamed (old names → Removed Events table)
 - [ ] Page Viewed → add `auth_signup` as `current_page_context` value (replaces `auth_landing`)
@@ -368,7 +368,7 @@ New events from this plan to add to `docs/helix/event-catalog.md`:
 |---|---|---|---|---|
 | Login / Signup | Login Started | Account Create Succeeded (new user) or Auth Login Succeeded (returning) | Auth Login Rejected | -- |
 | Email verification | -- | Auth Email Verify Code Send Succeeded | Auth Email Verify Rejected | Auth Email Verify Code Send Errored |
-| Role selection | Onboarding Role Card Clicked | Account Create Succeeded | -- | -- |
+| Persona selection | Onboarding Persona Card Clicked | Account Create Succeeded | -- | -- |
 | Intro completion | -- | Onboarding Intro Complete Succeeded | -- | -- |
 | Resume upload (onboarding) | Candidate Resume Upload Button Clicked | Candidate Resume Upload Succeeded | Candidate Resume Upload Rejected | Candidate Resume Upload Errored |
 | Profile photo (onboarding) | Add Profile Photo Button Clicked | Profile Photo Added | Profile Photo Upload Failed | -- |
@@ -393,7 +393,7 @@ New events from this plan to add to `docs/helix/event-catalog.md`:
 | 8 | Resume upload success rate during onboarding | Candidate Resume Upload Button Clicked → Candidate Resume Upload Succeeded (filter: `mode = onboarding`) | Funnel | Breakdown by `resume_file_type` | Prospect |
 | 9 | Profile photo adoption during onboarding | Add Profile Photo Button Clicked → Profile Photo Added (filter: `mode = onboarding`) | Funnel | -- | Prospect |
 | 10 | Handle claim rate during onboarding | Handle Claim Succeeded (filter: `mode = onboarding`) / Onboarding Complete Succeeded (filter: `current_persona = job_seeker`) | Formula | -- | Prospect |
-| 11 | Role exploration behavior | Onboarding Role Card Clicked | Trend | Breakdown by `action_value` | Growth |
+| 11 | Persona exploration behavior | Onboarding Persona Card Clicked | Trend | Breakdown by `action_value` | Growth |
 | 12 | Email verification completion rate | Page Viewed (filter: `current_page_context = onboarding_verify_email`) → Auth Email Verify Succeeded | Funnel | -- | Growth |
 | 13 | Time per onboarding step | Onboarding Complete Succeeded | Trend | Property: `onboarding_duration_seconds`, breakdown by `steps_completed` | Growth |
 
