@@ -315,6 +315,97 @@ class ParseTrackingPlanTests(unittest.TestCase):
         errs, _ = mod.tp_rule_12(events, ALLOWED_EVENT_TYPES)
         self.assertEqual(errs, [])
 
+    def test_event_renames_are_parsed_as_planned_events(self):
+        body = """# Tracking Plan: Test
+
+## Event Renames
+
+### Type Reclassification — Started/Success → Interaction
+
+| Current Name | New Name | Old Type | New Type | Constant |
+|---|---|---|---|---|
+| Login Started | Login Started Button Clicked | Started | Interaction | `LOGIN_STARTED` → `LOGIN_STARTED_BUTTON_CLICKED` |
+| [Old Name] | [New Name] | Success | Interaction | `OLD` → `NEW` |
+
+### Success Events — Must End "Succeeded"
+
+| Current Name | New Name | Type | Constant |
+|---|---|---|---|
+| Account Created | Account Create Succeeded | Success | `ACCOUNT_CREATED` → `ACCOUNT_CREATE_SUCCEEDED` |
+
+### Rejected Events — Must End "Rejected"
+
+| Current Name | New Name | Type | Rationale |
+|---|---|---|---|
+| Auth Login Failed | Auth Login Rejected | Rejected | User-caused |
+
+### Error Events — Must End "Errored"
+
+| Current Name | New Name | Type | Rationale |
+|---|---|---|---|
+| Auth Refresh Failed | Auth Refresh Errored | Error | System-caused |
+"""
+        events = self._parse(body).events
+        self.assertEqual(events["Login Started Button Clicked"]["type"], "Interaction")
+        self.assertEqual(events["Account Create Succeeded"]["type"], "Success")
+        self.assertEqual(events["Auth Login Rejected"]["type"], "Rejected")
+        self.assertEqual(events["Auth Refresh Errored"]["type"], "Error")
+        self.assertEqual(
+            events["Account Create Succeeded"]["renamed_from"], "Account Created"
+        )
+        self.assertNotIn("[New Name]", events)
+
+    def test_renamed_events_satisfy_result_pattern_and_funnel_checks(self):
+        body = """# Tracking Plan: Test
+
+## Event Renames
+
+### Type Reclassification — Started/Success → Interaction
+
+| Current Name | New Name | Old Type | New Type | Constant |
+|---|---|---|---|---|
+| Login Started | Login Started Button Clicked | Started | Interaction | `LOGIN_STARTED` → `LOGIN_STARTED_BUTTON_CLICKED` |
+
+### Success Events — Must End "Succeeded"
+
+| Current Name | New Name | Type | Constant |
+|---|---|---|---|
+| Account Created | Account Create Succeeded | Success | `ACCOUNT_CREATED` → `ACCOUNT_CREATE_SUCCEEDED` |
+
+## Interaction / Started / Result Pattern
+
+| Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
+|---|---|---|---|---|
+| Login / Signup | Login Started Button Clicked | Account Create Succeeded | -- | -- |
+
+## Funnels
+
+### Signup Funnel
+
+| Step | Event | Filter |
+|---|---|---|
+| 1 | Page Viewed | — |
+| 2 | Login Started Button Clicked | — |
+| 3 | Account Create Succeeded | — |
+"""
+        data = self._parse(body)
+        catalog_events = {"Page Viewed": {"section": "Navigation"}}
+
+        result_errors, _ = mod.tp_rule_06(
+            data.result_pattern,
+            data.result_pattern_errors,
+            data.events,
+            catalog_events,
+        )
+        funnel_errors, _ = mod.tp_rule_08(
+            data.funnels,
+            data.events,
+            catalog_events,
+        )
+
+        self.assertEqual(result_errors, [])
+        self.assertEqual(funnel_errors, [])
+
 
 if __name__ == "__main__":
     unittest.main()
