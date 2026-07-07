@@ -7,7 +7,7 @@
 **Repo:** Zipstorm/helix
 **Branch:** soumabrata/2026-07-06-onboarding-flow-v1
 **PR:** https://github.com/Zipstorm/Seekout-Analytics/pull/36
-**Status:** Review
+**Status:** Merged
 
 ## Status History
 
@@ -16,6 +16,8 @@
 | Draft | 2026-07-05 | Plan created |
 | Absorbed | 2026-07-06 | Codebase absorption from helix branch — 13 deviations applied |
 | Review | 2026-07-07 | PR #36 updated after validator and review feedback; validator all clear |
+| Approved | 2026-07-07 | PR #36 approved |
+| Merged | 2026-07-07 | Events merged into catalog via /merge-tracking-plan |
 
 ## Workflow
 
@@ -25,8 +27,8 @@
 - [x] Absorbed from codebase — 2026-07-06
 - [x] Re-validated — 2026-07-07 (All clear — 13 validation rules passed)
 - [x] PR raised — 2026-07-06
-- [ ] PR approved
-- [ ] Merged to catalog
+- [x] PR approved — 2026-07-07
+- [x] Merged to catalog — 2026-07-07
 - [ ] Squash merged to main
 
 > References: `docs/shared/naming-and-event-types.md`, `docs/helix/event-schema.md`, and `docs/helix/event-catalog.md`.

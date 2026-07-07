@@ -41,10 +41,19 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Object | Entity | Example Events |
 |--------|--------|---------------|
 | Page | Any meaningful product page/screen | Page Viewed |
-| Auth | Authentication and session lifecycle | Auth Login Succeeded, Auth Login Failed, Auth Session Restore Succeeded, Auth Session Restore Failed |
-| Login | Auth flow initiation | Login Started, Login Cancelled |
-| Account | User (account-level actions) | Account Created, Account Activated |
-| Intro | Onboarding intro screen | Intro Completed |
+| Auth | Authentication and session lifecycle | Auth Login Succeeded, Auth Login Rejected, Auth Session Restore Succeeded, Auth Session Restore Errored |
+| Login Started Button | Auth CTA buttons on signup/signin pages | Login Started Button Clicked |
+| Account | User (account-level actions) | Account Activated |
+| Account Create | User account creation | Account Create Succeeded |
+| Onboarding Intro Complete Button | Onboarding intro "Let's go" button | Onboarding Intro Complete Button Clicked |
+| Onboarding Persona Card | Persona selection card on onboarding page | Onboarding Persona Card Clicked |
+| Onboarding Complete | Full onboarding flow lifecycle | Onboarding Complete Succeeded |
+| Auth Login | Authentication login lifecycle | Auth Login Rejected |
+| Auth Email Verify Code Send | Email OTP dispatch lifecycle | Auth Email Verify Code Send Succeeded, Auth Email Verify Code Send Errored |
+| Auth Email Verify | Email verification lifecycle | Auth Email Verify Succeeded, Auth Email Verify Rejected |
+| Auth Logout | Logout lifecycle | Auth Logout Succeeded |
+| Auth Session Restore | Session restore lifecycle | Auth Session Restore Errored |
+| Auth Refresh | Token refresh lifecycle | Auth Refresh Errored |
 | Profile | Prospect's career profile | Profile Section Updated |
 | Job | Job posting | Job Posting Draft Created, Job Shared |
 | Interest | Expression of Interest | Interest Expressed, Interest Reviewed |
@@ -77,11 +86,12 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Question | AI-generated interview question | Question Add Button Clicked |
 | Intro Script | Intro video script | Intro Script Updated |
 | Chat | Chat/WebSocket connection for messaging | Chat WebSocket Connected, Chat WebSocket Error |
-| Profile Photo | User's profile headshot image | Add Profile Photo Button Clicked, Profile Photo Added, Profile Photo Upload Failed, Profile Photo Removed |
+| Profile Photo | User's profile headshot image | Add Profile Photo Button Clicked, Profile Photo Upload Failed, Profile Photo Removed |
+| Profile Photo Add | Profile photo upload lifecycle | Profile Photo Add Succeeded |
 | LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Link Clicked |
 | Build Profile | AI profile generation process | Build Profile Button Clicked, Build Profile Snapshot |
-| Candidate Profile | Job seeker's AI-generated career profile | Candidate Profile Created, Candidate Profile Creation Failed |
-| Candidate Handle Add | Job seeker handle add action | Candidate Handle Add Succeeded, Candidate Handle Add Rejected |
+| Candidate Profile Create | Portfolio creation lifecycle | Candidate Profile Create Succeeded, Candidate Profile Create Errored |
+| Handle Claim | Handle claim lifecycle | Handle Claim Succeeded, Handle Claim Rejected |
 | Candidate Previous Resume Select Button | Previous resume select CTA | Candidate Previous Resume Select Button Clicked |
 | Candidate Custom Link Delete | Custom link deletion lifecycle | Candidate Custom Link Delete Succeeded, Candidate Custom Link Delete Errored |
 | Candidate Custom Link Delete Button | Custom link delete CTA | Candidate Custom Link Delete Button Clicked |
@@ -182,12 +192,12 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 
 | Property | Type | Values | Set By | Description |
 |----------|------|--------|--------|-------------|
-| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Page Viewed (login page — `/signup` URL) | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. Set on login page so even abandoners are attributed. |
-| `first_referrer` | string | URL or null | Page Viewed (login page — `/signup` URL) | HTTP referrer at first visit (`document.referrer`). |
-| `first_landing_url` | string | URL | Page Viewed (login page — `/signup` URL) | Full landing URL including query params at first visit. |
-| `first_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Account Created | First persona chosen during onboarding. Never changes even if user switches role later. |
-| `account_created_at` | ISO date | | Account Created | Account creation timestamp. |
-| `referred_by` | UUID | user ID | Account Created (backend) | User ID of referrer. |
+| `entry_point` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Page Viewed (auth page) | First-touch attribution — how user originally found Helix. Derived from `?context=` URL param. Set on auth page so even abandoners are attributed. |
+| `first_referrer` | string | URL or null | Page Viewed (auth page) | HTTP referrer at first visit (`document.referrer`). |
+| `first_landing_url` | string | URL | Page Viewed (auth page) | Full landing URL including query params at first visit. |
+| `first_persona` | enum | `hiring_manager`, `recruiter`, `job_seeker` | Account Create Succeeded, Onboarding Complete Succeeded | First persona chosen during onboarding. Never changes even if user switches role later. |
+| `account_created_at` | ISO date | | Account Create Succeeded | Account creation timestamp. |
+| `referred_by` | UUID | user ID | Account Create Succeeded (backend) | User ID of referrer. |
 | `signup_context` | enum | `job_link`, `direct_prospect`, `direct_hiring`, `team_invite`, `direct` | Team Member Joined | Signup context captured when an invited team member first joins a job. |
 
 #### `$set` — Updated on every login
@@ -198,10 +208,10 @@ Describe the user across all events. Set via `$set_once` (immutable, first value
 | `name` | string | `identifyUser()` | User's current name |
 | `role` | string | `identifyUser()` | User's current role enum (e.g., `HIRING_MANAGER`, `RECRUITER`, `PROFESSIONAL`) |
 | `org_id` | string | `identifyUser()` | User's current organization ID |
-| `current_persona` | enum | Account Created, Persona Updated, `identifyUser()` | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. |
-| `activated_personas` | array | Account Created, Persona Updated | All unique personas the user has ever been in. Seeded with `[persona]` on Account Created, grows as user switches personas via Persona Updated. DB column and PostHog person property are now in sync. |
+| `current_persona` | enum | Account Create Succeeded, Persona Updated, `identifyUser()`, `posthog.register()` (super-property) | Active persona — `hiring_manager`, `recruiter`, `job_seeker`. Set on account creation, updated on persona switch and every login. Also registered as a PostHog super-property via `posthog.register()` inside `identifyUser()`, so it automatically rides on every frontend `capture()` call. |
+| `activated_personas` | array | Account Create Succeeded, Persona Updated | All unique personas the user has ever been in. Seeded with `[current_persona]` on Account Create Succeeded, grows as user switches personas via Persona Updated. DB column and PostHog person property are now in sync. |
 
-**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Created and `identifyUser()` (every login), and updated on persona switch via Persona Updated. `activated_personas` (`$set`) is seeded with `[persona]` on Account Created and accumulates every persona the user has tried via Persona Updated — it only grows, never shrinks. Both DB column and PostHog person property stay in sync.
+**Three persona properties, three purposes:** `first_persona` (`$set_once`) preserves what the user originally chose during onboarding. `current_persona` (`$set`) is set on Account Create Succeeded and `identifyUser()` (every login), updated on persona switch via Persona Updated, and registered as a super-property via `posthog.register()` so it rides on all frontend events. `activated_personas` (`$set`) is seeded with `[current_persona]` on Account Create Succeeded and accumulates every persona the user has tried via Persona Updated — it only grows, never shrinks. Both DB column and PostHog person property stay in sync.
 
 **Identifying a user (JS SDK — called after auth succeeds):**
 
@@ -214,20 +224,14 @@ posthog.identify(user.id,
 );
 ```
 
-**Setting first-touch attribution (JS SDK — fires on Login Started, before auth):**
+**Setting first-touch attribution (JS SDK — fires on Page Viewed for auth pages, before any interaction):**
 
 ```javascript
-// In pages/SignUp.tsx → handleLogin()
-posthog.capture('Login Started', {
-  action: 'click',
-  action_value: 'continue_with_google_or_email_button',
-  current_page_context: 'auth_landing',
-  previous_page_context: null,
+// In pages/SignUp.tsx — Page Viewed on mount
+posthog.capture('Page Viewed', {
+  current_page_context: 'auth_signup',
+  previous_page_context: getPreviousPageContext(),
   entry_point: entryPoint,
-  entity_type: 'account',
-  component: 'auth_landing_hero_card_cta',
-  context_object_type: null,
-  context_object_id: null,
   $set_once: {
     entry_point: entryPoint,
     first_referrer: document.referrer || null,
@@ -236,23 +240,19 @@ posthog.capture('Login Started', {
 });
 ```
 
-**Setting first_persona (JS SDK — fires on Account Created, after role selection):**
+**Setting first_persona (JS SDK — fires on Account Create Succeeded, after role selection):**
 
 ```javascript
 // In pages/RoleSelection.tsx → handleContinue()
-posthog.capture('Account Created', {
-  action: 'click',
-  action_value: 'continue_as_hiring_manager_button',  // or continue_as_recruiter_button, continue_as_job_seeker_button
-  current_page_context: 'onboarding_role_selection',
-  previous_page_context: previousPageContext,  // stored from last page view, transformed to snake_case
-  entry_point: entryPoint,
-  entity_type: 'onboarding',
-  component: 'onboarding_role_selection_footer_cta',
-  context_object_type: null,
-  context_object_id: null,
-  persona,
+posthog.capture('Account Create Succeeded', {
+  current_persona: 'hiring_manager',  // or 'recruiter', 'job_seeker'
+  auth_method: 'google',  // or 'microsoft', 'email'
+  $set: {
+    current_persona: 'hiring_manager',
+    activated_personas: ['hiring_manager'],
+  },
   $set_once: {
-    first_persona: persona,
+    first_persona: 'hiring_manager',
     account_created_at: new Date().toISOString(),
   },
 });
@@ -284,27 +284,11 @@ Include on every event where applicable.
 // getPreviousPageContext() returns the last page viewed, transformed to snake_case.
 // On first page load (no previous page), it returns null.
 
-// Page Viewed — fires on page mount
+// Page Viewed — fires on page mount (auth pages also set $set_once attribution)
 posthog.capture('Page Viewed', {
-  current_page_context: 'auth_landing',
+  current_page_context: 'auth_signup',
   previous_page_context: getPreviousPageContext(),
   entry_point: entryPoint,
-});
-
-// Login Started — fires on CTA click, before auth
-const searchParams = new URLSearchParams(window.location.search);
-const entryPoint = searchParams.get('context') || 'direct';
-
-posthog.capture('Login Started', {
-  action: 'click',
-  action_value: 'continue_with_google_or_email_button',
-  current_page_context: 'auth_landing',
-  previous_page_context: getPreviousPageContext(),
-  entry_point: entryPoint,
-  entity_type: 'account',
-  component: 'auth_landing_hero_card_cta',
-  context_object_type: null,
-  context_object_id: null,
   $set_once: {
     entry_point: entryPoint,
     first_referrer: document.referrer || null,
@@ -312,36 +296,43 @@ posthog.capture('Login Started', {
   },
 });
 
-// Account Created — fires after role selection + server confirms
-posthog.capture('Account Created', {
+// Login Started Button Clicked — fires on CTA click, before auth
+const searchParams = new URLSearchParams(window.location.search);
+const entryPoint = searchParams.get('context') || 'direct';
+
+posthog.capture('Login Started Button Clicked', {
   action: 'click',
-  action_value: 'continue_as_hiring_manager_button',  // or continue_as_recruiter_button, continue_as_job_seeker_button
-  current_page_context: 'onboarding_role_selection',
+  action_value: 'sign_up_with_google_button',
+  current_page_context: 'auth_signup',
   previous_page_context: getPreviousPageContext(),
   entry_point: entryPoint,
-  entity_type: 'onboarding',
-  component: 'onboarding_role_selection_footer_cta',
-  context_object_type: null,
-  context_object_id: null,
-  persona: 'hiring_manager',
   auth_method: 'google',
+  entity_type: 'account',
+  component: 'auth_signup_card_cta',
+});
+
+// Account Create Succeeded — fires after role selection + server confirms
+posthog.capture('Account Create Succeeded', {
+  current_persona: 'hiring_manager',
+  auth_method: 'google',
+  $set: {
+    current_persona: 'hiring_manager',
+    activated_personas: ['hiring_manager'],
+  },
   $set_once: {
     first_persona: 'hiring_manager',
     account_created_at: new Date().toISOString(),
   },
 });
 
-// Intro Completed — fires on "Let's go" click
-posthog.capture('Intro Completed', {
+// Onboarding Intro Complete Button Clicked — fires on "Let's go" click
+posthog.capture('Onboarding Intro Complete Button Clicked', {
   action: 'click',
   action_value: 'lets_go_button',
   current_page_context: 'onboarding_intro',
   previous_page_context: getPreviousPageContext(),
-  entry_point: null,
   entity_type: 'onboarding',
   component: 'onboarding_intro_footer_cta',
-  context_object_type: null,
-  context_object_id: null,
 });
 ```
 
@@ -355,6 +346,8 @@ posthog.identify(user.id,
   { email: user.email, name: user.name, role: user.role, org_id: user.orgId, current_persona: currentPersona },  // $set
   { account_created_at: user.createdAt }  // $set_once
 );
+// Register current_persona as a super-property so it rides on all subsequent capture() calls
+posthog.register({ current_persona: currentPersona });
 ```
 
 ### Prospect event (Python SDK — backend)
@@ -452,7 +445,7 @@ Current catalog examples that still use old result terminals or non-result names
 
 | Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
 |------|-----------------------------|---------------|----------------|-------------|
-| Login / Signup | Login Started | Account Created (new) or Auth Login Succeeded (returning) | Login Cancelled, Auth Login Failed | -- |
+| Login / Signup | Login Started Button Clicked | Account Create Succeeded (new) or Auth Login Succeeded (returning) | Auth Login Rejected | -- |
 | Sharing a job | Share Button Clicked | Job Shared | Job Share Failed | -- |
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed | -- |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed | -- |
@@ -461,14 +454,16 @@ Current catalog examples that still use old result terminals or non-result names
 | Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- | -- |
 | Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- | -- |
 | Publishing a job (skipped) | Job Post Wizard Verification Skipped | Job Posting Published | -- | -- |
-| Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed | -- |
-| Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed | -- |
-| Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed | -- |
+| Email verification | -- | Auth Email Verify Code Send Succeeded | Auth Email Verify Rejected | Auth Email Verify Code Send Errored |
+| Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | -- | Auth Session Restore Errored |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed | -- |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed | -- |
 | Resume upload | Candidate Resume Upload Button Clicked | Candidate Resume Upload Succeeded | Candidate Resume Upload Rejected | Candidate Resume Upload Errored |
-| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Added | Profile Photo Upload Failed | -- |
-| Profile creation | Build Profile Button Clicked | Candidate Profile Created | Candidate Profile Creation Failed | -- |
+| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Add Succeeded | Profile Photo Upload Failed | -- |
+| Profile creation | Build Profile Button Clicked | Candidate Profile Create Succeeded | -- | Candidate Profile Create Errored |
+| Persona selection | Onboarding Persona Card Clicked | Account Create Succeeded | -- | -- |
+| Intro completion | Onboarding Intro Complete Button Clicked | -- | -- | -- |
+| Onboarding completion | -- | Onboarding Complete Succeeded | -- | -- |
 | Publish portfolio | Candidate Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | -- | Candidate Portfolio Publish Errored |
 | Unpublish portfolio | Candidate Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | -- | -- |
 | Rename portfolio | Candidate Portfolio Rename Button Clicked | Candidate Portfolio Rename Succeeded | -- | -- |
