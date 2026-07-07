@@ -139,11 +139,11 @@ The claim logic is in `candidateInterviewSignup.ts`. ActivateProfile.tsx has no 
 
 ---
 
-## 9. Replace OAuth Screenshots with Sanitized Captures — **Won't Fix**
+## 9. Replace OAuth Screenshots with Sanitized Captures — **Done**
 
-**What:** The current onboarding screenshots include Google OAuth account chooser state showing office email.
+**What:** The original `02-google-oauth-chooser.png` showed personal Gmail accounts and another person's email. Replaced with a sanitized capture showing only the office email (`@seekout.com`).
 
-**Decision (2026-07-07):** Keeping as-is. This is office PII (name, work email) visible to all team members. The screenshots are internal reference material in a private repo, not external-facing docs.
+**Done:** 2026-07-07
 
 ---
 
