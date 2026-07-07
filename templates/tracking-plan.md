@@ -207,13 +207,26 @@ docs/<product>/event-schema.md. Rows use the same shape as the schema table so
 
 ---
 
+<!--
+## Removed Standard Objects
+
+Use this section when the plan removes Standard Objects from
+docs/<product>/event-schema.md. The validator checks that no catalog
+events still reference a removed object before allowing the merge.
+
+| Object | Reason |
+|---|---|
+| [Object Name] | [Why removing] |
+-->
+
+---
+
 ## Catalog Updates
 
 New events from this plan to add to `docs/<product>/event-catalog.md`:
 
 - [ ] [Event Name] → [Catalog section]
 - [ ] New object added to Standard Objects table: [Yes / No]
-- [ ] Removed object: [Object Name] — [Reason]
 
 ---
 
