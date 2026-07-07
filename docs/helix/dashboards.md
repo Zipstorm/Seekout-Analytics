@@ -139,9 +139,6 @@ Tracks rejected-result and technical-error rates across the Interaction / Starte
 | Resume upload | Candidate Resume Upload Button Clicked | Candidate Resume Upload Succeeded | Candidate Resume Upload Rejected | Candidate Resume Upload Errored |
 | Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Add Succeeded | Profile Photo Upload Failed | -- |
 | Profile creation | Build Profile Button Clicked | Candidate Profile Create Succeeded | -- | Candidate Profile Create Errored |
-| Persona selection | Onboarding Persona Card Clicked | Account Create Succeeded | -- | -- |
-| Intro completion | Onboarding Intro Complete Button Clicked | -- | -- | -- |
-| Onboarding completion | -- | Onboarding Complete Succeeded | -- | -- |
 | Portfolio publish | Candidate Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | -- | Candidate Portfolio Publish Errored |
 | Unpublish portfolio | Candidate Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | -- | -- |
 | Rename portfolio | Candidate Portfolio Rename Button Clicked | Candidate Portfolio Rename Succeeded | -- | -- |

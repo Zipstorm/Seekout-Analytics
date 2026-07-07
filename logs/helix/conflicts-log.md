@@ -114,8 +114,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
 - **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-04 14:47:16 UTC
@@ -214,8 +212,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 ### Warnings
 
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-06 11:03:43 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -241,8 +237,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule TP6]** Result pattern: "Account Create Succeeded" (success for "Role selection") not found in catalog or tracking plan
 - **[Rule TP6]** Result pattern: "Intro Complete Succeeded" (success for "Intro completion") not found in catalog or tracking plan
 - **[Rule TP6]** Result pattern: "Auth Session Restore Errored" (error for "Session restore") not found in catalog or tracking plan
-
-
 ---
 
 ## Run: 2026-07-06 11:09:34 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -268,8 +262,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule TP7]** Event "Auth Logout Succeeded": object "Auth Logout" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Logout" in ## New Standard Objects.
 - **[Rule TP7]** Event "Auth Session Restore Errored": object "Auth Session Restore" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Session Restore" in ## New Standard Objects.
 - **[Rule TP7]** Event "Auth Refresh Errored": object "Auth Refresh" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Refresh" in ## New Standard Objects.
-
-
 ---
 
 ## Run: 2026-07-06 11:12:06 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -295,8 +287,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule TP7]** Event "Auth Logout Succeeded": object "Auth Logout" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Logout" in ## New Standard Objects.
 - **[Rule TP7]** Event "Auth Session Restore Errored": object "Auth Session Restore" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Session Restore" in ## New Standard Objects.
 - **[Rule TP7]** Event "Auth Refresh Errored": object "Auth Refresh" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Refresh" in ## New Standard Objects.
-
-
 ---
 
 ## Run: 2026-07-06 11:12:57 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -306,8 +296,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 ### Errors
 
 - **[Rule TP0]** Tracking plan section "New Standard Objects" must use columns: Object | Entity | Example Events.
-
-
 ---
 
 ## Run: 2026-07-06 11:21:19 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -470,8 +458,6 @@ All 13 validation rules passed.
 
 - **[Rule 1]** Standard Object "Candidate Profile" has no matching events in Event Catalog
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-07 12:28:48 UTC
@@ -558,8 +544,6 @@ All 13 validation rules passed.
 
 - **[Rule 1]** Standard Object "Candidate Profile" has no matching events in Event Catalog
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-07 12:29:13 UTC
@@ -646,8 +630,6 @@ All 13 validation rules passed.
 
 - **[Rule 1]** Standard Object "Candidate Profile" has no matching events in Event Catalog
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-07 12:29:37 UTC
@@ -734,8 +716,6 @@ All 13 validation rules passed.
 
 - **[Rule 1]** Standard Object "Candidate Profile" has no matching events in Event Catalog
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-07 12:31:07 UTC
@@ -821,8 +801,6 @@ All 13 validation rules passed.
 ### Warnings
 
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-07 12:31:07 UTC
@@ -908,8 +886,6 @@ All 13 validation rules passed.
 ### Warnings
 
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-07 12:31:37 UTC
@@ -994,8 +970,6 @@ All 13 validation rules passed.
 ### Warnings
 
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-07 12:31:46 UTC
@@ -1080,8 +1054,6 @@ All 13 validation rules passed.
 ### Warnings
 
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-07 12:31:51 UTC
@@ -1166,4 +1138,3 @@ All 13 validation rules passed.
 ### Warnings
 
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-

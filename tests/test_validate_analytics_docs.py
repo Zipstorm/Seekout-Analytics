@@ -329,7 +329,7 @@ class RemovalSafetySubcommandTests(unittest.TestCase):
         self.addCleanup(path.unlink)
         result = run_removal_safety(path)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("Auth blocks: Auth Login Succeeded", stdout_without_banner(result))
+        self.assertIn("Auth blocks: Auth Dev Login Started", stdout_without_banner(result))
         self.assertEqual(result.stderr, "")
 
     def test_no_removed_section_is_noop(self):
