@@ -565,6 +565,11 @@ def _parse_object_declaration_section(lines, section_name):
                 break
 
     if table_start is None:
+        # Empty section is OK (no declarations). But an active section
+        # with prose and no table means the author intended to declare
+        # something but forgot the table — error so they fix it.
+        if any(line.strip() for line in lines):
+            errors.append(_malformed_section_message(section_name))
         return entries, errors
 
     header = _split_row(lines[table_start].strip())

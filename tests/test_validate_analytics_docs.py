@@ -244,8 +244,9 @@ This should be a table.
         self.assertEqual(
             validator.parse_tracking_plan(zero_rows).declaration_errors, []
         )
-        self.assertEqual(
-            validator.parse_tracking_plan(paragraph).declaration_errors, []
+        self.assertIn(
+            "must use columns",
+            validator.parse_tracking_plan(paragraph).declaration_errors[0],
         )
         self.assertIn(
             "appears more than once",
@@ -664,6 +665,34 @@ Some explanation text.
 | Object | Entity |
 |---|---|
 | Foo | Bar |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.declaration_errors), 1)
+        self.assertIn("must use columns", data.declaration_errors[0])
+
+    def test_prose_only_new_standard_objects_errors(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Standard Objects
+
+Voice Session should be added as a new object.
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.declaration_errors), 1)
+        self.assertIn("must use columns", data.declaration_errors[0])
+
+    def test_prose_only_removed_standard_objects_errors(self):
+        path = write_tmp_md(
+            """# Test
+
+## Removed Standard Objects
+
+Remove Voice Session because it is deprecated.
 """
         )
         self.addCleanup(path.unlink)
