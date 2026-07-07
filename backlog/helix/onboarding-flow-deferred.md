@@ -139,13 +139,33 @@ The claim logic is in `candidateInterviewSignup.ts`. ActivateProfile.tsx has no 
 
 ---
 
-## 9. Replace OAuth Screenshots with Sanitized Captures
+## 9. Replace OAuth Screenshots with Sanitized Captures — **Won't Fix**
 
-**What:** The current onboarding screenshots intentionally preserve the manual walkthrough context, including Google OAuth account chooser state. Replace these with sanitized captures that remove personal names, emails, avatars, browser profile state, and unrelated browser chrome.
+**What:** The current onboarding screenshots include Google OAuth account chooser state showing office email.
 
-**Why this matters:** The screenshots are useful for validating the onboarding route sequence, but public review artifacts should not rely on personal account details.
+**Decision (2026-07-07):** Keeping as-is. This is office PII (name, work email) visible to all team members. The screenshots are internal reference material in a private repo, not external-facing docs.
 
-**When to pick up:** Before the screenshots become long-lived reference material or are copied into external docs. The current files can stay temporarily while the onboarding tracking plan is reviewed.
+---
+
+## 10. Profile Photo Upload Failed — Split Object Family + Stale Terminal
+
+**What:** `Profile Photo Added` was renamed to `Profile Photo Add Succeeded` in the onboarding v1 plan, but the failure sibling `Profile Photo Upload Failed` was not renamed. This creates a split object family (`Profile Photo Add` vs `Profile Photo Upload`) and leaves a non-conforming `Failed` terminal.
+
+**Correct name:** `Profile Photo Add Rejected` or `Profile Photo Add Errored` (depending on whether the failure is user-caused or system-caused).
+
+**Why deferred:** Pre-existing catalog naming issue, not part of the onboarding v1 scope. Per CLAUDE.md: "pre-existing catalog naming issues unrelated to the tracking plan → document in backlog, don't fix during merge."
+
+**When to pick up:** During the next naming cleanup sprint (see `backlog/helix/naming-cleanup.md`).
+
+---
+
+## 11. Recruiter Wizard-Completion Terminal Undefined
+
+**What:** `Onboarding Complete Succeeded` lists `current_page_context` values for Professional, HM-skip, HM-wizard-complete, and Recruiter-skip paths. But the Recruiter-completes-ATS-wizard path is undefined — `WORKFLOW.md` marks this terminal as "TBD (not yet captured)."
+
+**Impact:** If a Recruiter completes the ATS wizard during onboarding, `Onboarding Complete Succeeded` may fire with an unlisted `current_page_context` value or may not fire at all.
+
+**When to pick up:** When the Recruiter wizard-completion flow is walked through and screenshotted. Add the terminal `current_page_context` value to the Onboarding Complete Succeeded spec and update the `WORKFLOW.md`.
 
 ---
 

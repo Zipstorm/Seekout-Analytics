@@ -64,7 +64,9 @@ Overview of genuinely new events introduced by this plan. Renames are in the Eve
 | Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
 |---|---|---|---|---|---|---|---|---|---|
 | Onboarding Persona Card Clicked | Account | Interaction | Frontend | User clicks "I'm a professional" or "I'm hiring" or a hiring sub-option on `/onboarding/role` | Tracks which persona cards users explore before committing. Fires before persona is set. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Dev |
-| Onboarding Complete Succeeded | Account | Success | Frontend | User lands on the first post-onboarding page after completing all onboarding steps | Terminal event marking the end of onboarding. Frontend fires via `maybeFireOnboardingComplete()` on terminal page mount: Professional portfolio/dashboard, HM dashboard or wizard success page, or Recruiter dashboard. | `current_page_context`, `previous_page_context`, `current_persona`, `auth_method`, `onboarding_duration_seconds`, `had_email_verification`, `had_phone_collection`, `has_resume`, `has_photo`, `has_handle`, `links_count` | -- | `$set_once: first_persona` | Dev |
+| Onboarding Complete Succeeded | Account | Success | Frontend | User lands on the first post-onboarding page after completing all onboarding steps | Terminal event marking the end of onboarding. Frontend fires via `maybeFireOnboardingComplete()` on terminal page mount: Professional portfolio/dashboard, HM dashboard or wizard success page, or Recruiter dashboard. | `current_page_context`, `previous_page_context`, `current_persona`, `auth_method`, `onboarding_duration_seconds`, `had_email_verification`, `has_resume`, `has_photo`, `has_handle`, `links_count` | -- | `$set_once: first_persona` | Dev |
+| Handle Claim Succeeded | Prospect | Success | Frontend | Handle blur or submit, availability check returns available | User successfully claimed a handle. Catalog previously listed this as `Candidate Handle Add Succeeded` (never matched code). Code fired `Handle Claimed`, now renamed. | `handle_length`, `current_page_context`, `source`, `current_persona` | -- | -- | Dev |
+| Handle Claim Rejected | Prospect | Rejected | Frontend | Handle blur or submit, availability check returns unavailable | Handle already taken or invalid. Catalog previously listed this as `Candidate Handle Add Rejected` (never matched code). Code fired `Handle Claim Failed`, now renamed. | `reason`, `current_page_context`, `source`, `current_persona` | -- | -- | Dev |
 
 ---
 
@@ -76,7 +78,6 @@ New or modified properties introduced by this plan. Properties already in the ca
 |---|---|---|---|
 | `onboarding_duration_seconds` | number | positive decimal seconds | Seconds elapsed from the first auth Page Viewed to Onboarding Complete Succeeded. Computed client-side as `(Date.now() - sessionStorage.helix_onboarding_start_ts) / 1000`; fractional precision is preserved. |
 | `had_email_verification` | boolean | true/false | Whether the user went through the email verification step during onboarding. False for Google/Microsoft OAuth signups. |
-| `had_phone_collection` | boolean | true/false | Whether the user saw the phone collection step during onboarding. Currently hardcoded to `false` — phone collection is not wired into app router. |
 | `has_resume` | boolean | true/false | Whether user uploaded a resume during onboarding (Professional only). |
 | `has_photo` | boolean | true/false | Whether user added a profile photo during onboarding. |
 | `has_handle` | boolean | true/false | Whether user claimed a handle during onboarding. |
@@ -131,7 +132,6 @@ Detailed per-event specs. Updated after codebase absorption to reflect actuals.
 | `auth_method` | enum | `google`, `microsoft`, `email` | How the user authenticated. Read from `sessionStorage.helix_auth_method`. |
 | `onboarding_duration_seconds` | number | positive decimal seconds | Seconds from first auth Page Viewed to this event. Computed from `sessionStorage.helix_onboarding_start_ts`; fractional precision is preserved. |
 | `had_email_verification` | boolean | true/false | Whether user went through email verification |
-| `had_phone_collection` | boolean | false | Hardcoded false — phone collection not wired into app router |
 | `has_resume` | boolean | true/false | Whether user uploaded a resume (Professional only) |
 | `has_photo` | boolean | true/false | Whether user added a profile photo |
 | `has_handle` | boolean | true/false | Whether user claimed a handle |
@@ -208,8 +208,9 @@ Existing events renamed during this implementation. Organized by the type of cha
 | Auth Logout Completed | Auth Logout Succeeded | Success | `AUTH_LOGOUT_COMPLETED` → `AUTH_LOGOUT_SUCCEEDED` |
 | Auth Email Verify Code Sent | Auth Email Verify Code Send Succeeded | Success | `AUTH_EMAIL_VERIFY_CODE_SENT` → `AUTH_EMAIL_VERIFY_CODE_SEND_SUCCEEDED` |
 | Auth Email Verified | Auth Email Verify Succeeded | Success | `AUTH_EMAIL_VERIFIED` → `AUTH_EMAIL_VERIFY_SUCCEEDED` |
-| Handle Claimed | Handle Claim Succeeded | Success | `HANDLE_CLAIMED` → `HANDLE_CLAIM_SUCCEEDED` |
 | Profile Photo Added | Profile Photo Add Succeeded | Success | `PROFILE_PHOTO_ADDED` → `PROFILE_PHOTO_ADD_SUCCEEDED` |
+
+**Note:** `Profile Photo Upload Failed` (the failure sibling) retains its old name — it has a different object prefix (`Profile Photo Upload` vs `Profile Photo Add`) and a non-conforming `Failed` terminal. This is a pre-existing catalog naming issue documented in `backlog/helix/onboarding-flow-deferred.md`, not fixed in this plan.
 | Candidate Profile Created | Candidate Profile Create Succeeded | Success | `CANDIDATE_PROFILE_CREATED` → `CANDIDATE_PROFILE_CREATE_SUCCEEDED` |
 
 ### Rejected Events — Must End "Rejected"
@@ -218,7 +219,6 @@ Existing events renamed during this implementation. Organized by the type of cha
 |---|---|---|---|
 | Auth Login Failed | Auth Login Rejected | Rejected | User-initiated auth declined by system |
 | Auth Email Verify Failed | Auth Email Verify Rejected | Rejected | Wrong code entered by user |
-| Handle Claim Failed | Handle Claim Rejected | Rejected | Handle taken or invalid |
 
 ### Error Events — Must End "Errored"
 
@@ -248,8 +248,8 @@ Events removed by this plan. Includes old names from renames and events deleted 
 | Auth Email Verify Code Send Failed | Renamed | Auth Email Verify Code Send Errored |
 | Auth Session Restore Failed | Renamed | Auth Session Restore Errored |
 | Auth Refresh Failed | Renamed | Auth Refresh Errored |
-| Handle Claimed | Renamed | Handle Claim Succeeded |
-| Handle Claim Failed | Renamed | Handle Claim Rejected |
+| Handle Claimed | Codebase name, never in catalog | Handle Claim Succeeded (new catalog entry) |
+| Handle Claim Failed | Codebase name, never in catalog | Handle Claim Rejected (new catalog entry) |
 | Profile Photo Added | Renamed | Profile Photo Add Succeeded |
 | Candidate Profile Created | Renamed | Candidate Profile Create Succeeded |
 | Candidate Profile Creation Failed | Renamed | Candidate Profile Create Errored |

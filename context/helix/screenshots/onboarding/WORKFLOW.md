@@ -52,58 +52,6 @@ For **Professional** persona: onboarding is complete when the user lands on the 
 - **Email signup** path → may include email verification and phone collection steps
 - **Interview → signup** path → candidate who did an anonymous interview, then signs up to claim it
 - **Sign in** path → returning user via `/signin`
-- **Recruiter: job creation wizard completion during onboarding** — user said they'll share this separately
-
----
-
-# Flow 3: Recruiter Persona
-
-**Persona selected:** Recruiter
-**Captured:** 2026-07-05
-
-## Flow Sequence
-
-Shared steps 1–3 are identical to Professional/HM (signup page, Google OAuth, role selection default). This flow diverges at role selection.
-
-| Step | Screenshot | Route | Screen | User Action | What Happens Next |
-|------|-----------|-------|--------|-------------|-------------------|
-| 3b | `22-recruiter-role-selection.png` | `/onboarding/role` | "I'm hiring" card expanded, "Recruiter" sub-option selected (purple border). Continue button says "Continue as a recruiter" (enabled, purple). | Clicked "Continue as a recruiter" | Navigates to intro page |
-| 4 | `23-recruiter-value-prop-intro.png` | `/onboarding/intro` | Value prop page — "Stop wasting time on bad applicants, focus on the ones that matter." Different content from HM: pipeline shows ATS → Candidates apply → AI evaluates & screens → Top candidates. Same four value cards as HM but with recruiter-specific copy ("Nothing goes out without your sign-off. No candidate gets contacted behind your back." / "Every applicant gets a real conversation against the same rubric — no more keyword-soup resume triage." / "Review 50 applicants today..."). "Let's go" button. **No progress bar, no cancel/back button.** | Clicked "Let's go" | Navigates to ATS check wizard |
-| 5 | `24-recruiter-ats-check-wizard.png` | `/recruiter/ai-job-flow/ats-check` | "Create job posting" wizard — step 1 "Job details". 4-step progress: Job details → Intake meeting → Screening setup → Review rubric. "How are you sourcing for this role?" with two cards: "Network referrals" / "Inbound from your ATS". Cancel button and X button available — **user can skip.** | Clicked X (close) | Navigates to job postings dashboard |
-| 6 | `25-recruiter-job-postings-dashboard.png` | `/recruiter/ai-job-flows` | Job Postings dashboard — "Let's find your first great hire". Empty state with "+ Select job" CTA. Sidebar shows "Recruiter" persona, "Job postings" nav. **This marks the end of onboarding for Recruiter.** | Onboarding complete | User is now in the product |
-
-## Flow Observations
-
-### Key Differences from HM
-- **Intro page content is recruiter-specific** — "Stop wasting time on bad applicants" (HM sees "Stop reading resumes"). Pipeline illustration shows ATS as the source (HM shows Network).
-- **Different wizard** — Recruiter gets a 4-step ATS-focused wizard (Job details → Intake meeting → Screening setup → Review rubric) vs HM's 5-step wizard (Job details → Understanding the role → Role requirements → Interview questions → Verify)
-- **Has both Cancel button AND X button** — HM wizard only has X. Recruiter wizard has an explicit Cancel text button.
-- **Dashboard CTA differs** — Recruiter sees "+ Select job" (implies importing from ATS). HM sees "+ Create job" (implies creating from scratch).
-- **Dashboard route differs** — Recruiter lands on `/recruiter/ai-job-flows`, HM lands on `/hiring-manager/job-postings`
-
-### Similarities with HM
-- Same intro page structure (value cards, "Let's go" button, no progress bar)
-- Job creation wizard is **skippable** (same as HM)
-- Onboarding ends on the job postings dashboard when wizard is skipped (same as HM)
-
-### Onboarding Completion Definition
-For **Recruiter** persona: onboarding is complete when the user lands on the job postings dashboard (`/recruiter/ai-job-flows`). The ATS check wizard is shown during onboarding but is **skippable**. If the user completes the wizard, onboarding ends on the success page (flow not yet captured — user will share separately).
-
----
-
-# Summary: Onboarding Flows Comparison
-
-| Aspect | Professional | Hiring Manager | Recruiter |
-|--------|-------------|----------------|-----------|
-| **Intro headline** | "Future-ready careers start here" | "Stop reading resumes, start meeting the right people" | "Stop wasting time on bad applicants, focus on the ones that matter" |
-| **Progress bar on intro** | Yes (2-step: How we help → Build your portfolio) | No | No |
-| **Post-intro flow** | Create profile (mandatory) | Job post wizard (skippable) | ATS check wizard (skippable) |
-| **Post-intro route** | `/candidate/create-profile` | `/hiring-manager/job-posting` | `/recruiter/ai-job-flow/ats-check` |
-| **Can skip post-intro step?** | No — must upload resume and build portfolio | Yes — X button on wizard | Yes — X button and Cancel button on wizard |
-| **Wizard steps** | N/A (single page) | 5 steps: JD → Understanding role → Requirements → Questions → Verify | 4 steps: Job details → Intake meeting → Screening setup → Review rubric |
-| **Terminal (skip path)** | N/A | Job postings dashboard (`/hiring-manager/job-postings`) | Job postings dashboard (`/recruiter/ai-job-flows`) |
-| **Terminal (complete path)** | Portfolio editor (`/candidate/editor/:id`) | Wizard success page (`/hiring-manager/job-postings/:jobId/success`) | TBD (not yet captured) |
-| **Mandatory steps** | 5+ (signup → auth → role → intro → create profile → portfolio) | 3 (signup → auth → role → intro → dashboard) | 3 (signup → auth → role → intro → dashboard) |
 
 ---
 
@@ -167,3 +115,54 @@ This sub-flow documents what happens when the HM chooses to complete the job pos
 
 ### Onboarding Completion — Wizard Path
 For HMs who complete the wizard during onboarding, the Onboarding Complete Succeeded event should fire on the success page (`/hiring-manager/job-postings/:jobId/success`). This is different from HMs who skip (who land on the job postings dashboard).
+
+---
+
+# Flow 3: Recruiter Persona
+
+**Persona selected:** Recruiter
+**Captured:** 2026-07-05
+
+## Flow Sequence
+
+Shared steps 1–3 are identical to Professional/HM (signup page, Google OAuth, role selection default). This flow diverges at role selection.
+
+| Step | Screenshot | Route | Screen | User Action | What Happens Next |
+|------|-----------|-------|--------|-------------|-------------------|
+| 3b | `22-recruiter-role-selection.png` | `/onboarding/role` | "I'm hiring" card expanded, "Recruiter" sub-option selected (purple border). Continue button says "Continue as a recruiter" (enabled, purple). | Clicked "Continue as a recruiter" | Navigates to intro page |
+| 4 | `23-recruiter-value-prop-intro.png` | `/onboarding/intro` | Value prop page — "Stop wasting time on bad applicants, focus on the ones that matter." Different content from HM: pipeline shows ATS → Candidates apply → AI evaluates & screens → Top candidates. Same four value cards as HM but with recruiter-specific copy ("Nothing goes out without your sign-off. No candidate gets contacted behind your back." / "Every applicant gets a real conversation against the same rubric — no more keyword-soup resume triage." / "Review 50 applicants today..."). "Let's go" button. **No progress bar, no cancel/back button.** | Clicked "Let's go" | Navigates to ATS check wizard |
+| 5 | `24-recruiter-ats-check-wizard.png` | `/recruiter/ai-job-flow/ats-check` | "Create job posting" wizard — step 1 "Job details". 4-step progress: Job details → Intake meeting → Screening setup → Review rubric. "How are you sourcing for this role?" with two cards: "Network referrals" / "Inbound from your ATS". Cancel button and X button available — **user can skip.** | Clicked X (close) | Navigates to job postings dashboard |
+| 6 | `25-recruiter-job-postings-dashboard.png` | `/recruiter/ai-job-flows` | Job Postings dashboard — "Let's find your first great hire". Empty state with "+ Select job" CTA. Sidebar shows "Recruiter" persona, "Job postings" nav. **This marks the end of onboarding for Recruiter.** | Onboarding complete | User is now in the product |
+
+## Flow Observations
+
+### Key Differences from HM
+- **Intro page content is recruiter-specific** — "Stop wasting time on bad applicants" (HM sees "Stop reading resumes"). Pipeline illustration shows ATS as the source (HM shows Network).
+- **Different wizard** — Recruiter gets a 4-step ATS-focused wizard (Job details → Intake meeting → Screening setup → Review rubric) vs HM's 5-step wizard (Job details → Understanding the role → Role requirements → Interview questions → Verify)
+- **Has both Cancel button AND X button** — HM wizard only has X. Recruiter wizard has an explicit Cancel text button.
+- **Dashboard CTA differs** — Recruiter sees "+ Select job" (implies importing from ATS). HM sees "+ Create job" (implies creating from scratch).
+- **Dashboard route differs** — Recruiter lands on `/recruiter/ai-job-flows`, HM lands on `/hiring-manager/job-postings`
+
+### Similarities with HM
+- Same intro page structure (value cards, "Let's go" button, no progress bar)
+- Job creation wizard is **skippable** (same as HM)
+- Onboarding ends on the job postings dashboard when wizard is skipped (same as HM)
+
+### Onboarding Completion Definition
+For **Recruiter** persona: onboarding is complete when the user lands on the job postings dashboard (`/recruiter/ai-job-flows`). The ATS check wizard is shown during onboarding but is **skippable**. If the user completes the wizard, onboarding ends on the success page (flow not yet captured — see `backlog/helix/onboarding-flow-deferred.md` item #11).
+
+---
+
+# Summary: Onboarding Flows Comparison
+
+| Aspect | Professional | Hiring Manager | Recruiter |
+|--------|-------------|----------------|-----------|
+| **Intro headline** | "Future-ready careers start here" | "Stop reading resumes, start meeting the right people" | "Stop wasting time on bad applicants, focus on the ones that matter" |
+| **Progress bar on intro** | Yes (2-step: How we help → Build your portfolio) | No | No |
+| **Post-intro flow** | Create profile (mandatory) | Job post wizard (skippable) | ATS check wizard (skippable) |
+| **Post-intro route** | `/candidate/create-profile` | `/hiring-manager/job-posting` | `/recruiter/ai-job-flow/ats-check` |
+| **Can skip post-intro step?** | No — must upload resume and build portfolio | Yes — X button on wizard | Yes — X button and Cancel button on wizard |
+| **Wizard steps** | N/A (single page) | 5 steps: JD → Understanding role → Requirements → Questions → Verify | 4 steps: Job details → Intake meeting → Screening setup → Review rubric |
+| **Terminal (skip path)** | N/A | Job postings dashboard (`/hiring-manager/job-postings`) | Job postings dashboard (`/recruiter/ai-job-flows`) |
+| **Terminal (complete path)** | Portfolio editor (`/candidate/editor/:id`) | Wizard success page (`/hiring-manager/job-postings/:jobId/success`) | TBD (see backlog item #11) |
+| **Mandatory steps** | 5+ (signup → auth → role → intro → create profile → portfolio) | 3 (signup → auth → role → intro → dashboard) | 3 (signup → auth → role → intro → dashboard) |
