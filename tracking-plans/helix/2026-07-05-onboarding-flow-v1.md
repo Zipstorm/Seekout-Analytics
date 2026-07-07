@@ -40,9 +40,9 @@
 
 This plan covers the entire onboarding funnel for all personas. After codebase absorption it:
 
-1. **Adds 2 new events** — persona card interaction, onboarding completion terminal
+1. **Adds 4 catalog events** — persona card interaction, onboarding completion terminal, plus Handle Claim Succeeded/Rejected catalog cleanup entries replacing never-wired Candidate Handle Add rows
 2. **Renames 16 onboarding events** — 12 for Succeeded/Rejected/Errored terminal rules, 2 for type reclassification (Started/Success → Interaction), 2 for convention alignment
-3. **Removes 6 dead events** — phone collection (not wired), Login Cancelled (dead code), catalog-only handle names
+3. **Removes 6 dead/never-wired events** — phone collection (not wired), Login Cancelled (dead code), catalog-only Candidate Handle Add names
 4. **Extends Page Viewed** to 2 pages with no page-view tracking (email verification, activate profile)
 5. **Fixes Login Started Button Clicked** to fire on production Clerk auth paths (was dev-only)
 6. **Adds `mode` property** to events shared between onboarding and post-onboarding
@@ -59,7 +59,7 @@ This plan supersedes `tracking-plans/helix/helix-code-changes-login-onboarding.m
 
 ## New Events Summary
 
-Overview of genuinely new events introduced by this plan. Renames are in the Event Renames section.
+Overview of new catalog entries introduced by this plan. Renames are in the Event Renames section; Handle Claim rows are catalog cleanup entries that replace never-wired Candidate Handle Add catalog names.
 
 | Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
 |---|---|---|---|---|---|---|---|---|---|
@@ -141,7 +141,47 @@ Detailed per-event specs. Updated after codebase absorption to reflect actuals.
 
 **Deviation from original plan:**
 - **Source changed:** Backend → Frontend. No single backend endpoint knows onboarding is complete. This is a navigation event — frontend owns the sessionStorage state, page context, and landing page detection. (Deviation #1)
-- **`steps_completed` dropped.** Redundant — derivable from `current_persona` + `had_email_verification` + `had_phone_collection`. PostHog funnels already show per-step drop-off. (Deviation #3)
+- **`steps_completed` dropped.** Redundant — derivable from `current_persona`, `had_email_verification`, and terminal `current_page_context`. PostHog funnels already show per-step drop-off. (Deviation #3)
+
+### Handle Claim Succeeded
+
+| Field | Value |
+|---|---|
+| **Event** | Handle Claim Succeeded |
+| **Area** | Prospect |
+| **Type** | Success |
+| **Trigger** | Handle blur or submit confirms the requested handle is available |
+| **Source** | Frontend |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `handle_length` | number | 0+ | Character count of the requested handle |
+| `current_page_context` | string | page context | Page where handle claim happened |
+| `source` | string | `settings`, `profile_editor` | Surface that initiated the handle check, when available |
+| `current_persona` | enum | `job_seeker`, `hiring_manager`, `recruiter` | Active persona |
+
+**Catalog cleanup:** Replaces the never-wired catalog row `Candidate Handle Add Succeeded`. Code historically fired `Handle Claimed`; the catalog should use `Handle Claim Succeeded`.
+
+### Handle Claim Rejected
+
+| Field | Value |
+|---|---|
+| **Event** | Handle Claim Rejected |
+| **Area** | Prospect |
+| **Type** | Rejected |
+| **Trigger** | Handle blur or submit confirms the requested handle is unavailable or invalid |
+| **Source** | Frontend |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `reason` | string | backend reason | Why the handle was rejected |
+| `current_page_context` | string | page context | Page where handle claim happened |
+| `source` | string | `settings`, `profile_editor` | Surface that initiated the handle check, when available |
+| `current_persona` | enum | `job_seeker`, `hiring_manager`, `recruiter` | Active persona |
+
+**Catalog cleanup:** Replaces the never-wired catalog row `Candidate Handle Add Rejected`. Code historically fired `Handle Claim Failed`; the catalog should use `Handle Claim Rejected`.
 
 ### Login Started Button Clicked
 
@@ -209,9 +249,9 @@ Existing events renamed during this implementation. Organized by the type of cha
 | Auth Email Verify Code Sent | Auth Email Verify Code Send Succeeded | Success | `AUTH_EMAIL_VERIFY_CODE_SENT` → `AUTH_EMAIL_VERIFY_CODE_SEND_SUCCEEDED` |
 | Auth Email Verified | Auth Email Verify Succeeded | Success | `AUTH_EMAIL_VERIFIED` → `AUTH_EMAIL_VERIFY_SUCCEEDED` |
 | Profile Photo Added | Profile Photo Add Succeeded | Success | `PROFILE_PHOTO_ADDED` → `PROFILE_PHOTO_ADD_SUCCEEDED` |
+| Candidate Profile Created | Candidate Profile Create Succeeded | Success | `CANDIDATE_PROFILE_CREATED` → `CANDIDATE_PROFILE_CREATE_SUCCEEDED` |
 
 **Note:** `Profile Photo Upload Failed` (the failure sibling) retains its old name — it has a different object prefix (`Profile Photo Upload` vs `Profile Photo Add`) and a non-conforming `Failed` terminal. This is a pre-existing catalog naming issue documented in `backlog/helix/onboarding-flow-deferred.md`, not fixed in this plan.
-| Candidate Profile Created | Candidate Profile Create Succeeded | Success | `CANDIDATE_PROFILE_CREATED` → `CANDIDATE_PROFILE_CREATE_SUCCEEDED` |
 
 ### Rejected Events — Must End "Rejected"
 
@@ -398,8 +438,10 @@ New events from this plan to add to `docs/helix/event-catalog.md`:
 
 - [ ] Onboarding Persona Card Clicked → Login & Onboarding Events
 - [ ] Onboarding Complete Succeeded → Login & Onboarding Events
+- [ ] Handle Claim Succeeded → Prospect Events (catalog cleanup replacing Candidate Handle Add Succeeded)
+- [ ] Handle Claim Rejected → Prospect Events (catalog cleanup replacing Candidate Handle Add Rejected)
 - [ ] 16 events renamed (old names → Removed Events table)
-- [ ] 6 dead events removed
+- [ ] 6 dead/never-wired events removed
 - [ ] `mode` property extended with value `onboarding`
 - [ ] `wizard_mode` extended with value `onboarding`
 - [ ] Page Viewed → add `auth_signup` as `current_page_context` value (replaces `auth_landing`)
