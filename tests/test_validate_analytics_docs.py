@@ -595,5 +595,245 @@ class ProductCliTests(unittest.TestCase):
         self.assertIn("All clear", result.stdout)
 
 
+class ObjectDeclarationProseTests(unittest.TestCase):
+    """Prose before the declaration table should not cause errors."""
+
+    def test_prose_before_new_standard_objects_table(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Standard Objects
+
+Use this section when new events introduce an object that is not yet in
+docs/helix/event-schema.md.
+
+| Object | Entity | Example Events |
+|---|---|---|
+| Sam Session | Sam | Sam Session Started |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(data.declaration_errors, [])
+        self.assertIn("Sam Session", data.added_objects)
+        self.assertEqual(data.added_objects["Sam Session"]["entity"], "Sam")
+
+    def test_placeholder_rows_are_skipped(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Standard Objects
+
+Use this section when new events introduce an object.
+
+| Object | Entity | Example Events |
+|---|---|---|
+| [Object Name] | [Entity represented] | [Object Action], [Object Action] |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(data.declaration_errors, [])
+        self.assertEqual(data.added_objects, {})
+
+    def test_prose_before_removed_standard_objects_table(self):
+        path = write_tmp_md(
+            """# Test
+
+## Removed Standard Objects
+
+Objects removed by this plan.
+
+| Object | Reason |
+|---|---|
+| Voice Session | Deprecated |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(data.declaration_errors, [])
+        self.assertIn("Voice Session", data.removed_objects)
+
+    def test_malformed_table_after_prose_still_errors(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Standard Objects
+
+Some explanation text.
+
+| Object | Entity |
+|---|---|
+| Foo | Bar |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.declaration_errors), 1)
+        self.assertIn("must use columns", data.declaration_errors[0])
+
+    def test_prose_only_new_standard_objects_errors(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Standard Objects
+
+Voice Session should be added as a new object.
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.declaration_errors), 1)
+        self.assertIn("must use columns", data.declaration_errors[0])
+
+    def test_prose_only_removed_standard_objects_errors(self):
+        path = write_tmp_md(
+            """# Test
+
+## Removed Standard Objects
+
+Remove Voice Session because it is deprecated.
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.declaration_errors), 1)
+        self.assertIn("must use columns", data.declaration_errors[0])
+
+
+class FunnelParserScopingTests(unittest.TestCase):
+    """New per-funnel step tables should only be parsed inside ## Funnels."""
+
+    def test_step_tables_inside_funnels_section_are_parsed(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Events Summary
+
+| Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| Account Create Succeeded | Account | Success | Backend | Account created | New user | `auth_method` | -- | -- | Not Started |
+
+## Funnels
+
+### Signup Funnel
+
+| Step | Event | Filter |
+|---|---|---|
+| 1 | Page Viewed | `current_page_context` = `auth_signup` |
+| 2 | Login Started | — |
+| 3 | Account Create Succeeded | — |
+
+### Auth Funnel
+
+| Step | Event | Filter |
+|---|---|---|
+| 1 | Login Started | — |
+| 2 | Auth Login Succeeded | — |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.funnels), 2)
+        self.assertIn("Signup Funnel", data.funnels)
+        self.assertIn("Auth Funnel", data.funnels)
+        self.assertEqual(
+            data.funnels["Signup Funnel"],
+            ["Page Viewed", "Login Started", "Account Create Succeeded"],
+        )
+
+    def test_step_event_table_outside_funnels_section_is_ignored(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Events Summary
+
+| Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| Account Create Succeeded | Account | Success | Backend | Account created | New user | `auth_method` | -- | -- | Not Started |
+
+## Implementation Notes
+
+### Migration Steps
+
+| Step | Event | Action |
+|---|---|---|
+| 1 | Account Created | Rename to Account Create Succeeded |
+| 2 | Auth Login Failed | Rename to Auth Login Rejected |
+
+## Funnels
+
+### Signup Funnel
+
+| Step | Event | Filter |
+|---|---|---|
+| 1 | Page Viewed | — |
+| 2 | Account Create Succeeded | — |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.funnels), 1)
+        self.assertIn("Signup Funnel", data.funnels)
+        self.assertNotIn("Migration Steps", data.funnels)
+
+    def test_old_flat_funnel_format_still_works(self):
+        path = write_tmp_md(
+            """# Test
+
+## New Events Summary
+
+| Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| Foo Created | Account | Success | Backend | Created | New | `id` | -- | -- | Not Started |
+
+## Funnels
+
+| Funnel Name | Steps | Purpose |
+|---|---|---|
+| Signup | Page Viewed → Login Started → Foo Created | Measures signup |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.funnels), 1)
+        self.assertEqual(
+            data.funnels["Signup"],
+            ["Page Viewed", "Login Started", "Foo Created"],
+        )
+
+
+    def test_subfunnel_heading_containing_funnels_not_confused_with_old_format(self):
+        """### Sourcing Funnels should not be parsed as old flat-table format."""
+        path = write_tmp_md(
+            """# Test
+
+## New Events Summary
+
+| Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| Foo Created | Account | Success | Backend | Created | New | `id` | -- | -- | Not Started |
+
+## Funnels
+
+### Sourcing Funnels
+
+| Step | Event | Filter |
+|---|---|---|
+| 1 | Page Viewed | — |
+| 2 | Login Started | — |
+| 3 | Foo Created | — |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.funnels), 1)
+        self.assertIn("Sourcing Funnels", data.funnels)
+        self.assertEqual(
+            data.funnels["Sourcing Funnels"],
+            ["Page Viewed", "Login Started", "Foo Created"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

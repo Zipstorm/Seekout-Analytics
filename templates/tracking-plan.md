@@ -31,6 +31,29 @@
 
 ---
 
+<!--
+## Scope
+
+Use this section when the plan touches existing events (renames, removals, property
+fixes) in addition to — or instead of — new events. Summarize the plan's full
+scope so reviewers can see the blast radius at a glance. Skip for simple
+new-events-only plans.
+
+1. **Adds N new events** — [brief description]
+2. **Renames N events** — [naming rule being applied]
+3. **Removes N events** — [reason: dead code, superseded, etc.]
+4. **Fixes properties on N events** — [what kind of fixes]
+5. **Extends [Event Name] to N new pages** — [which pages]
+
+### Supersedes
+
+This plan supersedes `tracking-plans/<product>/[old-plan].md` (status: [status],
+[date], [reason it was never completed]). That plan should be archived after this
+one is merged.
+-->
+
+---
+
 ## New Events Summary
 
 Overview of all events introduced by this feature. All follow Object-Action, Proper Case.
@@ -43,7 +66,7 @@ Overview of all events introduced by this feature. All follow Object-Action, Pro
 
 ## Property Details
 
-Detailed property definitions for new events. Properties shared across multiple events are listed once.
+Detailed property definitions for new or modified events. Properties shared across multiple events are listed once.
 
 | Property | Type | Values | Description |
 |---|---|---|---|
@@ -73,6 +96,105 @@ Detailed per-event specs. Initially filled during event design (from screenshots
 ---
 
 <!--
+## Event Renames
+
+Use this section when existing events need renaming to comply with naming rules
+from `docs/shared/naming-and-event-types.md`. Organize by terminal type so
+reviewers can verify the naming rule applied to each rename.
+
+### Success Events — Must End "Succeeded"
+
+| Current Name | New Name | Type | Constant |
+|---|---|---|---|
+| [Old Name] | [New Name] | Success | `OLD_CONSTANT` → `NEW_CONSTANT` |
+
+### Rejected Events — Must End "Rejected"
+
+| Current Name | New Name | Type | Rationale |
+|---|---|---|---|
+| [Old Name] | [New Name] | Rejected | [Why Rejected not Errored] |
+
+### Error Events — Must End "Errored"
+
+| Current Name | New Name | Type | Rationale |
+|---|---|---|---|
+| [Old Name] | [New Name] | Error | [Why Errored not Rejected] |
+-->
+
+---
+
+<!--
+## Removed Events
+
+Events removed by this plan. Includes old names from renames (replaced by new
+name) and events being deleted entirely (dead code, superseded, never wired).
+
+| Event | Reason | Replaced By |
+|---|---|---|
+| [Old Event Name] | Renamed / Dead code / Superseded / Never wired | [New Event Name] / — |
+-->
+
+---
+
+<!--
+## Existing Event Updates
+
+Use this section when the plan modifies existing catalog events without renaming
+them. Covers: extending events to new pages, fixing triggers or properties,
+adding new properties (like `mode`), moving `$set_once` attribution, etc.
+
+Each sub-section is optional — include only what applies.
+
+### Page Viewed Extensions
+
+Pages that currently do not fire Page Viewed. This plan adds Page Viewed to each.
+
+| Page | Route | `current_page_context` value | Notes |
+|---|---|---|---|
+| [Page name] | [/route] | [value] | [Conditions, e.g. "skipped for OAuth"] |
+
+### Existing Event Property Extensions
+
+Existing catalog events that gain new properties (e.g., `mode` for
+onboarding/post-onboarding distinction) or get wired to additional pages.
+
+| Event | Change | New Properties | Notes |
+|---|---|---|---|
+| [Event Name] | Wired on [Page] / Added `mode` / etc. | `prop_1`, `prop_2` | [Context] |
+
+### Existing Event Fixes
+
+Production fixes, trigger changes, or `$set_once` attribution moves on existing events.
+
+| Event | Change | Detail |
+|---|---|---|
+| [Event Name] | Trigger fix / `$set_once` move / property value rename | [What changed and why] |
+
+### Property Fixes on Existing Events
+
+Property additions, removals, or renames on existing events.
+
+#### Properties to Remove
+
+| Event | Property | Reason |
+|---|---|---|
+| [Event Name] | `property` | [Why removing] |
+
+#### Properties to Rename
+
+| Event | Current Property | New Property | Reason |
+|---|---|---|---|
+| [Event Name] | `old_prop` | `new_prop` | [Why renaming] |
+
+#### Properties to Add
+
+| Event | Property | Type | Values | Reason |
+|---|---|---|---|---|
+| [Event Name] | `prop` | type | [values] | [Why adding] |
+-->
+
+---
+
 ## New Standard Objects
 
 Use this section when new events introduce an object that is not yet in
@@ -82,6 +204,19 @@ docs/<product>/event-schema.md. Rows use the same shape as the schema table so
 | Object | Entity | Example Events |
 |---|---|---|
 | [Object Name] | [Entity represented] | [Object Action], [Object Action] |
+
+---
+
+<!--
+## Removed Standard Objects
+
+Use this section when the plan removes Standard Objects from
+docs/<product>/event-schema.md. The validator checks that no catalog
+events still reference a removed object before allowing the merge.
+
+| Object | Reason |
+|---|---|
+| [Object Name] | [Why removing] |
 -->
 
 ---
@@ -92,7 +227,6 @@ New events from this plan to add to `docs/<product>/event-catalog.md`:
 
 - [ ] [Event Name] → [Catalog section]
 - [ ] New object added to Standard Objects table: [Yes / No]
-- [ ] Removed object: [Object Name] — [Reason]
 
 ---
 
@@ -120,6 +254,25 @@ Map events back to success metrics. Fill after events are designed.
 
 Multi-step conversion flows to track. Fill after events are absorbed from the codebase.
 
-| Funnel Name | Steps | Purpose |
+### [Funnel Name]
+
+| Step | Event | Filter |
 |---|---|---|
-| [Name] | Step 1 → Step 2 → Step 3 | [What this measures] |
+| 1 | [Event Name] | [Property filter or —] |
+| 2 | [Event Name] | [Property filter or —] |
+| 3 | [Event Name] | [Property filter or —] |
+
+**Purpose:** [What this funnel measures]
+
+<!--
+## Implementation Notes
+
+Use this section for developer-facing guidance when the plan has non-obvious
+implementation requirements: cross-repo coordination, sessionStorage state,
+SDK integration points, migration batching strategy, etc. Skip for plans
+where the Event Specifications are sufficient for implementation.
+
+### [Topic]
+
+[Implementation detail]
+-->
