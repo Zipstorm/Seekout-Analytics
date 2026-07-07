@@ -985,6 +985,9 @@ def parse_tracking_plan(path):
     )
 
     # ── Funnels table ──
+    # Supports two formats:
+    #   Old: flat table under ## Funnels with Funnel Name | Steps | Purpose
+    #   New: per-funnel H3 tables with Step | Event | Filter columns
     tp_funnels = {}
     _, fn_rows = _find_table(tables, "Funnels")
     if fn_rows:
@@ -1000,6 +1003,21 @@ def parse_tracking_plan(path):
                 if s.strip()
             ]
             tp_funnels[fname] = steps
+
+    # Fallback: per-funnel step tables (Step | Event | Filter)
+    if not tp_funnels:
+        for heading, header, rows in tables:
+            normalized = [h.strip().lower() for h in header]
+            if "step" in normalized and "event" in normalized:
+                event_col = normalized.index("event")
+                steps = []
+                for row in rows:
+                    if event_col < len(row):
+                        ev = row[event_col].strip()
+                        if ev and not ev.startswith("["):
+                            steps.append(ev)
+                if steps:
+                    tp_funnels[heading] = steps
 
     # ── Property Details table ──
     tp_prop_dict = {}
