@@ -2,7 +2,7 @@
 
 **Created:** 2026-07-05
 **Source:** Onboarding flow audit (`plans/helix-onboarding-flow-audit.md`) and tracking plan (`tracking-plans/helix/2026-07-05-onboarding-flow-v1.md`)
-**Decision:** These items were identified during the onboarding flow audit but deferred to avoid expanding the scope of the v1 tracking plan. Each item has full context so it can be picked up independently later.
+**Decision:** These items were identified during the onboarding flow audit but deferred to avoid expanding the scope of the v1 tracking plan. Each item is separately scoped, with pickup timing noted below.
 
 ---
 
@@ -15,9 +15,9 @@
 - Whether HMs who skip during onboarding come back to create a job (and how long it takes)
 - If the wizard placement during onboarding is actually helpful or just friction
 
-**Proposed event:** `Job Post Wizard Dismissed` (Type: Interaction) with `mode: 'onboarding'`, `current_page_context`, `step_name` (which wizard step they were on when they dismissed)
+**Proposed event:** `Job Post Wizard Dismissed` (Type: Interaction) with `wizard_mode: 'onboarding'`, `current_page_context`, `step_name` (which wizard step they were on when they dismissed)
 
-**When to pick up:** After the v1 onboarding tracking plan is merged and we have baseline data on the core funnel. Can be bundled with other job wizard improvements.
+**When to pick up:** After the v1 onboarding tracking plan is merged and we have baseline data on the core funnel. It can be bundled with other job wizard improvements.
 
 ---
 
@@ -70,11 +70,11 @@ The claim logic is in `candidateInterviewSignup.ts`. ActivateProfile.tsx has no 
 
 ## 5. Onboarding Time-Per-Step Breakdown
 
-**What:** The v1 tracking plan captures `onboarding_duration_seconds` on the terminal `Onboarding Completed` event. But it doesn't break down time spent on each individual step (e.g., how long on role selection vs intro vs create profile).
+**What:** The v1 tracking plan captures `onboarding_duration_seconds` on the terminal `Onboarding Complete Succeeded` event. But it doesn't break down time spent on each individual step (e.g., how long on role selection vs intro vs create profile).
 
 **Why this matters:** If we see high drop-off at a specific step, knowing the time spent on that step before dropping off helps distinguish "confused and stuck" from "distracted and left". Also helps identify if any step is unexpectedly slow.
 
-**Proposed approach:** Add `step_duration_seconds` to Page Viewed events on onboarding pages. Compute as `Date.now() - sessionStorage timestamp` set when the page first mounted, fired on the NEXT page's Page Viewed (i.e., when the user leaves the step).
+**Proposed approach:** Add `step_duration_seconds` to Page Viewed events on onboarding pages. Compute as `Date.now() - sessionStorage timestamp` set when the page first mounted. For intermediate steps, emit the previous step duration on the NEXT page's Page Viewed. For terminal steps, flush the final duration on completion or abort so the last step is captured even without another onboarding Page Viewed.
 
 **When to pick up:** After we have baseline funnel data from v1. This is an enhancement that adds implementation complexity (sessionStorage timestamp management per step).
 
@@ -151,7 +151,7 @@ The claim logic is in `candidateInterviewSignup.ts`. ActivateProfile.tsx has no 
 
 ## How to Use This Backlog
 
-- Each item is independent and can be picked up in any order
+- Each item is independently scoped, but some items depend on the v1 tracking plan merge or additional validation before pickup
 - When picking up an item, create a tracking plan (or extend an existing one) and reference this backlog item
 - After an item is implemented, mark it as **Done** with the tracking plan reference and date
 - Items may become obsolete if the product changes — review periodically

@@ -135,9 +135,9 @@ Shared steps 1–3 are identical to Professional (signup page, Google OAuth, rol
 For **Hiring Manager** persona: onboarding is complete when the user lands on the job postings dashboard (`/hiring-manager/job-postings`). The job post wizard is shown during onboarding but is **skippable** — creating a job during onboarding is optional.
 
 ### Analytics Implications
-- Job post wizard events during onboarding should carry `mode: 'onboarding'` to distinguish from later job creation
-- If user completes the wizard during onboarding, both the job creation events AND Onboarding Completed fire
-- If user skips (X button), only Onboarding Completed fires — need to track the skip action
+- Job post wizard events during onboarding should carry `wizard_mode: 'onboarding'` to distinguish from later job creation
+- If user completes the wizard during onboarding, both the job creation events AND Onboarding Complete Succeeded fire
+- If user skips (X button), only Onboarding Complete Succeeded fires — need to track the skip action
 - Need to track: what % of HMs create their first job during onboarding vs later
 
 ---
@@ -163,7 +163,7 @@ This sub-flow documents what happens when the HM chooses to complete the job pos
 - **Verify step (step 5) is skippable** — "Maybe later" link skips email domain verification
 - **Success page is the terminal** — shows the created job with next actions (Preview, Share, Invite teammates)
 - **All existing job wizard events fire during this flow** — they already exist in the catalog (Job Post Wizard Started, Job Post Wizard Job Details Completed, etc.)
-- **`mode: 'onboarding'` should be added to backlog** — these events already exist in dev branch; adding `mode` is a separate scope item, not part of the v1 onboarding tracking plan
+- **`wizard_mode: 'onboarding'` should be verified in backlog** — these events already exist in dev branch; verifying/documenting `wizard_mode` is a separate scope item, not part of the v1 onboarding tracking plan
 
 ### Onboarding Completion — Wizard Path
-For HMs who complete the wizard during onboarding, the Onboarding Completed event should fire on the success page (`/hiring-manager/job-postings/:jobId/success`). This is different from HMs who skip (who land on the job postings dashboard).
+For HMs who complete the wizard during onboarding, the Onboarding Complete Succeeded event should fire on the success page (`/hiring-manager/job-postings/:jobId/success`). This is different from HMs who skip (who land on the job postings dashboard).

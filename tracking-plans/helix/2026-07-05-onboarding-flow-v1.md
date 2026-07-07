@@ -6,8 +6,8 @@
 **Related PRD:** —
 **Repo:** Zipstorm/helix
 **Branch:** soumabrata/2026-07-06-onboarding-flow-v1
-**PR:** —
-**Status:** Draft
+**PR:** https://github.com/Zipstorm/Seekout-Analytics/pull/36
+**Status:** Review
 
 ## Status History
 
@@ -15,6 +15,7 @@
 |---|---|---|
 | Draft | 2026-07-05 | Plan created |
 | Absorbed | 2026-07-06 | Codebase absorption from helix branch — 13 deviations applied |
+| Review | 2026-07-07 | PR #36 updated after validator and review feedback; validator all clear |
 
 ## Workflow
 
@@ -22,7 +23,7 @@
 - [ ] Validated — skipped (plan went to implementation before validation)
 - [x] Codebase implemented — 2026-07-06
 - [x] Absorbed from codebase — 2026-07-06
-- [x] Re-validated — 2026-07-06 (24 TP6/TP8 expected errors: renamed events not in catalog yet; TP0-TP5, TP7, TP9-TP12 all pass)
+- [x] Re-validated — 2026-07-07 (All clear — 13 validation rules passed)
 - [x] PR raised — 2026-07-06
 - [ ] PR approved
 - [ ] Merged to catalog
@@ -63,7 +64,7 @@ Overview of genuinely new events introduced by this plan. Renames are in the Eve
 | Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
 |---|---|---|---|---|---|---|---|---|---|
 | Onboarding Persona Card Clicked | Account | Interaction | Frontend | User clicks "I'm a professional" or "I'm hiring" or a hiring sub-option on `/onboarding/role` | Tracks which persona cards users explore before committing. Fires before persona is set. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Dev |
-| Onboarding Complete Succeeded | Account | Success | Frontend | User lands on the first post-onboarding page after completing all onboarding steps | Terminal event marking the end of onboarding. Frontend fires via `maybeFireOnboardingComplete()` on CandidateDashboard, PortfolioEditor, or JobList mount. | `current_page_context`, `previous_page_context`, `current_persona`, `auth_method`, `onboarding_duration_seconds`, `had_email_verification`, `had_phone_collection`, `has_resume`, `has_photo`, `has_handle`, `links_count` | -- | `$set_once: first_persona` | Dev |
+| Onboarding Complete Succeeded | Account | Success | Frontend | User lands on the first post-onboarding page after completing all onboarding steps | Terminal event marking the end of onboarding. Frontend fires via `maybeFireOnboardingComplete()` on terminal page mount: Professional portfolio/dashboard, HM dashboard or wizard success page, or Recruiter dashboard. | `current_page_context`, `previous_page_context`, `current_persona`, `auth_method`, `onboarding_duration_seconds`, `had_email_verification`, `had_phone_collection`, `has_resume`, `has_photo`, `has_handle`, `links_count` | -- | `$set_once: first_persona` | Dev |
 
 ---
 
@@ -73,7 +74,7 @@ New or modified properties introduced by this plan. Properties already in the ca
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `onboarding_duration_seconds` | number | positive integer | Seconds elapsed from the first auth Page Viewed to Onboarding Complete Succeeded. Computed client-side: `(Date.now() - sessionStorage.helix_onboarding_start_ts) / 1000`. |
+| `onboarding_duration_seconds` | number | positive decimal seconds | Seconds elapsed from the first auth Page Viewed to Onboarding Complete Succeeded. Computed client-side as `(Date.now() - sessionStorage.helix_onboarding_start_ts) / 1000`; fractional precision is preserved. |
 | `had_email_verification` | boolean | true/false | Whether the user went through the email verification step during onboarding. False for Google/Microsoft OAuth signups. |
 | `had_phone_collection` | boolean | true/false | Whether the user saw the phone collection step during onboarding. Currently hardcoded to `false` — phone collection is not wired into app router. |
 | `has_resume` | boolean | true/false | Whether user uploaded a resume during onboarding (Professional only). |
@@ -118,17 +119,17 @@ Detailed per-event specs. Updated after codebase absorption to reflect actuals.
 | **Event** | Onboarding Complete Succeeded |
 | **Area** | Account |
 | **Type** | Success |
-| **Trigger** | User lands on the first post-onboarding page after completing all onboarding steps. For Professional: portfolio editor or candidate dashboard. For HM: job postings dashboard. For Recruiter: job postings dashboard. |
+| **Trigger** | User lands on the first post-onboarding page after completing all onboarding steps. Professional: portfolio editor or candidate dashboard. Hiring Manager: job postings dashboard when the wizard is skipped, or wizard success page when the wizard is completed. Recruiter: recruiter job postings dashboard when the ATS wizard is skipped. |
 | **Source** | Frontend |
 | **Group** | — |
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `current_page_context` | string | `candidate_editor`, `candidate_dashboard`, `hiring_manager_job_posting` | Landing page after onboarding |
+| `current_page_context` | string | `candidate_editor`, `candidate_dashboard`, `hiring_manager_job_postings`, `hm_job_creation_wizard_success`, `recruiter_ai_job_flows` | Terminal landing page after onboarding: Professional portfolio/dashboard, HM skip path, HM wizard-complete path, or Recruiter skip path |
 | `previous_page_context` | string | via `rotatePageContext()` | Last onboarding step |
 | `current_persona` | enum | `job_seeker`, `hiring_manager`, `recruiter` | Active persona. Auto-stamped via super-property. |
 | `auth_method` | enum | `google`, `microsoft`, `email` | How the user authenticated. Read from `sessionStorage.helix_auth_method`. |
-| `onboarding_duration_seconds` | number | positive integer | Seconds from first auth Page Viewed to this event. Computed from `sessionStorage.helix_onboarding_start_ts`. |
+| `onboarding_duration_seconds` | number | positive decimal seconds | Seconds from first auth Page Viewed to this event. Computed from `sessionStorage.helix_onboarding_start_ts`; fractional precision is preserved. |
 | `had_email_verification` | boolean | true/false | Whether user went through email verification |
 | `had_phone_collection` | boolean | false | Hardcoded false — phone collection not wired into app router |
 | `has_resume` | boolean | true/false | Whether user uploaded a resume (Professional only) |
