@@ -16,1131 +16,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-07-04 14:24:02 UTC
-
-**Result: 101 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 2]** Result pattern table: "(backend submission)" (interaction / started for "Submit interview") not found in Event Catalog
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 7]** Prospect Dashboard (Prospect Team): references `candidate_create_profile` not found in Property Dictionary
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Restart Button Clicked / Candidate Interview Question Restart Succeeded / -- / Candidate Interview Question Restart Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Custom Link Delete Button Clicked / Candidate Custom Link Delete Succeeded / -- / Candidate Custom Link Delete Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Publish Button Clicked / Candidate Portfolio Publish Succeeded / -- / Candidate Portfolio Publish Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Add Profile Photo Button Clicked / Profile Photo Added / Profile Photo Upload Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected / Candidate Interview Identity Verification Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected / Candidate Interview Question Skip Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Resume Upload Button Clicked / Candidate Resume Upload Succeeded / Candidate Resume Upload Rejected / Candidate Resume Upload Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Profile Photo Remove Button Clicked / Candidate Profile Photo Remove Succeeded / -- / Candidate Profile Photo Remove Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Build Profile Button Clicked / Candidate Profile Created / Candidate Profile Creation Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Schema Interaction / Started / Result row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Interaction / Started / Result row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected) not in Dashboard Platform Health table
-- **[Rule 10]** `entry_point` lists "Account Created" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 10]** `action` lists "Candidate Interview Identity Verification Continue Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Question Skip Rejected" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Retake Question Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Review Answer Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `start_source` lists "Page Viewed" in "Used In" but that event does not reference this property
-- **[Rule 10]** `photo_upload_method` lists "--" in "Used In" but that event does not exist in the catalog
-- **[Rule 10]** `action_value` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 14]** Event name "Candidate Profile Photo Remove Button Clicked" appears 2 times in the catalog
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:24:31 UTC
-
-**Result: 101 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 2]** Result pattern table: "(backend submission)" (interaction / started for "Submit interview") not found in Event Catalog
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 7]** Prospect Dashboard (Prospect Team): references `candidate_create_profile` not found in Property Dictionary
-- **[Rule 9]** Platform Health row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected / Candidate Interview Identity Verification Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Add Profile Photo Button Clicked / Profile Photo Added / Profile Photo Upload Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Profile Photo Remove Button Clicked / Candidate Profile Photo Remove Succeeded / -- / Candidate Profile Photo Remove Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Resume Upload Button Clicked / Candidate Resume Upload Succeeded / Candidate Resume Upload Rejected / Candidate Resume Upload Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Publish Button Clicked / Candidate Portfolio Publish Succeeded / -- / Candidate Portfolio Publish Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Custom Link Delete Button Clicked / Candidate Custom Link Delete Succeeded / -- / Candidate Custom Link Delete Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Restart Button Clicked / Candidate Interview Question Restart Succeeded / -- / Candidate Interview Question Restart Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Build Profile Button Clicked / Candidate Profile Created / Candidate Profile Creation Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected / Candidate Interview Question Skip Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Schema Interaction / Started / Result row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Interaction / Started / Result row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected) not in Dashboard Platform Health table
-- **[Rule 10]** `entry_point` lists "Account Created" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 10]** `action` lists "Candidate Interview Identity Verification Continue Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Question Skip Rejected" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Retake Question Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Review Answer Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `start_source` lists "Page Viewed" in "Used In" but that event does not reference this property
-- **[Rule 10]** `photo_upload_method` lists "--" in "Used In" but that event does not exist in the catalog
-- **[Rule 10]** `action_value` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 14]** Event name "Candidate Profile Photo Remove Button Clicked" appears 2 times in the catalog
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:24:41 UTC
-
-**Result: 101 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 2]** Result pattern table: "(backend submission)" (interaction / started for "Submit interview") not found in Event Catalog
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 7]** Prospect Dashboard (Prospect Team): references `candidate_create_profile` not found in Property Dictionary
-- **[Rule 9]** Platform Health row (Build Profile Button Clicked / Candidate Profile Created / Candidate Profile Creation Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Custom Link Delete Button Clicked / Candidate Custom Link Delete Succeeded / -- / Candidate Custom Link Delete Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected / Candidate Interview Question Skip Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected / Candidate Interview Identity Verification Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Profile Photo Remove Button Clicked / Candidate Profile Photo Remove Succeeded / -- / Candidate Profile Photo Remove Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Resume Upload Button Clicked / Candidate Resume Upload Succeeded / Candidate Resume Upload Rejected / Candidate Resume Upload Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Restart Button Clicked / Candidate Interview Question Restart Succeeded / -- / Candidate Interview Question Restart Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Add Profile Photo Button Clicked / Profile Photo Added / Profile Photo Upload Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Publish Button Clicked / Candidate Portfolio Publish Succeeded / -- / Candidate Portfolio Publish Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Schema Interaction / Started / Result row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Interaction / Started / Result row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected) not in Dashboard Platform Health table
-- **[Rule 10]** `entry_point` lists "Account Created" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 10]** `action` lists "Candidate Interview Identity Verification Continue Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Question Skip Rejected" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Retake Question Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Review Answer Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `start_source` lists "Page Viewed" in "Used In" but that event does not reference this property
-- **[Rule 10]** `photo_upload_method` lists "--" in "Used In" but that event does not exist in the catalog
-- **[Rule 10]** `action_value` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 14]** Event name "Candidate Profile Photo Remove Button Clicked" appears 2 times in the catalog
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:24:52 UTC
-
-**Result: 101 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 2]** Result pattern table: "(backend submission)" (interaction / started for "Submit interview") not found in Event Catalog
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 7]** Prospect Dashboard (Prospect Team): references `candidate_create_profile` not found in Property Dictionary
-- **[Rule 9]** Platform Health row (Candidate Portfolio Publish Button Clicked / Candidate Portfolio Publish Succeeded / -- / Candidate Portfolio Publish Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected / Candidate Interview Identity Verification Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Profile Photo Remove Button Clicked / Candidate Profile Photo Remove Succeeded / -- / Candidate Profile Photo Remove Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Resume Upload Button Clicked / Candidate Resume Upload Succeeded / Candidate Resume Upload Rejected / Candidate Resume Upload Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected / Candidate Interview Question Skip Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Add Profile Photo Button Clicked / Profile Photo Added / Profile Photo Upload Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Build Profile Button Clicked / Candidate Profile Created / Candidate Profile Creation Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Custom Link Delete Button Clicked / Candidate Custom Link Delete Succeeded / -- / Candidate Custom Link Delete Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Restart Button Clicked / Candidate Interview Question Restart Succeeded / -- / Candidate Interview Question Restart Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Schema Interaction / Started / Result row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Interaction / Started / Result row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected) not in Dashboard Platform Health table
-- **[Rule 10]** `entry_point` lists "Account Created" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 10]** `action` lists "Candidate Interview Identity Verification Continue Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Question Skip Rejected" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Retake Question Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Review Answer Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `start_source` lists "Page Viewed" in "Used In" but that event does not reference this property
-- **[Rule 10]** `photo_upload_method` lists "--" in "Used In" but that event does not exist in the catalog
-- **[Rule 10]** `action_value` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 14]** Event name "Candidate Profile Photo Remove Button Clicked" appears 2 times in the catalog
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:25:01 UTC
-
-**Result: 101 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 2]** Result pattern table: "(backend submission)" (interaction / started for "Submit interview") not found in Event Catalog
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 7]** Prospect Dashboard (Prospect Team): references `candidate_create_profile` not found in Property Dictionary
-- **[Rule 9]** Platform Health row (Add Profile Photo Button Clicked / Profile Photo Added / Profile Photo Upload Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Restart Button Clicked / Candidate Interview Question Restart Succeeded / -- / Candidate Interview Question Restart Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected / Candidate Interview Identity Verification Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Resume Upload Button Clicked / Candidate Resume Upload Succeeded / Candidate Resume Upload Rejected / Candidate Resume Upload Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Custom Link Delete Button Clicked / Candidate Custom Link Delete Succeeded / -- / Candidate Custom Link Delete Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Profile Photo Remove Button Clicked / Candidate Profile Photo Remove Succeeded / -- / Candidate Profile Photo Remove Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected / Candidate Interview Question Skip Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Publish Button Clicked / Candidate Portfolio Publish Succeeded / -- / Candidate Portfolio Publish Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Build Profile Button Clicked / Candidate Profile Created / Candidate Profile Creation Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Schema Interaction / Started / Result row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Interaction / Started / Result row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected) not in Dashboard Platform Health table
-- **[Rule 10]** `entry_point` lists "Account Created" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 10]** `action` lists "Candidate Interview Identity Verification Continue Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Question Skip Rejected" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Retake Question Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Review Answer Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `start_source` lists "Page Viewed" in "Used In" but that event does not reference this property
-- **[Rule 10]** `photo_upload_method` lists "--" in "Used In" but that event does not exist in the catalog
-- **[Rule 10]** `action_value` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 14]** Event name "Candidate Profile Photo Remove Button Clicked" appears 2 times in the catalog
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:26:34 UTC
-
-**Result: 101 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 2]** Result pattern table: "(backend submission)" (interaction / started for "Submit interview") not found in Event Catalog
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 7]** Prospect Dashboard (Prospect Team): references `candidate_create_profile` not found in Property Dictionary
-- **[Rule 9]** Platform Health row (Candidate Resume Upload Button Clicked / Candidate Resume Upload Succeeded / Candidate Resume Upload Rejected / Candidate Resume Upload Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected / Candidate Interview Identity Verification Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Restart Button Clicked / Candidate Interview Question Restart Succeeded / -- / Candidate Interview Question Restart Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Add Profile Photo Button Clicked / Profile Photo Added / Profile Photo Upload Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Profile Photo Remove Button Clicked / Candidate Profile Photo Remove Succeeded / -- / Candidate Profile Photo Remove Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected / Candidate Interview Question Skip Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Build Profile Button Clicked / Candidate Profile Created / Candidate Profile Creation Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Publish Button Clicked / Candidate Portfolio Publish Succeeded / -- / Candidate Portfolio Publish Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Custom Link Delete Button Clicked / Candidate Custom Link Delete Succeeded / -- / Candidate Custom Link Delete Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Schema Interaction / Started / Result row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Interaction / Started / Result row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected) not in Dashboard Platform Health table
-- **[Rule 10]** `entry_point` lists "Account Created" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 10]** `action` lists "Candidate Interview Identity Verification Continue Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Question Skip Rejected" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Retake Question Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Review Answer Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `start_source` lists "Page Viewed" in "Used In" but that event does not reference this property
-- **[Rule 10]** `photo_upload_method` lists "--" in "Used In" but that event does not exist in the catalog
-- **[Rule 10]** `action_value` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 14]** Event name "Candidate Profile Photo Remove Button Clicked" appears 2 times in the catalog
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:26:47 UTC
-
-**Result: 101 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 2]** Result pattern table: "(backend submission)" (interaction / started for "Submit interview") not found in Event Catalog
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 7]** Prospect Dashboard (Prospect Team): references `candidate_create_profile` not found in Property Dictionary
-- **[Rule 9]** Platform Health row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected / Candidate Interview Question Skip Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Question Restart Button Clicked / Candidate Interview Question Restart Succeeded / -- / Candidate Interview Question Restart Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Resume Upload Button Clicked / Candidate Resume Upload Succeeded / Candidate Resume Upload Rejected / Candidate Resume Upload Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Profile Photo Remove Button Clicked / Candidate Profile Photo Remove Succeeded / -- / Candidate Profile Photo Remove Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Add Profile Photo Button Clicked / Profile Photo Added / Profile Photo Upload Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected / Candidate Interview Identity Verification Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Custom Link Delete Button Clicked / Candidate Custom Link Delete Succeeded / -- / Candidate Custom Link Delete Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Build Profile Button Clicked / Candidate Profile Created / Candidate Profile Creation Failed) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Publish Button Clicked / Candidate Portfolio Publish Succeeded / -- / Candidate Portfolio Publish Errored) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Schema Interaction / Started / Result row (Open Identity Check Link Clicked / Candidate Interview Identity Verification Succeeded / Candidate Interview Identity Verification Rejected) not in Dashboard Platform Health table
-- **[Rule 9]** Schema Interaction / Started / Result row (Candidate Interview Question Skip Button Clicked / Candidate Interview Question Skip Succeeded / Candidate Interview Question Skip Rejected) not in Dashboard Platform Health table
-- **[Rule 10]** `entry_point` lists "Account Created" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 10]** `action` lists "Candidate Interview Identity Verification Continue Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Question Skip Rejected" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Retake Question Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `action` lists "Candidate Interview Review Answer Button Clicked" in "Used In" but that event does not reference this property
-- **[Rule 10]** `start_source` lists "Page Viewed" in "Used In" but that event does not reference this property
-- **[Rule 10]** `photo_upload_method` lists "--" in "Used In" but that event does not exist in the catalog
-- **[Rule 10]** `action_value` is used in "Candidate Resume Download Succeeded" but not listed in Property Dictionary "Used In"
-- **[Rule 14]** Event name "Candidate Profile Photo Remove Button Clicked" appears 2 times in the catalog
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:45:12 UTC
-
-**Result: 86 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:45:12 UTC
-
-**Result: 86 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
-## Run: 2026-07-04 14:45:23 UTC
-
-**Result: 86 errors, 3 warnings**
-
-### Errors
-
-- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
-- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Created" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
-- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
-- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
-- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
-- **[Rule 16]** Event "Login Cancelled" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Session Restore Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Result event "Auth Refresh Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Logout Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verify Code Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Code Send Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Email Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Email Verify Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Submitted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Auth Phone Submit Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Auth Phone Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Photo Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Candidate Profile Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Candidate Profile Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
-- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
-- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
-- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
-
-### Warnings
-
-- **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
-- **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
-- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
----
-
 ## Run: 2026-07-04 14:45:35 UTC
 
 **Result: 86 errors, 3 warnings**
@@ -1239,8 +114,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule 1]** Standard Object "Resume Upload" has no matching events in Event Catalog
 - **[Rule 1]** Standard Object "Resume" has no matching events in Event Catalog
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-04 14:47:16 UTC
@@ -1339,8 +212,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 ### Warnings
 
 - **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
-
-
 ---
 
 ## Run: 2026-07-06 11:03:43 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -1366,8 +237,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule TP6]** Result pattern: "Account Create Succeeded" (success for "Role selection") not found in catalog or tracking plan
 - **[Rule TP6]** Result pattern: "Intro Complete Succeeded" (success for "Intro completion") not found in catalog or tracking plan
 - **[Rule TP6]** Result pattern: "Auth Session Restore Errored" (error for "Session restore") not found in catalog or tracking plan
-
-
 ---
 
 ## Run: 2026-07-06 11:09:34 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -1393,8 +262,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule TP7]** Event "Auth Logout Succeeded": object "Auth Logout" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Logout" in ## New Standard Objects.
 - **[Rule TP7]** Event "Auth Session Restore Errored": object "Auth Session Restore" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Session Restore" in ## New Standard Objects.
 - **[Rule TP7]** Event "Auth Refresh Errored": object "Auth Refresh" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Refresh" in ## New Standard Objects.
-
-
 ---
 
 ## Run: 2026-07-06 11:12:06 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -1420,8 +287,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 - **[Rule TP7]** Event "Auth Logout Succeeded": object "Auth Logout" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Logout" in ## New Standard Objects.
 - **[Rule TP7]** Event "Auth Session Restore Errored": object "Auth Session Restore" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Session Restore" in ## New Standard Objects.
 - **[Rule TP7]** Event "Auth Refresh Errored": object "Auth Refresh" is not in the product event-schema.md Standard Objects or this plan's ## New Standard Objects section. Either rename the event to use a registered object, or declare "Auth Refresh" in ## New Standard Objects.
-
-
 ---
 
 ## Run: 2026-07-06 11:12:57 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -1431,8 +296,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 ### Errors
 
 - **[Rule TP0]** Tracking plan section "New Standard Objects" must use columns: Object | Entity | Example Events.
-
-
 ---
 
 ## Run: 2026-07-06 11:21:19 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
@@ -1464,3 +327,814 @@ All 13 validation rules passed.
 **Result: All clear**
 
 All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-07 12:02:37 UTC — Tracking Plan: 2026-07-05-onboarding-flow-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-07 12:24:53 UTC
+
+**Result: 109 errors, 2 warnings**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 10]** `first_persona` lists "Account Create Succeeded" in "Used In" but that event does not reference this property
+- **[Rule 10]** `current_persona` is used in "Archive Job Button Clicked" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Create Job Button Clicked" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Job Creation Failed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Job Posting Draft Created" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Job Posting Published" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Job Posting Verified" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Job Share Failed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Job Shared" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Job Status Changed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Screening Configuration Saved" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Share Button Clicked" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Team Member Invite Failed" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` is used in "Team Member Invited" but not listed in Property Dictionary "Used In"
+- **[Rule 10]** `current_persona` lists "Auth Login Succeeded (via `identifyUser()`)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `current_persona` lists "Auth Session Restore Succeeded (via `identifyUser()`)" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `mode` lists "Add Profile Photo Button Clicked" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Build Profile Button Clicked" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Custom Link Delete Button Clicked" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Custom Link Delete Errored" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Custom Link Delete Succeeded" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Profile Create Errored" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Profile Create Succeeded" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Profile Custom Link Add Succeeded" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Profile Photo Remove Button Clicked" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Profile Photo Remove Errored" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Profile Photo Remove Succeeded" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Resume Remove Button Clicked" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Resume Upload Button Clicked" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Resume Upload Errored" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Resume Upload Rejected" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Candidate Resume Upload Succeeded" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Link Validation Error Shown" in "Used In" but that event does not exist in the catalog
+- **[Rule 10]** `mode` lists "LinkedIn Export Learn How Link Clicked" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Profile Photo Add Succeeded" in "Used In" but that event does not reference this property
+- **[Rule 10]** `mode` lists "Profile Photo Upload Failed" in "Used In" but that event does not reference this property
+- **[Rule 10]** `error_code` lists "_(no active events)_" in "Used In" but that event does not exist in the catalog
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 1]** Standard Object "Candidate Profile" has no matching events in Event Catalog
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+---
+
+## Run: 2026-07-07 12:28:48 UTC
+
+**Result: 73 errors, 2 warnings**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 10]** `error_code` lists "_(no active events)_" in "Used In" but that event does not exist in the catalog
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 1]** Standard Object "Candidate Profile" has no matching events in Event Catalog
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+---
+
+## Run: 2026-07-07 12:29:13 UTC
+
+**Result: 73 errors, 2 warnings**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 10]** `error_code` lists "_(no active events)_" in "Used In" but that event does not exist in the catalog
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 1]** Standard Object "Candidate Profile" has no matching events in Event Catalog
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+---
+
+## Run: 2026-07-07 12:29:37 UTC
+
+**Result: 73 errors, 2 warnings**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 10]** `error_code` lists "_(no active events)_" in "Used In" but that event does not exist in the catalog
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 1]** Standard Object "Candidate Profile" has no matching events in Event Catalog
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+---
+
+## Run: 2026-07-07 12:31:07 UTC
+
+**Result: 73 errors, 1 warning**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 10]** `error_code` lists "--" in "Used In" but that event does not exist in the catalog
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+---
+
+## Run: 2026-07-07 12:31:07 UTC
+
+**Result: 73 errors, 1 warning**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 10]** `error_code` lists "--" in "Used In" but that event does not exist in the catalog
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+---
+
+## Run: 2026-07-07 12:31:37 UTC
+
+**Result: 72 errors, 1 warning**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+---
+
+## Run: 2026-07-07 12:31:46 UTC
+
+**Result: 72 errors, 1 warning**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)
+---
+
+## Run: 2026-07-07 12:31:51 UTC
+
+**Result: 72 errors, 1 warning**
+
+### Errors
+
+- **[Rule 5]** Funnel "Job Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 5]** Funnel "Profile Sharing Loop": event "Signup Started" (stage: Signup Form) not found in Event Catalog
+- **[Rule 6]** Funnel "Job Sharing Loop": "Job Shared" says Defined In "Hiring Surface" but catalog section is "Hiring Persona Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Job Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Custom Link Shared" says Defined In "Prospect Surface" but catalog section is "Prospect Persona Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Create Succeeded" says Defined In "Account & Surface" but catalog section is "Login & Onboarding Events"
+- **[Rule 6]** Funnel "Profile Sharing Loop": "Account Activated" says Defined In "Account & Surface" but catalog section is "Account & Persona Events"
+- **[Rule 9]** Platform Health row (Candidate Portfolio Unpublish Button Clicked / Candidate Portfolio Unpublish Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Completed / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Screening Response Edit Button Clicked / Candidate Interview Screening Response Edit Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Persona Card Clicked / Account Create Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Rename Button Clicked / Candidate Portfolio Rename Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Verification Code Send Button Clicked / Job Posting Verified / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Onboarding Intro Complete Button Clicked / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Job Post Wizard Verification Skipped / Job Posting Published / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (-- / Onboarding Complete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Portfolio Delete Button Clicked / Candidate Portfolio Delete Succeeded / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Candidate Interview Start Button Clicked / Candidate Interview Started / --) not in Schema Interaction / Started / Result table
+- **[Rule 9]** Platform Health row (Create Job Button Clicked, Job Post Wizard Started / -- / --) not in Schema Interaction / Started / Result table
+- **[Rule 15]** Event "Chat WebSocket Abnormal Close": action "WebSocket Abnormal Close" must end in a past-tense verb (Created, Started, Succeeded, Rejected, Errored)
+- **[Rule 16]** Result event "Auth Dev Login Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Account Activated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Persona Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Persona Update Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Result event "Profile Photo Upload Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Profile Section Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Custom Link Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Expressed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Interest Expression Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Interest Withdrawn" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Career Coach Message Sent" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Draft Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Post Wizard Job Details Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Description Evaluated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Description Evaluation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Description Field Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Intake Mode Selected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Sam Session Setup Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Sam Session Ended" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Role Requirements Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Role Requirement Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Interview Questions Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Edited" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Question Added" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Screening Configuration Saved" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Completed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Post Wizard Verification Skipped" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Verified" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Posting Published" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message AI Refined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Share Message Copied" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Job Shared" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Job Share Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Job Status Changed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Team Member Invite Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Team Member Joined" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Interest Reviewed" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Review Decision Made" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Video Created" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Intro Video Creation Failed" must end with "Rejected", not "Failed" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Intro Video Deleted" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Intro Script Updated" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Candidate Recording Played" has Type Success but does not end in Succeeded
+- **[Rule 16]** Event "Chat WebSocket Connected" has Type Success but does not end in Succeeded
+- **[Rule 16]** Result event "Chat WebSocket Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+- **[Rule 16]** Event "Chat WebSocket Abnormal Close" has Type Error but does not end in Errored
+- **[Rule 16]** Result event "Chat WebSocket Parse Error" must end with "Errored", not "Error" (result terminals are Succeeded/Rejected/Errored)
+
+### Warnings
+
+- **[Rule 4]** Job-grouped interaction event "Share Button Clicked" missing `job_id` (may be intentional for creation flow)

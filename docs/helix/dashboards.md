@@ -30,7 +30,7 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 | View | c_view | Job Link Viewed | Anonymous User Events |
 | Engage | c_click | Job Link Engaged | Anonymous User Events |
 | Signup Form | c_form | Signup Started | Account & Surface |
-| Signup Complete | c_complete | Account Created | Account & Surface |
+| Signup Complete | c_complete | Account Create Succeeded | Account & Surface |
 | Activate | c_activate | Account Activated | Account & Surface |
 
 ### Profile Sharing Loop
@@ -41,7 +41,7 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 | View | c_view | Profile Link Viewed | Anonymous User Events |
 | Engage | c_click | Profile Link Engaged | Anonymous User Events |
 | Signup Form | c_form | Signup Started | Account & Surface |
-| Signup Complete | c_complete | Account Created | Account & Surface |
+| Signup Complete | c_complete | Account Create Succeeded | Account & Surface |
 | Activate | c_activate | Account Activated | Account & Surface |
 
 ---
@@ -60,9 +60,9 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 ### Growth Dashboard (Platform Team)
 - New accounts per day/week, broken down by `signup_context`
 - K-factor per viral loop (job sharing, profile sharing)
-- Conversion funnel: Job Link Viewed → Job Link Engaged → Signup Started → Account Created → Activated
+- Conversion funnel: Job Link Viewed → Job Link Engaged → Signup Started → Account Create Succeeded → Activated
 - Activation rate by signup context
-- Onboarding-to-job conversion: Account Created → Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Posting Draft Created → Job Posting Published
+- Onboarding-to-job conversion: Account Create Succeeded → Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Posting Draft Created → Job Posting Published
 - Retention: WAU, MAU, D7/D30 return rates
 
 ### Prospect Dashboard (Prospect Team)
@@ -72,12 +72,12 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Interest expressions per user; withdrawal rate and `reason` distribution
 - Career coach session frequency, `session_type` (first_time vs. returning), `input_mode` (text vs. voice)
 - Career coach message volume by `topic` (profile_improvement / job_application / career_advice)
-- Onboarding to profile creation funnel: Account Created → Intro Completed → Page Viewed (filter: `current_page_context` value = `"candidate_create_profile"`) → Build Profile Button Clicked → Candidate Profile Created
+- Onboarding to profile creation funnel: Account Create Succeeded → Onboarding Intro Complete Button Clicked → Page Viewed (filter: `current_page_context` value = `"candidate_create_profile"`) → Build Profile Button Clicked → Candidate Profile Create Succeeded
 - Resume upload conversion: Candidate Resume Upload Button Clicked → Candidate Resume Upload Succeeded
-- Profile photo adoption: Add Profile Photo Button Clicked → Profile Photo Added
+- Profile photo adoption: Add Profile Photo Button Clicked → Profile Photo Add Succeeded
 - Profile completeness: Candidate Profile Overview Load Succeeded filtered by `profile_completeness_rate`
 - Portfolio publish conversion: Candidate Portfolio Publish Button Clicked → Candidate Portfolio Publish Succeeded
-- Handle adoption rate: Candidate Profile Created filtered by `has_handle` = true
+- Handle adoption rate: Candidate Profile Create Succeeded filtered by `has_handle` = true
 
 ### Hiring Dashboard (HM/Recruiter Team)
 - Jobs created and published per user
@@ -102,7 +102,7 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Identity verification funnel: Open Identity Check Link Clicked → Candidate Interview Identity Verification Succeeded
 - Device → start funnel: Allow Device Access Button Clicked → Device Access Grant Succeeded → Candidate Interview Started
 - Per-question completion funnel: Candidate Interview Started → Candidate Interview Question Answer Succeeded → Candidate Interview Submit Succeeded (breakdown by `question_number` and `question_status`)
-- Interview → signup funnel: Candidate Interview Submit Succeeded → Account Created (filter `entry_point = interview`)
+- Interview → signup funnel: Candidate Interview Submit Succeeded → Account Create Succeeded (filter `entry_point = interview`)
 - Publish conversion funnel: Candidate Portfolio Publish Button Clicked → Candidate Portfolio Publish Succeeded
 - Screening response edit funnel: Candidate Interview Screening Response Edit Button Clicked → Candidate Interview Screening Response Edit Succeeded
 - Question skip rate: Candidate Interview Question Skip Succeeded trend by `question_number`
@@ -123,7 +123,7 @@ Tracks rejected-result and technical-error rates across the Interaction / Starte
 
 | Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
 |------|-----------------------------|---------------|----------------|-------------|
-| Login / Signup | Login Started | Account Created (new) or Auth Login Succeeded (returning) | Login Cancelled, Auth Login Failed | -- |
+| Login / Signup | Login Started Button Clicked | Account Create Succeeded (new) or Auth Login Succeeded (returning) | Auth Login Rejected | -- |
 | Sharing a job | Share Button Clicked | Job Shared | Job Share Failed | -- |
 | Expressing interest | Express Interest Button Clicked | Interest Expressed | Interest Expression Failed | -- |
 | Inviting team member | Invite Button Clicked | Team Member Invited | Team Member Invite Failed | -- |
@@ -132,14 +132,13 @@ Tracks rejected-result and technical-error rates across the Interaction / Starte
 | Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- | -- |
 | Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- | -- |
 | Publishing a job (skipped) | Job Post Wizard Verification Skipped | Job Posting Published | -- | -- |
-| Phone collection | Auth Phone Submitted | *(implicit — accepted)* | Auth Phone Submit Failed | -- |
-| Email verification | Auth Email Verify Code Sent | Auth Email Verified | Auth Email Verify Failed | -- |
-| Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | Auth Session Restore Failed | -- |
+| Email verification | -- | Auth Email Verify Code Send Succeeded | Auth Email Verify Rejected | Auth Email Verify Code Send Errored |
+| Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | -- | Auth Session Restore Errored |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed | -- |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed | -- |
 | Resume upload | Candidate Resume Upload Button Clicked | Candidate Resume Upload Succeeded | Candidate Resume Upload Rejected | Candidate Resume Upload Errored |
-| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Added | Profile Photo Upload Failed | -- |
-| Profile creation | Build Profile Button Clicked | Candidate Profile Created | Candidate Profile Creation Failed | -- |
+| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Add Succeeded | Profile Photo Upload Failed | -- |
+| Profile creation | Build Profile Button Clicked | Candidate Profile Create Succeeded | -- | Candidate Profile Create Errored |
 | Portfolio publish | Candidate Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | -- | Candidate Portfolio Publish Errored |
 | Unpublish portfolio | Candidate Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | -- | -- |
 | Rename portfolio | Candidate Portfolio Rename Button Clicked | Candidate Portfolio Rename Succeeded | -- | -- |
