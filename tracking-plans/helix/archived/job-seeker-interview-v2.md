@@ -28,7 +28,7 @@
 - [x] PR raised — seekout-analytics#30
 - [x] PR approved — 2026-07-04
 - [x] Merged to catalog — 2026-07-04
-- [ ] Squash merged to main
+- [x] Squash merged to main — 2026-07-05
 
 > References: `docs/shared/naming-and-event-types.md`, `docs/helix/event-schema.md`, and `docs/helix/event-catalog.md`.
 

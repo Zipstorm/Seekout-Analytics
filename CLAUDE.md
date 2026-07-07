@@ -47,6 +47,17 @@ Before generating any analytics document for a product, read:
 
 **Important:** Never auto-merge events into the catalog. Only merge when the user explicitly runs `/merge-tracking-plan`.
 
+### Workflow Enforcement
+
+Every tracking plan has a Workflow checklist (see `templates/tracking-plan.md`). The steps are sequential. Before executing any step, check the tracking plan's Workflow section — if a prior step is unchecked, prompt the user: "Step [name] hasn't been completed yet. Should I do that first?"
+
+Key gates:
+- **Before raising a PR:** Re-validated must be checked. Run the validator, record results in the checkbox, then raise the PR.
+- **Before `/merge-tracking-plan`:** PR must be approved.
+- **Before absorption:** User must confirm the codebase implementation is done (this happens in the product repo, not here).
+
+Never silently skip workflow steps.
+
 ## Merge Conflict Resolution
 
 During `/merge-tracking-plan`, the **tracking plan wins** for its own events. The catalog gets updated to match, not the other way around.
