@@ -1006,31 +1006,35 @@ def parse_tracking_plan(path):
 
     # ── Funnels table ──
     # Supports two formats:
-    #   Old: flat table under ## Funnels with Funnel Name | Steps | Purpose
+    #   Old: flat table directly under ## Funnels with Funnel Name | Steps | Purpose
     #   New: per-funnel H3 tables with Step | Event | Filter columns
+    # Both parsers are scoped to the ## Funnels section only.
     tp_funnels = {}
-    _, fn_rows = _find_table(tables, "Funnels")
-    if fn_rows:
-        for row in fn_rows:
-            if len(row) < 2:
-                continue
-            fname = row[0].strip()
-            if not fname or fname.startswith("["):
-                continue
-            steps = [
-                s.strip()
-                for s in re.split(r"\s*(?:→|-->|->)\s*", row[1])
-                if s.strip()
-            ]
-            tp_funnels[fname] = steps
+    funnels_section = _extract_h2_section(text, "Funnels")
+    if funnels_section:
+        funnels_tables = parse_tables(funnels_section)
+        # Old format: look for a table with old-style headers
+        OLD_FUNNEL_HEADERS = {"funnel name", "funnel", "steps", "purpose"}
+        for heading, header, rows in funnels_tables:
+            normalized = {h.strip().lower() for h in header}
+            if "steps" in normalized and normalized & {"funnel name", "funnel"}:
+                for row in rows:
+                    if len(row) < 2:
+                        continue
+                    fname = row[0].strip()
+                    if not fname or fname.startswith("["):
+                        continue
+                    steps = [
+                        s.strip()
+                        for s in re.split(r"\s*(?:→|-->|->)\s*", row[1])
+                        if s.strip()
+                    ]
+                    tp_funnels[fname] = steps
+                break
 
     # Fallback: per-funnel step tables (Step | Event | Filter)
-    # Scoped to ## Funnels section only to avoid matching unrelated tables.
-    if not tp_funnels:
-        funnels_section = _extract_h2_section(text, "Funnels")
-        if funnels_section:
-            funnels_tables = parse_tables(funnels_section)
-            for heading, header, rows in funnels_tables:
+    if not tp_funnels and funnels_section:
+        for heading, header, rows in funnels_tables:
                 normalized = [h.strip().lower() for h in header]
                 if "step" in normalized and "event" in normalized:
                     event_col = normalized.index("event")

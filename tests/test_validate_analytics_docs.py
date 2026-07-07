@@ -803,5 +803,37 @@ class FunnelParserScopingTests(unittest.TestCase):
         )
 
 
+    def test_subfunnel_heading_containing_funnels_not_confused_with_old_format(self):
+        """### Sourcing Funnels should not be parsed as old flat-table format."""
+        path = write_tmp_md(
+            """# Test
+
+## New Events Summary
+
+| Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| Foo Created | Account | Success | Backend | Created | New | `id` | -- | -- | Not Started |
+
+## Funnels
+
+### Sourcing Funnels
+
+| Step | Event | Filter |
+|---|---|---|
+| 1 | Page Viewed | — |
+| 2 | Login Started | — |
+| 3 | Foo Created | — |
+"""
+        )
+        self.addCleanup(path.unlink)
+        data = validator.parse_tracking_plan(path)
+        self.assertEqual(len(data.funnels), 1)
+        self.assertIn("Sourcing Funnels", data.funnels)
+        self.assertEqual(
+            data.funnels["Sourcing Funnels"],
+            ["Page Viewed", "Login Started", "Foo Created"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
