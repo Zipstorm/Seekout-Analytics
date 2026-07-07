@@ -36,21 +36,27 @@ Before generating any analytics document for a product, read:
 
 ## Tracking Plan Workflow
 
-The tracking plan follows a strict sequential workflow. Each step must be completed before moving to the next. If the user asks to skip a step or jump ahead, prompt them: "Step N (name) hasn't been completed yet. Should I do that first?"
-
-1. **Draft created** — User provides feature context. Generate tracking plan using `templates/tracking-plan.md`. Save to `tracking-plans/<product>/<feature-name>.md`. Add entry to `tracking-plans/<product>/INDEX.md` with status **Draft**.
-2. **Validated** — Run `/validate-analytics --product PRODUCT [tracking-plan]`. Record results in the Workflow checkbox. Do not proceed to implementation until validation passes (or the user explicitly acknowledges and accepts known errors).
-3. **Codebase implemented** — The tracking plan is implemented in the product codebase. Check the box when the user confirms implementation is done.
-4. **Absorbed from codebase** — Read the implementation branch and update the tracking plan to reflect what was actually built (deviations, renames, property changes). Update the plan in-place.
-5. **Re-validated** — Run the validator again after absorption. Record results in the Workflow checkbox.
-6. **PR raised** — Only raise a PR after re-validation is done. Confirm all prior checkboxes are checked before creating the PR.
-7. **PR approved** — User or reviewer approves.
-8. **Merged to catalog** — When user triggers `/merge-tracking-plan --product PRODUCT`, merge approved events into `docs/<product>/event-catalog.md` and update `docs/<product>/event-schema.md` / `docs/<product>/dashboards.md` as needed.
-9. **Squash merged to main** — After catalog merge, move the tracking plan file to `tracking-plans/<product>/archived/` and mark status as **Merged** in `INDEX.md`.
+1. User provides feature context (PRD excerpt, spec, or description).
+2. Generate tracking plan using `templates/tracking-plan.md`.
+3. Save to `tracking-plans/<product>/<feature-name>.md`.
+4. Add entry to `tracking-plans/<product>/INDEX.md` with PRD link and status **Draft**.
+5. Validate with `/validate-analytics --product PRODUCT [tracking-plan]`.
+6. Update status in `INDEX.md` as the plan progresses: Draft -> Review -> Approved -> Merged.
+7. When user triggers `/merge-tracking-plan --product PRODUCT`, merge approved events into `docs/<product>/event-catalog.md` and update `docs/<product>/event-schema.md` / `docs/<product>/dashboards.md` as needed.
+8. After merge, move the tracking plan file to `tracking-plans/<product>/archived/` and mark status as **Merged** in `INDEX.md`.
 
 **Important:** Never auto-merge events into the catalog. Only merge when the user explicitly runs `/merge-tracking-plan`.
 
-**Enforcement:** Before executing any workflow step, check the Workflow section in the tracking plan. If a prior step is unchecked, prompt the user before proceeding. Never silently skip steps.
+### Workflow Enforcement
+
+Every tracking plan has a Workflow checklist (see `templates/tracking-plan.md`). The steps are sequential. Before executing any step, check the tracking plan's Workflow section — if a prior step is unchecked, prompt the user: "Step [name] hasn't been completed yet. Should I do that first?"
+
+Key gates:
+- **Before raising a PR:** Re-validated must be checked. Run the validator, record results in the checkbox, then raise the PR.
+- **Before `/merge-tracking-plan`:** PR must be approved.
+- **Before absorption:** User must confirm the codebase implementation is done (this happens in the product repo, not here).
+
+Never silently skip workflow steps.
 
 ## Merge Conflict Resolution
 
