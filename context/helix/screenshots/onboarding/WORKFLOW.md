@@ -17,7 +17,7 @@
 | Step | Screenshot | Route | Screen | User Action | What Happens Next |
 |------|-----------|-------|--------|-------------|-------------------|
 | 1 | `01-signup-page.png` | `/signup` | Sign up page — "Sign up with Google", "Sign up with Microsoft", work email + "Create account", "Already have an account? Sign in" link | Clicked "Sign up with Google" | Redirects to Google OAuth |
-| 2 | `02-google-oauth-chooser.png` | `accounts.google.com` | Google account chooser — "Choose an account to continue to SeekOut" | Selected `sarkar.sombrat@gmail.com` | Redirects back to SeekOut |
+| 2 | `02-google-oauth-chooser.png` | `accounts.google.com` | Google account chooser — "Choose an account to continue to SeekOut" | Selected walkthrough Google account | Redirects back to SeekOut |
 | 3 | `03-role-selection-default.png` | `/onboarding/role` | Role selection — "What brings you to SeekOut?" with two cards: "I'm a professional" / "I'm hiring". Continue button disabled. Note: "You can always change this later in settings" | (viewing default state) | — |
 | 4 | `04-role-selection-professional-selected.png` | `/onboarding/role` | Professional card selected (purple border). Continue button now says "Continue as a candidate" (enabled, purple) | — | — |
 | 5 | `05-role-selection-hiring-expanded.png` | `/onboarding/role` | "I'm hiring" card expanded, showing two sub-options: "Hiring Manager" and "Recruiter" with descriptions. Continue button remains disabled until sub-option selected | (viewing hiring expansion) | — |

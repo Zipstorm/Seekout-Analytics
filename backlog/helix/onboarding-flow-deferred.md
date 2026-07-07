@@ -105,18 +105,18 @@ The claim logic is in `candidateInterviewSignup.ts`. ActivateProfile.tsx has no 
 
 ---
 
-## 8. Add `mode: 'onboarding'` to Job Post Wizard Events
+## 8. Verify `wizard_mode: 'onboarding'` on Job Wizard Events
 
-**What:** The existing job post wizard events (Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Post Wizard Intake Mode Selected, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Posting Draft Created, Job Posting Verified, Job Posting Published, etc.) should carry `mode: 'onboarding'` when the wizard is initiated during the HM onboarding flow.
+**What:** The existing job post wizard events (Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Post Wizard Intake Mode Selected, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Posting Draft Created, Job Posting Verified, Job Posting Published, etc.) should consistently carry `wizard_mode: 'onboarding'` when the wizard is initiated during the HM onboarding flow.
 
-**Why this matters:** During the HM onboarding walkthrough (2026-07-05), we confirmed that the job post wizard is launched directly after the intro page. HMs can either complete the wizard (5 steps: JD → Understanding role → Requirements → Questions → Verify → Success) or dismiss it via the X button. Adding `mode: 'onboarding'` lets us:
+**Why this matters:** During the HM onboarding walkthrough (2026-07-05), we confirmed that the job post wizard is launched directly after the intro page. HMs can either complete the wizard (5 steps: JD → Understanding role → Requirements → Questions → Verify → Success) or dismiss it via the X button. Adding `wizard_mode: 'onboarding'` lets us:
 - Measure what % of HMs create a job during onboarding vs return later
 - Compare wizard completion rates for onboarding vs dashboard-initiated jobs
 - Separate onboarding friction from general wizard friction in funnel analysis
 
-**Why deferred:** These events already exist and are implemented in the dev branch. Adding `mode` to them requires modifying the wizard component to accept and propagate a mode prop, which is a cross-cutting change across ~15 events. This is implementation scope that shouldn't hold up the v1 onboarding tracking plan.
+**Why deferred:** The v1 tracking plan records the intended `wizard_mode` behavior for the HM wizard path. This backlog item is for verifying the shipped implementation and expanding the catalog/dashboard documentation after baseline onboarding events are merged. This is separate from the job seeker create-profile flow, which uses the generic `mode` property.
 
-**Affected events (all existing, all need `mode` property added):**
+**Affected events (all existing, all need `wizard_mode` verified/documented):**
 - Job Post Wizard Started
 - Job Post Wizard Job Details Completed
 - Job Description Evaluated / Job Description Evaluation Failed
@@ -131,11 +131,21 @@ The claim logic is in `candidateInterviewSignup.ts`. ActivateProfile.tsx has no 
 - Job Posting Published
 - All Role Requirement and Screening Question CRUD events
 
-**`mode` values:** `onboarding` (wizard launched during onboarding), `dashboard` (wizard launched from job postings dashboard via "+ Create job" button)
+**`wizard_mode` values:** `onboarding` (wizard launched during onboarding), `create` (wizard launched from job postings dashboard via "+ Create job" button)
 
 **When to pick up:** After v1 onboarding tracking plan is merged. Can be bundled with backlog item #1 (Job Post Wizard Dismissed) since both touch the wizard component.
 
 **Screenshots reference:** `context/helix/screenshots/onboarding/16-*.png` through `21-*.png`
+
+---
+
+## 9. Replace OAuth Screenshots with Sanitized Captures
+
+**What:** The current onboarding screenshots intentionally preserve the manual walkthrough context, including Google OAuth account chooser state. Replace these with sanitized captures that remove personal names, emails, avatars, browser profile state, and unrelated browser chrome.
+
+**Why this matters:** The screenshots are useful for validating the onboarding route sequence, but public review artifacts should not rely on personal account details.
+
+**When to pick up:** Before the screenshots become long-lived reference material or are copied into external docs. The current files can stay temporarily while the onboarding tracking plan is reviewed.
 
 ---
 
