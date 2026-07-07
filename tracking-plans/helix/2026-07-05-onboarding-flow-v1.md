@@ -19,11 +19,11 @@
 ## Workflow
 
 - [x] Draft created — 2026-07-05
-- [ ] Validated
+- [ ] Validated — skipped (plan went to implementation before validation)
 - [x] Codebase implemented — 2026-07-06
 - [x] Absorbed from codebase — 2026-07-06
-- [ ] Re-validated
-- [ ] PR raised
+- [x] Re-validated — 2026-07-06 (24 TP6/TP8 expected errors: renamed events not in catalog yet; TP0-TP5, TP7, TP9-TP12 all pass)
+- [x] PR raised — 2026-07-06
 - [ ] PR approved
 - [ ] Merged to catalog
 - [ ] Squash merged to main
