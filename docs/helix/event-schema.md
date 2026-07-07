@@ -86,10 +86,10 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Question | AI-generated interview question | Question Add Button Clicked |
 | Intro Script | Intro video script | Intro Script Updated |
 | Chat | Chat/WebSocket connection for messaging | Chat WebSocket Connected, Chat WebSocket Error |
-| Profile Photo | User's profile headshot image | Add Profile Photo Button Clicked, Profile Photo Upload Failed, Profile Photo Removed |
+| Profile Photo | User's profile headshot image | Add Profile Photo Button Clicked, Profile Photo Upload Failed, Candidate Profile Photo Remove Button Clicked |
 | Profile Photo Add | Profile photo upload lifecycle | Profile Photo Add Succeeded |
 | LinkedIn Export | LinkedIn export help link | LinkedIn Export Learn How Link Clicked |
-| Build Profile | AI profile generation process | Build Profile Button Clicked, Build Profile Snapshot |
+| Build Profile | AI profile generation process | Build Profile Button Clicked |
 | Candidate Profile Create | Portfolio creation lifecycle | Candidate Profile Create Succeeded, Candidate Profile Create Errored |
 | Handle Claim | Handle claim lifecycle | Handle Claim Succeeded, Handle Claim Rejected |
 | Candidate Previous Resume Select Button | Previous resume select CTA | Candidate Previous Resume Select Button Clicked |
