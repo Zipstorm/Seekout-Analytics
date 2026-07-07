@@ -63,15 +63,43 @@ Update `docs/<product>/event-schema.md` only after pre-validation and removal-sa
 
 ## Step 6: Merge into Event Catalog
 
-Update `docs/<product>/event-catalog.md`:
+Update `docs/<product>/event-catalog.md` using the structured tracking-plan sections as the source of truth. Treat `## Catalog Updates` as a checklist/summary only; if it conflicts with the detailed sections, stop and ask the user which source is correct.
 
-- Add new events to the correct product catalog section.
-- Add new properties to the Property Dictionary with type, allowed values, and Used In.
-- Do not create duplicate events or properties.
+Apply event changes in this order:
 
-## Step 7: Update Dashboards
+1. `## Event Renames`
+   - For each row with `Current Name` / `New Name`, rename the existing catalog row in place. Do not add a second row with the new name while leaving the old one behind.
+   - Update the catalog Type from `New Type` or `Type` when present.
+   - Preserve existing Area, Source, Group, Status, Trigger, Properties, and Property Updates unless the tracking plan's Event Specifications or `## Existing Event Updates` explicitly changes them.
+   - Update Property Dictionary `Used In` references from the old event name to the new event name.
+   - If `Current Name` is missing but `New Name` already exists, treat the row as already migrated only after confirming the existing row matches the plan. Otherwise stop and report the mismatch.
 
-If the tracking plan introduces new funnels, dashboard panels, or Platform Health flows, update `docs/<product>/dashboards.md`.
+2. `## Removed Events`
+   - For rows whose Reason is `Renamed`, verify `Replaced By` exists in the catalog after the rename step, then delete the old event row if it is still present.
+   - For rows whose Reason is `Dead code`, `Superseded`, `Never wired`, or equivalent, delete the event row if present. If it is absent, report it as skipped rather than recreating it.
+   - Remove deleted event names from Property Dictionary `Used In`, schema result-pattern rows, dashboard funnels, dashboard metrics, and Platform Health references unless the plan says to keep historical documentation.
+
+3. `## New Events Summary` plus matching Event Specifications
+   - Add genuinely new events to the correct product catalog section.
+   - Use Event Specifications for detailed Trigger, Properties, Group, and Property Updates when the summary row is abbreviated.
+   - Do not create duplicate events. If the event already exists, update it only when the tracking plan explicitly describes it as an existing-event update.
+
+4. `## Existing Event Updates`
+   - Apply property additions/removals, trigger/source/status fixes, page-view extensions, and Property Updates changes to existing catalog rows.
+   - For Page Viewed extensions, update the Page Viewed row and the relevant `current_page_context` Property Dictionary values.
+   - For property extensions such as `mode` or `wizard_mode`, update both the event rows and the Property Dictionary allowed values / `Used In` references.
+
+5. `## Property Details`
+   - Add new properties to the Property Dictionary with type, allowed values, description, and Used In.
+   - Extend existing property enum values without removing current values unless the plan explicitly says to remove them.
+   - Keep `Used In` synchronized with new, renamed, removed, and updated events.
+
+## Step 7: Update Schema and Dashboards
+
+- If the tracking plan changes `## Interaction / Started / Result Pattern`, update the matching table in `docs/<product>/event-schema.md`.
+- Replace old event names with renamed event names across schema result-pattern rows and dashboard references.
+- If the tracking plan introduces or changes funnels, dashboard panels, metrics mappings, or Platform Health flows, update `docs/<product>/dashboards.md`.
+- Keep dashboard filters aligned with any property enum changes made during Step 6.
 
 ## Step 8: Archive the Tracking Plan
 
@@ -93,7 +121,10 @@ If validation fails, print the validator output, state that pre-merge checks did
 Summarize:
 
 - New events added or updated.
+- Events renamed.
+- Events removed or skipped because they were already absent.
 - New properties added or updated.
+- Existing event updates applied.
 - Standard Objects added, skipped, or removed.
-- Dashboard updates.
+- Schema and dashboard updates.
 - Final validation result.

@@ -64,6 +64,7 @@ TP_RULE_NAMES = {
 
 NEW_OBJECTS_SECTION = "New Standard Objects"
 REMOVED_OBJECTS_SECTION = "Removed Standard Objects"
+EVENT_RENAMES_SECTION = "Event Renames"
 
 
 @dataclass
@@ -652,6 +653,105 @@ def _parse_object_declarations(text):
     )
 
 
+def _is_placeholder_cell(value):
+    value = value.strip()
+    return not value or value in {"--", "—"} or value.startswith("[")
+
+
+def _normalize_event_type(value):
+    raw = value.strip().strip("`")
+    if _is_placeholder_cell(raw):
+        return None
+    aliases = {
+        "view": "View",
+        "viewed": "View",
+        "interaction": "Interaction",
+        "clicked": "Interaction",
+        "started": "Started",
+        "success": "Success",
+        "succeeded": "Success",
+        "rejected": "Rejected",
+        "error": "Error",
+        "errored": "Error",
+    }
+    return aliases.get(raw.lower(), raw)
+
+
+def _infer_event_type_from_heading(heading):
+    h = heading.lower()
+    if "interaction" in h:
+        return "Interaction"
+    if "started" in h:
+        return "Started"
+    if "success" in h or "succeeded" in h:
+        return "Success"
+    if "rejected" in h:
+        return "Rejected"
+    if "error" in h or "errored" in h:
+        return "Error"
+    if "view" in h:
+        return "View"
+    return None
+
+
+def _infer_event_type_from_name(name):
+    words = name.split()
+    return _normalize_event_type(words[-1]) if words else None
+
+
+def _parse_event_renames(text):
+    """Parse ## Event Renames rows as planned post-merge event names."""
+    active_text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    section = _extract_h2_section(active_text, EVENT_RENAMES_SECTION)
+    if not section:
+        return {}
+
+    renamed_events = {}
+    for heading, header, rows in parse_tables(section):
+        col = {h.strip().lower(): i for i, h in enumerate(header or [])}
+        new_idx = col.get("new name")
+        if new_idx is None:
+            continue
+        old_idx = col.get("current name")
+        if old_idx is None:
+            old_idx = col.get("old name")
+
+        def _cell(row, key):
+            i = col.get(key)
+            return row[i].strip() if i is not None and i < len(row) else ""
+
+        for row in rows:
+            if new_idx >= len(row):
+                continue
+            name = row[new_idx].strip()
+            if _is_placeholder_cell(name):
+                continue
+
+            raw_type = _cell(row, "new type") or _cell(row, "type")
+            event_type = (
+                _normalize_event_type(raw_type)
+                or _infer_event_type_from_heading(heading)
+                or _infer_event_type_from_name(name)
+            )
+            renamed_from = (
+                row[old_idx].strip()
+                if old_idx is not None and old_idx < len(row)
+                else ""
+            )
+            renamed_events[name] = dict(
+                area="",
+                type=event_type,
+                properties=[],
+                inline_enums={},
+                group="",
+                person_props={},
+                group_props={},
+                renamed_from=renamed_from,
+            )
+
+    return renamed_events
+
+
 # ── Cell-Level Parsing ───────────────────────────────────────────────────────
 
 
@@ -998,6 +1098,9 @@ def parse_tracking_plan(path):
                 person_props=person,
                 group_props=grp,
             )
+
+    for name, event in _parse_event_renames(text).items():
+        tp_events.setdefault(name, event)
 
     # ── Interaction / Started / Result Pattern table ──
     tp_result_pattern, tp_result_pattern_errors = _parse_result_pattern_table(
