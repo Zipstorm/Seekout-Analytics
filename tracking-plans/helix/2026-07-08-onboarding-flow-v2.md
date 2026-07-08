@@ -41,10 +41,12 @@ This plan fixes bugs found on 2026-07-07 while building the PostHog onboarding d
 2. **Removes stale `auth_landing` Page Viewed** — old deployed code still fires a Page Viewed with `current_page_context: auth_landing` before the correct `auth_signup` event
 3. **Fixes Login Started Button Clicked on production** — OAuth redirect kills the page before PostHog flushes the event; adds `continue_button` action_value for signin email path
 4. **Documents `helix_session_id` boundary** — pre-auth and post-auth events have different session IDs by design; funnels spanning auth must not filter by session ID
-5. **Adds 1 new event** — `Profile Photo Add Errored` (server-side upload failure — completes the Interaction/Result pattern)
+5. **Adds 2 new events** — `Profile Photo Add Errored` (server-side upload failure — completes the Interaction/Result pattern) and `Auth Page Switch Link Clicked` (tracks signup↔signin navigation intent)
 6. **Renames 1 event** — `Profile Photo Upload Failed` → `Profile Photo Add Rejected` (backlog #10: object family alignment + terminal fix)
-7. **Adds `wizard_mode` to Property Dictionary** — gap from v1 merge (backlog #8)
-8. **Adds Auth Session Restore Errored 401 suppression note** — shipped in v1 but not documented in catalog
+7. **Adds signin funnel** — basic returning-user funnel now possible with identity fixes
+8. **Adds `wizard_mode` to Property Dictionary** — gap from v1 merge (backlog #8), now with all three values (`onboarding`, `create`, `edit`)
+9. **Adds Auth Session Restore Errored 401 suppression note** — shipped in v1 but not documented in catalog
+10. **Updates `dashboards.md`** — adds identity stitching requirement notes to onboarding funnels
 
 ### Background
 
@@ -88,6 +90,7 @@ The following v1 deviations were absorbed into the v1 tracking plan and merged t
 | Event | Area | Type | Source | Trigger | Context | Key Properties | Group | Property Updates | Status |
 |---|---|---|---|---|---|---|---|---|---|
 | Profile Photo Add Errored | Prospect | Error | Frontend | Server-side photo upload fails (network error, storage failure, server 500) after client validation passes | Completes the Profile Photo Add Interaction/Result pattern — Succeeded and Rejected exist but Error was missing | `upload_method`, `file_size_bytes`, `error_reason`, `error_category`, `current_page_context`, `previous_page_context`, `entity_type`, `mode` | -- | -- | Local |
+| Auth Page Switch Link Clicked | Account | Interaction | Frontend | User clicks "Sign in" link on signup page or "Sign up" link on signin page | Tracks users switching between auth pages — reveals confusion (e.g., existing users landing on signup) or intent changes. Currently only the destination Page Viewed captures the switch. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 
 ---
 
@@ -120,6 +123,30 @@ No new properties. `Profile Photo Add Errored` reuses existing properties from t
 | `previous_page_context` | string | via `rotatePageContext()` | Previous page |
 | `entity_type` | string | `candidate_profile` | Business object |
 | `mode` | enum | `onboarding`, `editor` | Context in which the photo was uploaded |
+
+### Auth Page Switch Link Clicked
+
+| Field | Value |
+|---|---|
+| **Event** | Auth Page Switch Link Clicked |
+| **Area** | Account |
+| **Type** | Interaction |
+| **Trigger** | User clicks "Sign in" link on signup page (`/signup`) or "Sign up" link on signin page (`/signin`) |
+| **Source** | Frontend |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | User action type |
+| `action_value` | string | `sign_in_link`, `sign_up_link` | Exact link text in snake_case. `sign_in_link` = "Sign in" on signup page. `sign_up_link` = "Sign up" on signin page. |
+| `current_page_context` | string | `auth_signup`, `auth_signin` | Page where the link was clicked (source page, not destination) |
+| `previous_page_context` | string | via `rotatePageContext()` | Previous page |
+| `entity_type` | string | `account` | Business object |
+| `component` | string | `auth_signup_card_footer`, `auth_signin_card_footer` | UI location of the link (bottom of the auth card) |
+
+**Analytics value:** Reveals users who land on the wrong auth page:
+- High "Sign in" clicks on signup = existing users arriving via signup links (consider redirect or detection)
+- High "Sign up" clicks on signin = new users confused about whether they have an account
 
 ---
 
@@ -340,13 +367,17 @@ Without `alias()`: pre-auth events (Page Viewed, Login Started Button Clicked) s
 
 | Property | Type | Scope | Allowed Values | Description | Used In |
 |---|---|---|---|---|---|
-| `wizard_mode` | enum | event | `onboarding`, `create` | Context in which the job post wizard was initiated. `onboarding` = wizard launched during HM onboarding flow (`helix_onboarding_active` set in sessionStorage). `create` = wizard launched from job postings dashboard via "+ Create job" button. | Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Description Evaluated, Job Description Evaluation Failed, Job Post Wizard Intake Mode Selected, Sam Session Started, Sam Session Ended, Sam Session Setup Failed, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Posting Draft Created, Screening Configuration Saved, Job Posting Verified, Job Posting Published, and all Role Requirement / Screening Question CRUD events |
+| `wizard_mode` | enum | event | `onboarding`, `create`, `edit` | Context in which the job post wizard was initiated. `onboarding` = wizard launched during HM onboarding flow (`helix_onboarding_active` set in sessionStorage). `create` = wizard launched from job postings dashboard via "+ Create job" button. `edit` = wizard opened to edit an existing job posting. | Job Post Wizard Started, Job Post Wizard Job Details Completed, Job Description Evaluated, Job Description Evaluation Failed, Job Post Wizard Intake Mode Selected, Sam Session Started, Sam Session Ended, Sam Session Setup Failed, Job Post Wizard Role Requirements Completed, Job Post Wizard Interview Questions Completed, Job Post Wizard Verification Completed, Job Post Wizard Verification Skipped, Job Posting Draft Created, Screening Configuration Saved, Job Posting Verified, Job Posting Published, and all Role Requirement / Screening Question CRUD events |
 
 ---
 
 ## New Standard Objects
 
-No new Standard Objects. `Profile Photo Add` already exists (from `Profile Photo Add Succeeded`). The rename and new error event complete the existing object family.
+| Object | Entity | Example Events |
+|---|---|---|
+| Auth Page Switch Link | Navigation links between signup and signin pages | Auth Page Switch Link Clicked |
+
+`Profile Photo Add` already exists as a Standard Object (from `Profile Photo Add Succeeded`). The rename and new error event complete the existing object family — no new object needed for that.
 
 ---
 
@@ -354,15 +385,17 @@ No new Standard Objects. `Profile Photo Add` already exists (from `Profile Photo
 
 Changes for `docs/helix/event-catalog.md` and `docs/helix/event-schema.md`:
 
-- [ ] `Profile Photo Add Errored` → added to catalog (Prospect Events section)
+- [ ] `Profile Photo Add Errored` → added to catalog (Prospect Events section). **Verify during implementation:** confirm `HeadshotUpload.tsx` has a server-error handling path. If the component only does client-side validation with no server error catch, this event needs a capture call added in the error handler.
+- [ ] `Auth Page Switch Link Clicked` → added to catalog (Login & Onboarding Events section)
 - [ ] `Profile Photo Upload Failed` → renamed to `Profile Photo Add Rejected` in catalog
 - [ ] `Profile Photo Upload Failed` → added to Removed Events table
 - [ ] Login Started Button Clicked → add `continue_button` to `action_value` in catalog and Property Dictionary
 - [ ] Auth Session Restore Errored → add 401 suppression note to Trigger column
 - [ ] Auth Logout Succeeded → add note about `posthog.reset()` call
-- [ ] `wizard_mode` → added to Property Dictionary (Enum Properties section)
+- [ ] `wizard_mode` → added to Property Dictionary (Enum Properties section) with values `onboarding`, `create`, `edit`
 - [ ] Identity stitching lifecycle → documented in event-schema.md (new section: PostHog Identity Lifecycle)
 - [ ] `helix_session_id` boundary note → documented in event-schema.md
+- [ ] `dashboards.md` → add identity stitching notes to Growth Dashboard onboarding funnels: `posthog.alias()` required, do NOT filter by `helix_session_id` across auth boundary
 
 ---
 
@@ -383,6 +416,8 @@ Updated pattern for profile photo flow after rename and error event addition:
 | 1 | Signup → First Action conversion (full funnel) | Page Viewed → Login Started Button Clicked → Auth Login Succeeded → Account Create Succeeded → Onboarding Complete Succeeded | Funnel | Breakdown by `current_persona`, `auth_method`. **Previously broken** (0% conversion) due to `distinct_id` contamination — `posthog.reset()` + `posthog.alias()` fix enables this funnel. | Growth |
 | 2 | Auth method attempt vs completion | Login Started Button Clicked → Auth Login Succeeded | Funnel | Breakdown by `auth_method`. **Previously invisible** — events attributed to wrong person (stale `distinct_id`). | Growth |
 | 3 | Signup vs signin conversion comparison | Login Started Button Clicked → Auth Login Succeeded | Funnel | Breakdown by `current_page_context` (`auth_signup` vs `auth_signin`) | Growth |
+| 4 | Returning user signin conversion | Page Viewed → Login Started Button Clicked → Auth Login Succeeded | Funnel | Filter: `current_page_context` = `auth_signin`. Breakdown by `auth_method`. | Growth |
+| 5 | Auth page switch rate | Auth Page Switch Link Clicked | Trend | Breakdown by `action_value` (`sign_in_link` vs `sign_up_link`) — high sign-in clicks on signup = existing users arriving via signup links | Growth |
 
 ---
 
@@ -402,14 +437,24 @@ Updated pattern for profile photo flow after rename and error event addition:
 
 **Note:** Do NOT filter by `helix_session_id` across the auth boundary — session ID is only present on post-auth events.
 
-### 2. Auth Method Comparison Funnel
+### 2. Signin Conversion Funnel
 
 | Step | Event | Filter |
 |---|---|---|
-| 1 | Login Started Button Clicked | `current_page_context` = `auth_signup` |
+| 1 | Page Viewed | `current_page_context` = `auth_signin` |
+| 2 | Login Started Button Clicked | `current_page_context` = `auth_signin` |
+| 3 | Auth Login Succeeded | — |
+
+**Purpose:** Returning user signin conversion. Breakdown by `auth_method` to compare Google vs Microsoft vs email. Now possible because `posthog.reset()` (B1) ensures pre-auth events have clean anonymous distinct_id and `posthog.identify()` links them back to the existing user.
+
+### 3. Auth Method Comparison Funnel
+
+| Step | Event | Filter |
+|---|---|---|
+| 1 | Login Started Button Clicked | — |
 | 2 | Auth Login Succeeded | — |
 
-**Purpose:** Compare auth method conversion. Breakdown by `auth_method` (google / microsoft / email).
+**Purpose:** Compare auth method conversion across both signup and signin. Breakdown by `auth_method` (google / microsoft / email). Optionally breakdown by `current_page_context` to compare signup vs signin conversion.
 
 ---
 
@@ -466,6 +511,18 @@ LOGOUT:
 │   → Next visitor gets clean anonymous ID             │
 └────────────────────────────────────────────────────┘
 ```
+
+### `posthog.reset()` Clears ALL Super-Properties
+
+`posthog.reset()` does not just clear `distinct_id` — it clears ALL registered super-properties. Currently these are:
+- `current_persona` — set via `posthog.register()` in `identifyUser()`
+- `helix_session_id` — set via `posthog.register()` in `sessionManager.onAuthenticated()`
+
+This is safe on auth page mount because both super-properties are re-set during `loginWithClerk()` after successful authentication. Pre-auth events (Page Viewed, Login Started Button Clicked) will NOT have `current_persona` or `helix_session_id` — this is correct and expected since the user hasn't authenticated yet.
+
+On logout, `posthog.reset()` clears these after `Auth Logout Succeeded` has already been captured with the correct values. No data loss.
+
+**If new super-properties are added in the future**, verify that they are re-set after login, or they will be lost when `posthog.reset()` fires on the next auth page mount.
 
 ### Edge Cases
 
@@ -529,7 +586,9 @@ Old event data persists under `Profile Photo Upload Failed` in PostHog; new even
 | `frontend/src/components/auth/SignInForm.tsx` | Fix OAuth redirect flush; add `continue_button` action_value for email submit |
 | `frontend/src/lib/posthogEvents.ts` | Rename `PROFILE_PHOTO_UPLOAD_FAILED` → `PROFILE_PHOTO_ADD_REJECTED`; add `PROFILE_PHOTO_ADD_ERRORED` |
 | `backend/app/shared/posthog_events.py` | Mirror renames (if parity needed) |
-| `frontend/src/components/profile/HeadshotUpload.tsx` | Add `Profile Photo Add Errored` capture on server-side upload failure |
+| `frontend/src/components/profile/HeadshotUpload.tsx` | Add `Profile Photo Add Errored` capture on server-side upload failure (verify error path exists) |
+| `frontend/src/components/auth/SignUpForm.tsx` | Add `Auth Page Switch Link Clicked` on "Sign in" link click |
+| `frontend/src/components/auth/SignInForm.tsx` | Add `Auth Page Switch Link Clicked` on "Sign up" link click |
 
 ---
 
