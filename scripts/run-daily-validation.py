@@ -16,6 +16,20 @@ from shlex import join as shell_join
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 VALIDATOR_PATH = SCRIPT_DIR / "validate-analytics-docs.py"
+MAX_BLOCKS = 50
+MAX_RULE_GROUPS = 3
+MAX_EXAMPLES_PER_GROUP = 2
+MAX_EXAMPLE_CHARS = 240
+REQUIRED_SUMMARY_KEYS = {
+    "product",
+    "exit_code",
+    "rule_count",
+    "error_count",
+    "warning_count",
+    "suppressed_warning_count",
+    "errors",
+    "warnings",
+}
 
 
 @dataclass
@@ -23,7 +37,7 @@ class ValidationResult:
     product: str
     command: list[str]
     returncode: int
-    stdout: str
+    summary: dict
     stderr: str
 
 
@@ -55,6 +69,7 @@ def run_validator(product):
         str(VALIDATOR_PATH),
         "--product",
         product,
+        "--json-summary",
     ]
     completed = subprocess.run(
         command,
@@ -62,11 +77,19 @@ def run_validator(product):
         text=True,
         check=False,
     )
+    if completed.stderr:
+        emit_validator_log(product, command, completed.returncode, completed.stderr)
+    summary = parse_summary(product, completed.stdout)
+    if summary["exit_code"] != completed.returncode:
+        raise RuntimeError(
+            f"{product} validator summary exit_code {summary['exit_code']} "
+            f"did not match subprocess return code {completed.returncode}"
+        )
     return ValidationResult(
         product=product,
         command=command,
         returncode=completed.returncode,
-        stdout=completed.stdout,
+        summary=summary,
         stderr=completed.stderr,
     )
 
@@ -80,36 +103,162 @@ def github_run_url():
     return f"{server_url}/{repository}/actions/runs/{run_id}"
 
 
-def code_block(label, value):
-    body = value.rstrip()
-    if not body:
-        body = "(empty)"
-    return f"{label}:\n```text\n{body}\n```"
+def emit_validator_log(product, command, returncode, stderr):
+    print(f"::group::{product} validator output", file=sys.stderr)
+    print(f"Command: {shell_join(command)}", file=sys.stderr)
+    print(f"Exit code: {returncode}", file=sys.stderr)
+    print(stderr.rstrip(), file=sys.stderr)
+    print("::endgroup::", file=sys.stderr)
 
 
-def build_message(results):
+def parse_summary(product, stdout):
+    try:
+        summary = json.loads(stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"{product} validator stdout was not valid JSON: {exc}") from exc
+
+    missing = sorted(REQUIRED_SUMMARY_KEYS - set(summary))
+    if missing:
+        raise RuntimeError(
+            f"{product} validator summary missing required keys: {', '.join(missing)}"
+        )
+    return summary
+
+
+def slack_escape(value):
+    return str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def truncate(value, limit=MAX_EXAMPLE_CHARS):
+    text = " ".join(str(value).split())
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "..."
+
+
+def display_product(product):
+    return str(product).replace("-", " ").title()
+
+
+def product_status(summary):
+    if summary["exit_code"] == 2:
+        return ":octagonal_sign: config issue"
+    if summary["error_count"] > 0:
+        return ":x: needs attention"
+    if summary["warning_count"] > 0:
+        return ":warning: warnings"
+    return ":white_check_mark: clean"
+
+
+def overall_status(summaries):
+    if any(summary["exit_code"] == 2 for summary in summaries):
+        return ":octagonal_sign: config issue"
+    if any(summary["error_count"] > 0 for summary in summaries):
+        return ":x: needs attention"
+    if any(summary["warning_count"] > 0 for summary in summaries):
+        return ":warning: warnings"
+    return ":white_check_mark: clean"
+
+
+def section(text, fields=None):
+    block = {
+        "type": "section",
+        "text": {"type": "mrkdwn", "text": text},
+    }
+    if fields:
+        block["fields"] = [{"type": "mrkdwn", "text": field} for field in fields]
+    return block
+
+
+def findings_text(summary):
+    groups = summary["errors"] if summary["error_count"] else summary["warnings"]
+    if not groups:
+        return f"All {summary['rule_count']} validation rules passed."
+
+    lines = ["*Top findings:*"]
+    sorted_groups = sorted(
+        groups,
+        key=lambda group: (-group["count"], str(group["rule_id"])),
+    )
+    for group in sorted_groups[:MAX_RULE_GROUPS]:
+        label = f"Rule {group['rule_id']}: {group['rule_name']}"
+        lines.append(f"- *{slack_escape(label)}* ({group['count']})")
+        for item in group["items"][:MAX_EXAMPLES_PER_GROUP]:
+            lines.append(f"  - {slack_escape(truncate(item))}")
+    return "\n".join(lines)
+
+
+def fallback_text(summaries):
+    parts = [
+        f"{summary['product']}: {product_status(summary)} "
+        f"({summary['error_count']} errors, {summary['warning_count']} warnings)"
+        for summary in summaries
+    ]
+    return f"Daily Analytics Validation - {overall_status(summaries)} - " + "; ".join(parts)
+
+
+def build_blocks(summaries):
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    lines = [f"Daily Analytics Validation - {timestamp}"]
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": "Daily Analytics Validation",
+                "emoji": True,
+            },
+        }
+    ]
 
     run_url = github_run_url()
+    context = f"*Run time:* {timestamp}"
     if run_url:
-        lines.append(f"Run: {run_url}")
-
-    for result in results:
-        lines.extend(
-            [
-                "",
-                f"## {result.product}",
-                f"Command: `{shell_join(result.command)}`",
-                f"Exit code: `{result.returncode}`",
-                "",
-                code_block("stdout", result.stdout),
-            ]
+        context += f" | <{run_url}|View GitHub run>"
+    blocks.append(
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": context}],
+        }
+    )
+    blocks.append(
+        section(
+            f"*Overall:* {overall_status(summaries)}\n"
+            f"*Products checked:* {len(summaries)}"
         )
-        if result.stderr:
-            lines.extend(["", code_block("stderr", result.stderr)])
+    )
+    blocks.append({"type": "divider"})
 
-    return "\n".join(lines)
+    for index, summary in enumerate(summaries):
+        if len(blocks) > MAX_BLOCKS - 4:
+            remaining = len(summaries) - index
+            blocks.append(
+                section(
+                    f"*{remaining} additional product"
+                    f"{'s' if remaining != 1 else ''} omitted from Slack.*\n"
+                    "Open the GitHub run for full validator output."
+                )
+            )
+            break
+
+        fields = [
+            f"*Status*\n{product_status(summary)}",
+            f"*Errors*\n{summary['error_count']}",
+            f"*Warnings*\n{summary['warning_count']}",
+            f"*Exit code*\n{summary['exit_code']}",
+        ]
+        blocks.append(section(f"*{display_product(summary['product'])}*", fields=fields))
+        blocks.append(section(findings_text(summary)))
+        if index != len(summaries) - 1 and len(blocks) < MAX_BLOCKS:
+            blocks.append({"type": "divider"})
+
+    return blocks[:MAX_BLOCKS]
+
+
+def build_payload(summaries):
+    return {
+        "text": fallback_text(summaries),
+        "blocks": build_blocks(summaries),
+    }
 
 
 def post_to_slack(webhook_url, payload):
@@ -153,7 +302,7 @@ def main(argv=None):
 
     products = discover_products()
     results = [run_validator(product) for product in products]
-    payload = {"text": build_message(results)}
+    payload = build_payload([result.summary for result in results])
 
     if args.dry_run:
         print(json.dumps(payload, indent=2))

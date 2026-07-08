@@ -1,10 +1,12 @@
 import importlib.util
+import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -593,6 +595,75 @@ class ProductCliTests(unittest.TestCase):
         result = self.run_script("--product", "recruit")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("All clear", result.stdout)
+
+    def test_json_summary_stdout_is_json_and_human_output_is_stderr(self):
+        result = self.run_script("--product", "recruit", "--json-summary")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+        summary = json.loads(result.stdout)
+        self.assertEqual(summary["product"], "recruit")
+        self.assertEqual(summary["exit_code"], 0)
+        self.assertEqual(summary["error_count"], 0)
+        self.assertEqual(summary["warning_count"], 0)
+        self.assertEqual(summary["rule_count"], 17)
+        self.assertNotIn("Validating product", result.stdout)
+        self.assertIn("Validating product: recruit", result.stderr)
+        self.assertIn("All clear", result.stderr)
+
+    def test_json_summary_error_result_groups_findings(self):
+        result = self.run_script("--product", "helix", "--json-summary")
+        self.assertEqual(result.returncode, 1)
+
+        summary = json.loads(result.stdout)
+        self.assertEqual(summary["product"], "helix")
+        self.assertEqual(summary["exit_code"], 1)
+        self.assertGreater(summary["error_count"], 0)
+        self.assertGreater(len(summary["errors"]), 0)
+        self.assertIn("rule_id", summary["errors"][0])
+        self.assertIn("items", summary["errors"][0])
+        self.assertIn("--- ERRORS", result.stderr)
+        self.assertNotIn("--- ERRORS", result.stdout)
+
+    def test_json_summary_is_catalog_only(self):
+        result = self.run_script(
+            "--product",
+            "helix",
+            "--json-summary",
+            "--check-removal-safety",
+            "missing.md",
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--json-summary is only supported", result.stderr)
+
+
+class SummaryResultTests(unittest.TestCase):
+    def test_compute_result_groups_errors_and_suppresses_known_warnings(self):
+        paths = SimpleNamespace(product="demo")
+        rules = [(1, lambda: (["broken"], ["known warning"]), ())]
+        result, errors, warnings = validator.compute_result(
+            paths,
+            rules,
+            {(1, "known warning")},
+            {1: "Demo rule"},
+        )
+
+        self.assertEqual(result["exit_code"], 1)
+        self.assertEqual(result["error_count"], 1)
+        self.assertEqual(result["warning_count"], 0)
+        self.assertEqual(result["suppressed_warning_count"], 1)
+        self.assertEqual(result["errors"][0]["rule_id"], 1)
+        self.assertEqual(result["errors"][0]["rule_name"], "Demo rule")
+        self.assertEqual(result["errors"][0]["items"], ["broken"])
+        self.assertEqual(errors, {1: ["broken"]})
+        self.assertEqual(warnings, {})
+
+    def test_config_error_summary_shape(self):
+        summary = validator.config_error_summary("helix", "File not found: catalog")
+        self.assertEqual(summary["exit_code"], 2)
+        self.assertEqual(summary["error_count"], 1)
+        self.assertEqual(summary["warning_count"], 0)
+        self.assertEqual(summary["errors"][0]["rule_id"], "config")
+        self.assertIn("File not found", summary["errors"][0]["items"][0])
 
 
 class ObjectDeclarationProseTests(unittest.TestCase):
