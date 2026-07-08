@@ -1,0 +1,21 @@
+name: Daily PostHog Catalog Validation
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  validate-posthog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run PostHog catalog runtime validation
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          POSTHOG_HELIX_PERSONAL_API_KEY: ${{ secrets.POSTHOG_HELIX_PERSONAL_API_KEY }}
+          POSTHOG_RECRUIT_PERSONAL_API_KEY: ${{ secrets.POSTHOG_RECRUIT_PERSONAL_API_KEY }}
+        run: python3 scripts/run-posthog-catalog-validation.py

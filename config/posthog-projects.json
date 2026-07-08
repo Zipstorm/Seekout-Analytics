@@ -1,0 +1,16 @@
+{
+  "products": [
+    {
+      "product": "helix",
+      "host": "https://us.posthog.com",
+      "project_id": "459597",
+      "api_key_env": "POSTHOG_HELIX_PERSONAL_API_KEY"
+    },
+    {
+      "product": "recruit",
+      "host": "https://us.posthog.com",
+      "project_id": "",
+      "api_key_env": "POSTHOG_RECRUIT_PERSONAL_API_KEY"
+    }
+  ]
+}
