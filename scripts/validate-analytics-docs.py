@@ -2475,6 +2475,8 @@ def main():
     try:
         paths = product_paths(args.product)
     except ProductPathError as exc:
+        # JSON mode is used by the daily wrapper with discovered products only, so
+        # unknown-product errors remain argparse usage failures rather than summaries.
         parser.error(str(exc))
     except ValueError as exc:
         if args.json_summary:

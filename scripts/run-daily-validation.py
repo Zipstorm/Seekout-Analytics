@@ -94,6 +94,34 @@ def run_validator(product):
     )
 
 
+def automation_error_summary(product, message):
+    return {
+        "product": product,
+        "exit_code": 2,
+        "rule_count": 0,
+        "error_count": 1,
+        "warning_count": 0,
+        "suppressed_warning_count": 0,
+        "errors": [
+            {
+                "rule_id": "automation",
+                "rule_name": "Validator automation",
+                "count": 1,
+                "items": [message],
+            }
+        ],
+        "warnings": [],
+    }
+
+
+def run_validator_with_fallback(product):
+    try:
+        return run_validator(product).summary
+    except Exception as exc:
+        print(f"::error::{product} validator failed before producing a usable summary: {exc}", file=sys.stderr)
+        return automation_error_summary(product, str(exc))
+
+
 def github_run_url():
     server_url = os.environ.get("GITHUB_SERVER_URL")
     repository = os.environ.get("GITHUB_REPOSITORY")
@@ -170,12 +198,11 @@ def section(text, fields=None):
     return block
 
 
-def findings_text(summary):
-    groups = summary["errors"] if summary["error_count"] else summary["warnings"]
+def render_group_section(title, groups):
     if not groups:
-        return f"All {summary['rule_count']} validation rules passed."
+        return []
 
-    lines = ["*Top findings:*"]
+    lines = [f"*{title}:*"]
     sorted_groups = sorted(
         groups,
         key=lambda group: (-group["count"], str(group["rule_id"])),
@@ -185,6 +212,18 @@ def findings_text(summary):
         lines.append(f"- *{slack_escape(label)}* ({group['count']})")
         for item in group["items"][:MAX_EXAMPLES_PER_GROUP]:
             lines.append(f"  - {slack_escape(truncate(item))}")
+    return lines
+
+
+def findings_text(summary):
+    if not summary["errors"] and not summary["warnings"]:
+        return f"All {summary['rule_count']} validation rules passed."
+
+    lines = []
+    lines.extend(render_group_section("Top errors", summary["errors"]))
+    if summary["errors"] and summary["warnings"]:
+        lines.append("")
+    lines.extend(render_group_section("Top warnings", summary["warnings"]))
     return "\n".join(lines)
 
 
@@ -301,8 +340,8 @@ def main(argv=None):
         raise RuntimeError("SLACK_WEBHOOK_URL is required unless --dry-run is set")
 
     products = discover_products()
-    results = [run_validator(product) for product in products]
-    payload = build_payload([result.summary for result in results])
+    summaries = [run_validator_with_fallback(product) for product in products]
+    payload = build_payload(summaries)
 
     if args.dry_run:
         print(json.dumps(payload, indent=2))
