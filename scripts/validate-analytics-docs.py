@@ -10,6 +10,7 @@ Exit: 0 = all clear, 1 = errors found, 2 = parse failure
 """
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass, field
@@ -2123,8 +2124,60 @@ def write_log(paths, all_errors, all_warnings, suppressed_count=0, mode_label=No
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 
-def _run_rules(paths, rules, known, rule_names, mode_label=None):
-    """Run a list of (rule_id, fn, args) rules, suppress known warnings, log, and exit."""
+def _group_findings(findings, rule_names):
+    grouped = []
+    for rid in sorted(findings, key=str):
+        items = list(findings[rid])
+        grouped.append(
+            {
+                "rule_id": rid,
+                "rule_name": rule_names[rid],
+                "count": len(items),
+                "items": items,
+            }
+        )
+    return grouped
+
+
+def _summary_result(paths, all_errors, all_warnings, suppressed, rule_names):
+    ec = sum(len(e) for e in all_errors.values())
+    wc = sum(len(w) for w in all_warnings.values())
+    return {
+        "product": paths.product,
+        "exit_code": 1 if ec else 0,
+        "rule_count": len(rule_names),
+        "error_count": ec,
+        "warning_count": wc,
+        "suppressed_warning_count": suppressed,
+        "errors": _group_findings(all_errors, rule_names),
+        "warnings": _group_findings(all_warnings, rule_names),
+    }
+
+
+def config_error_summary(product, message, rule_count=None):
+    if rule_count is None:
+        rule_count = len(RULE_NAMES)
+    return {
+        "product": product,
+        "exit_code": 2,
+        "rule_count": rule_count,
+        "error_count": 1,
+        "warning_count": 0,
+        "suppressed_warning_count": 0,
+        "errors": [
+            {
+                "rule_id": "config",
+                "rule_name": "Configuration",
+                "count": 1,
+                "items": [message],
+            }
+        ],
+        "warnings": [],
+    }
+
+
+def compute_result(paths, rules, known, rule_names):
+    """Run rules, suppress known warnings, and return structured findings."""
     all_errors, all_warnings = {}, {}
     for rid, fn, args in rules:
         errs, warns = fn(*args)
@@ -2143,36 +2196,57 @@ def _run_rules(paths, rules, known, rule_names, mode_label=None):
         if not all_warnings[rid]:
             del all_warnings[rid]
 
-    write_log(paths, all_errors, all_warnings, suppressed, mode_label=mode_label, rule_names=rule_names)
+    return _summary_result(paths, all_errors, all_warnings, suppressed, rule_names), all_errors, all_warnings
 
-    ec = sum(len(e) for e in all_errors.values())
-    wc = sum(len(w) for w in all_warnings.values())
 
-    if ec == 0 and wc == 0:
-        msg = f"All clear — {len(rule_names)} validation rules passed."
-        if suppressed:
-            msg += f" ({suppressed} known warnings suppressed)"
-        print(msg)
-        print(f"Log: {paths.log_path.relative_to(REPO_ROOT)}")
-        sys.exit(0)
+def emit_text_result(paths, result, stream):
+    if result["error_count"] == 0 and result["warning_count"] == 0:
+        msg = f"All clear — {result['rule_count']} validation rules passed."
+        if result["suppressed_warning_count"]:
+            msg += f" ({result['suppressed_warning_count']} known warnings suppressed)"
+        print(msg, file=stream)
+        print(f"Log: {paths.log_path.relative_to(REPO_ROOT)}", file=stream)
+        return
 
-    if ec:
-        print(f"\n--- ERRORS ({ec}) ---")
-        for rid in sorted(all_errors, key=str):
-            for e in all_errors[rid]:
-                print(f"  [Rule {rid}: {rule_names[rid]}] {e}")
+    if result["error_count"]:
+        print(f"\n--- ERRORS ({result['error_count']}) ---", file=stream)
+        for group in result["errors"]:
+            for e in group["items"]:
+                print(
+                    f"  [Rule {group['rule_id']}: {group['rule_name']}] {e}",
+                    file=stream,
+                )
 
-    if wc:
-        print(f"\n--- WARNINGS ({wc}) ---")
-        for rid in sorted(all_warnings, key=str):
-            for w in all_warnings[rid]:
-                print(f"  [Rule {rid}: {rule_names[rid]}] {w}")
+    if result["warning_count"]:
+        print(f"\n--- WARNINGS ({result['warning_count']}) ---", file=stream)
+        for group in result["warnings"]:
+            for w in group["items"]:
+                print(
+                    f"  [Rule {group['rule_id']}: {group['rule_name']}] {w}",
+                    file=stream,
+                )
 
-    if suppressed:
-        print(f"\n({suppressed} known warnings suppressed)")
+    if result["suppressed_warning_count"]:
+        print(f"\n({result['suppressed_warning_count']} known warnings suppressed)", file=stream)
 
-    print(f"\nLog updated: {paths.log_path.relative_to(REPO_ROOT)}")
-    sys.exit(1 if ec else 0)
+    print(f"\nLog updated: {paths.log_path.relative_to(REPO_ROOT)}", file=stream)
+
+
+def emit_json_result(result):
+    json.dump(result, sys.stdout, sort_keys=True)
+    print()
+
+
+def _run_rules(paths, rules, known, rule_names, mode_label=None, json_summary=False):
+    """Run validation rules, write logs, emit output, and return the intended exit code."""
+    result, all_errors, all_warnings = compute_result(paths, rules, known, rule_names)
+    write_log(paths, all_errors, all_warnings, result["suppressed_warning_count"], mode_label=mode_label, rule_names=rule_names)
+
+    stream = sys.stderr if json_summary else sys.stdout
+    emit_text_result(paths, result, stream)
+    if json_summary:
+        emit_json_result(result)
+    return result["exit_code"]
 
 
 def _resolve_tracking_plan_path(paths, arg):
@@ -2247,12 +2321,19 @@ def check_removal_safety(paths, tp_path):
     return 1 if blockers else 0
 
 
-def validate_catalog(paths):
+def emit_config_error(paths, message, json_summary=False):
+    print(f"ERROR: {message}", file=sys.stderr)
+    result = config_error_summary(paths.product, message)
+    if json_summary:
+        emit_json_result(result)
+    return result["exit_code"]
+
+
+def validate_catalog(paths, json_summary=False):
     """Validate consistency across the 3 source-of-truth docs."""
     for p in (paths.catalog_path, paths.schema_path, paths.dashboard_path):
         if not p.exists():
-            print(f"ERROR: File not found: {p}", file=sys.stderr)
-            sys.exit(2)
+            return emit_config_error(paths, f"File not found: {p}", json_summary)
 
     catalog_events, prop_dict, dup_events = parse_catalog(paths.catalog_path)
     (
@@ -2266,8 +2347,7 @@ def validate_catalog(paths):
     funnels, dash_ph, dash_ph_errors, dash_props = parse_dashboards(paths.dashboard_path)
 
     if not catalog_events and not paths.config.allow_empty_catalog:
-        print("ERROR: No events parsed from catalog", file=sys.stderr)
-        sys.exit(2)
+        return emit_config_error(paths, "No events parsed from catalog", json_summary)
 
     known = load_known_warnings(paths.log_path)
 
@@ -2291,19 +2371,19 @@ def validate_catalog(paths):
         (17, rule_17, (catalog_events, schema_event_types)),
     ]
 
-    _run_rules(paths, rules, known, RULE_NAMES)
+    return _run_rules(paths, rules, known, RULE_NAMES, json_summary=json_summary)
 
 
 def validate_tracking_plan(paths, tp_path):
     """Validate a tracking plan against catalog and schema context."""
     if not tp_path.exists():
         print(f"ERROR: Tracking plan not found: {tp_path}", file=sys.stderr)
-        sys.exit(2)
+        return 2
 
     for p in (paths.catalog_path, paths.schema_path):
         if not p.exists():
             print(f"ERROR: File not found: {p}", file=sys.stderr)
-            sys.exit(2)
+            return 2
 
     catalog_events, prop_dict, _ = parse_catalog(paths.catalog_path)
     schema_objects, _, schema_evt_props, _, _, schema_event_types = parse_schema(
@@ -2313,7 +2393,7 @@ def validate_tracking_plan(paths, tp_path):
 
     if not tp_data.events:
         print("ERROR: No events parsed from tracking plan", file=sys.stderr)
-        sys.exit(2)
+        return 2
 
     known = load_known_warnings(paths.log_path)
     plan_name = tp_path.stem
@@ -2358,7 +2438,7 @@ def validate_tracking_plan(paths, tp_path):
         ("TP12", tp_rule_12, (tp_data.events, schema_event_types)),
     ]
 
-    _run_rules(paths, rules, known, TP_RULE_NAMES, mode_label=f"Tracking Plan: {plan_name}")
+    return _run_rules(paths, rules, known, TP_RULE_NAMES, mode_label=f"Tracking Plan: {plan_name}")
 
 
 def main():
@@ -2376,6 +2456,11 @@ def main():
         help="Check whether removed Standard Objects are still referenced by catalog events.",
     )
     parser.add_argument(
+        "--json-summary",
+        action="store_true",
+        help="Emit a catalog validation summary as JSON on stdout; human output goes to stderr.",
+    )
+    parser.add_argument(
         "tracking_plan",
         nargs="?",
         help="Tracking plan path, basename, or file under tracking-plans/<product>/.",
@@ -2384,20 +2469,32 @@ def main():
 
     if args.check_removal_safety and args.tracking_plan:
         parser.error("tracking_plan positional cannot be combined with --check-removal-safety")
+    if args.json_summary and (args.check_removal_safety or args.tracking_plan):
+        parser.error("--json-summary is only supported for catalog validation")
 
     try:
         paths = product_paths(args.product)
-    except (ProductPathError, ValueError) as exc:
+    except ProductPathError as exc:
+        # JSON mode is used by the daily wrapper with discovered products only, so
+        # unknown-product errors remain argparse usage failures rather than summaries.
+        parser.error(str(exc))
+    except ValueError as exc:
+        if args.json_summary:
+            message = str(exc)
+            print(f"ERROR: {message}", file=sys.stderr)
+            emit_json_result(config_error_summary(args.product, message))
+            sys.exit(2)
         parser.error(str(exc))
 
-    print(f"Validating product: {paths.product}")
+    stream = sys.stderr if args.json_summary else sys.stdout
+    print(f"Validating product: {paths.product}", file=stream)
     if args.check_removal_safety:
         tp_path = _resolve_tracking_plan_path(paths, args.check_removal_safety)
         sys.exit(check_removal_safety(paths, tp_path))
     if args.tracking_plan:
-        validate_tracking_plan(paths, _resolve_tracking_plan_path(paths, args.tracking_plan))
+        sys.exit(validate_tracking_plan(paths, _resolve_tracking_plan_path(paths, args.tracking_plan)))
     else:
-        validate_catalog(paths)
+        sys.exit(validate_catalog(paths, json_summary=args.json_summary))
 
 
 if __name__ == "__main__":
