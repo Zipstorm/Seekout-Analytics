@@ -387,6 +387,7 @@ def build_payload(summaries):
     return {"text": fallback_text(summaries), "blocks": build_blocks(summaries)}
 
 
+# Mirrors the small Slack webhook helper in run-daily-validation.py; keep in sync.
 def post_to_slack(webhook_url, payload):
     data = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
@@ -583,6 +584,12 @@ def validate_value(prop_name, value, prop_type, allowed_values):
     return None
 
 
+def property_validation_rule(event, prop_dict, prop_name):
+    if prop_name in event.inline_enums:
+        return "enum", set(event.inline_enums[prop_name])
+    return prop_dictionary_entry(prop_dict, prop_name)
+
+
 def schema_required_properties(schema_event_props, event):
     required = set()
     source = event.source.lower()
@@ -591,6 +598,8 @@ def schema_required_properties(schema_event_props, event):
         when = info.get("when", "").lower()
         if "all frontend events" in when and "frontend" in source:
             required.add(prop)
+        # The catalog's current event-type taxonomy maps the old user_action
+        # capture class to Interaction events.
         if "all `user_action` events" in when and event_type == "Interaction":
             required.add(prop)
         if prop == "job_id" and event.group == "job":
@@ -638,8 +647,17 @@ def collect_event_drift(summary, catalog_events, event_defs, removed_events, now
             continue
         if is_fresh(definition.get("last_seen_at"), now, window_days):
             unexpected.append(name)
-    for name in sorted(unexpected)[:20]:
+    unexpected = sorted(unexpected)
+    for name in unexpected[:20]:
         add_finding(summary, "warning", "event_drift", "Uncataloged PostHog event", f'"{name}" is recent in PostHog but not in the catalog')
+    if len(unexpected) > 20:
+        add_finding(
+            summary,
+            "warning",
+            "event_drift",
+            "Uncataloged PostHog event",
+            f"{len(unexpected) - 20} additional recent uncataloged events omitted from Slack",
+        )
 
     for name in sorted(removed_events):
         definition = event_defs.get(name)
@@ -665,7 +683,9 @@ def fresh_expected_events(expected_events, event_defs, now, window_days):
 
 def validate_samples(summary, event, samples, prop_dict, schema_event_props):
     required = required_property_names(schema_event_props, event)
-    optional = {spec.name for spec in event.properties if spec.optional}
+    catalog_props = {spec.name for spec in event.properties}
+    props_to_validate = catalog_props | required
+    sample_properties = []
     for row in samples:
         properties = row.get("properties")
         if isinstance(properties, str):
@@ -675,27 +695,46 @@ def validate_samples(summary, event, samples, prop_dict, schema_event_props):
                 properties = {}
         if not isinstance(properties, dict):
             properties = {}
-        for prop in sorted(required):
+        sample_properties.append(properties)
+
+    sample_count = len(sample_properties)
+    missing_counts = {prop: 0 for prop in required}
+    value_errors = {}
+
+    for properties in sample_properties:
+        for prop in required:
             if prop not in properties:
-                add_finding(summary, "error", "property_presence", "Required key presence", f'"{event.name}" sample is missing required key `{prop}`')
-        for spec in event.properties:
-            if spec.name not in properties:
-                continue
-            prop_type, allowed = prop_dictionary_entry(prop_dict, spec.name)
-            error = validate_value(spec.name, properties.get(spec.name), prop_type, allowed)
-            if error:
-                rule = "enum_drift" if prop_type == "enum" else "value_type"
-                name = "Enum drift" if prop_type == "enum" else "Declared type validation"
-                add_finding(summary, "error", rule, name, f'"{event.name}": {error}')
-        for prop in sorted(required - {spec.name for spec in event.properties} - optional):
+                missing_counts[prop] += 1
+
+        for prop in props_to_validate:
             if prop not in properties:
                 continue
-            prop_type, allowed = prop_dictionary_entry(prop_dict, prop)
+            prop_type, allowed = property_validation_rule(event, prop_dict, prop)
             error = validate_value(prop, properties.get(prop), prop_type, allowed)
             if error:
                 rule = "enum_drift" if prop_type == "enum" else "value_type"
                 name = "Enum drift" if prop_type == "enum" else "Declared type validation"
-                add_finding(summary, "error", rule, name, f'"{event.name}": {error}')
+                key = (rule, name, error)
+                value_errors[key] = value_errors.get(key, 0) + 1
+
+    for prop, count in sorted(missing_counts.items()):
+        if count:
+            add_finding(
+                summary,
+                "error",
+                "property_presence",
+                "Required key presence",
+                f'"{event.name}" missing required key `{prop}` on {count}/{sample_count} sampled rows',
+            )
+
+    for (rule, name, error), count in sorted(value_errors.items()):
+        add_finding(
+            summary,
+            "error",
+            rule,
+            name,
+            f'"{event.name}": {error} on {count}/{sample_count} sampled rows',
+        )
 
 
 def validate_product(product, validator, config, args, now):
