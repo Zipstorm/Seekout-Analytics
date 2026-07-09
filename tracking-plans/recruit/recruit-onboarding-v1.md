@@ -79,7 +79,7 @@ Properties shared across multiple events are listed once. These follow the same 
 |---|---|---|---|
 | `current_page_context` | string | snake_case page identifier | Page where the event fired. Route path transformed to snake_case (e.g., `/signIn` → `sign_in`). All frontend events. |
 | `previous_page_context` | string | snake_case page identifier or `null` | Page the user was on before navigating here. `null` if direct entry / external referrer. All frontend events. |
-| `sku_id` | string | `WORKSPACES_FREE_TRIAL`, `RECRUIT_CORE_ANNUAL`, `RECRUIT_SOURCING_MONTHLY` | User's current plan/SKU at the time the event fires. All post-auth events. Pre-auth events (login page, marketing site) will not have this. |
+| `sku_id` | string | `workspaces-free-trial`, `recruit-core-annual`, `recruit-sourcing-monthly` | User's current plan/SKU at the time the event fires. All post-auth events. Pre-auth events (login page, marketing site) will not have this. |
 | `action` | enum | `click`, `submit`, `toggle` | What the user did. All Interaction type events. |
 | `action_value` | string | exact UI label in snake_case | Exact button/link text the user clicked, in snake_case. Never paraphrased. All Interaction type events. |
 | `entity_type` | string | `account`, `pricing`, `meeting` | Domain the action relates to. All Interaction type events. |
@@ -552,7 +552,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `auth_method` | enum | `email`, `sso`, `impersonate` | How the user authenticated |
-| `sku_id` | string | e.g., `WORKSPACES_FREE_TRIAL` | User's current plan at login time |
+| `sku_id` | string | e.g., `workspaces-free-trial` | User's current plan at login time |
 | `organization_id` | string | UUID | User's organization |
 
 **Property Updates:**
@@ -628,7 +628,7 @@ Properties shared across multiple events are listed once. These follow the same 
 
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `sku_id` | string | `WORKSPACES_FREE_TRIAL` | Trial SKU assigned |
+| `sku_id` | string | `workspaces-free-trial` | Trial SKU assigned |
 | `trial_duration_days` | number | `14` | Trial length |
 | `organization_id` | string | UUID or `null` | Org if assigned at signup |
 | `signup_source` | enum | `pricing_page`, `direct` | Where the signup originated |
@@ -636,7 +636,7 @@ Properties shared across multiple events are listed once. These follow the same 
 **Property Updates:**
 - `$set_once: trial_start_date` — when trial was activated (never overwritten)
 - `$set_once: trial_sku_id` — original trial SKU (preserved after conversion to paid)
-- `$set: sku_id` — current plan (`WORKSPACES_FREE_TRIAL`)
+- `$set: sku_id` — current plan (`workspaces-free-trial`)
 - `$set: email` — user's email
 - `$set: name` — user's name
 - `$set: company_name` — user's company
@@ -780,7 +780,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | Success Metric | PostHog Event(s) | Insight Type | Breakdown / Filter | Dashboard |
 |---|---|---|---|---|
 | Login page traffic | Page Viewed (`current_page_context = sign_in`) | Trend | Breakdown by `entry_point` | Auth & Onboarding |
-| Login method preference | Sign In Button Clicked, Sign In With SSO Link Clicked | Trend | Compare event counts over time | Auth & Onboarding |
+| Login method preference | Sign In Button Clicked, SSO Sign In Button Clicked | Trend | Compare event counts over time | Auth & Onboarding |
 | Login success rate | Auth Login Succeeded vs Auth Login Rejected | Trend | Breakdown by `auth_method` | Auth & Onboarding |
 | Login failure reasons | Auth Login Rejected | Trend | Breakdown by `rejection_reason` | Auth & Onboarding |
 | Trial interest from login page | Get A Free Trial Link Clicked | Trend | -- | Auth & Onboarding |
@@ -906,7 +906,7 @@ seekout.com/free-trial/             Zapier                    recruit-api
 | `country` | string | From form |
 | `email_domain` | string | Extracted from business_email — for domain-level analysis |
 | `sku_id` | string | Trial SKU (`workspaces-free-trial`) |
-| `activation_status` | enum | `pending` → `activated` → `expired` |
+| `activation_status` | enum | `pending` → `activated` / `expired` / `rejected` |
 | `requested_at` | timestamp | When the trial was requested |
 | `activated_at` | timestamp | When the user activated (clicked link + set password). `null` if not activated. |
 | `activation_link_expires_at` | timestamp | `requested_at` + 60 days |
@@ -920,7 +920,8 @@ seekout.com/free-trial/             Zapier                    recruit-api
 | `created_at` | timestamp | Row creation time |
 
 **Where to write:**
-- **On trial request** (`POST /api/auth/workspace/register`): Insert row with `activation_status: pending`
+- **On trial request accepted** (`POST /api/auth/workspace/register`): Insert row with `activation_status: pending`
+- **On trial request rejected** (`POST /api/auth/workspace/register`): Insert row with `activation_status: rejected` and `rejection_reason` populated
 - **On activation** (`POST /api/auth/register` with free trial shortId): Update to `activation_status: activated`, set `activated_at`, `trial_start_date`, `trial_end_date`, `user_id`
 - **On plan conversion** (SKU change from trial to paid): Update `converted_to_paid`, `converted_at`, `paid_sku_id`
 
