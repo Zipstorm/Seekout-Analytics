@@ -6,7 +6,7 @@
 **Related PRD:** —
 **Repo:** recruit-ui (frontend), recruit-api (backend)
 **Branch:** recruit-onboarding-v1
-**PR:** —
+**PR:** [#42](https://github.com/Zipstorm/Seekout-Analytics/pull/42)
 **Status:** Draft
 
 ## Status History
@@ -18,13 +18,14 @@
 ## Workflow
 
 - [x] Draft created
-- [ ] Validated
+- [x] Validated
 - [ ] Codebase implemented
 - [ ] Absorbed from codebase
 - [ ] Re-validated
-- [ ] PR raised
+- [x] PR raised
 - [ ] PR approved
 - [ ] Merged to catalog
+- [ ] Squash merged to main
 
 > References: `docs/shared/naming-and-event-types.md`, `docs/recruit/event-schema.md`, and `docs/recruit/event-catalog.md`.
 
@@ -32,7 +33,7 @@
 
 ## Scope
 
-1. **21 distinct event names** — Login page (6 frontend), Pricing page (5 marketing site), Free trial form (2 marketing site), Request meeting (2 marketing site), Request demo (1 marketing site), Backend auth lifecycle (5 backend). Page Viewed is reused across 5 page contexts.
+1. **21 distinct event names** — Login page (6 frontend), Pricing page (5 marketing site), Free trial form (2 marketing site), Request meeting (2 marketing site), Request demo (1 marketing site), Backend auth lifecycle (7 backend). Page Viewed is reused across 5 page contexts.
 2. **Backend data pipeline** — `trial_signups` table for permanent trial signup records
 3. More events will be added as additional onboarding screens are documented
 
@@ -81,7 +82,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `sku_id` | string | `WORKSPACES_FREE_TRIAL`, `RECRUIT_CORE_ANNUAL`, `RECRUIT_SOURCING_MONTHLY` | User's current plan/SKU at the time the event fires. All post-auth events. Pre-auth events (login page, marketing site) will not have this. |
 | `action` | enum | `click`, `submit`, `toggle` | What the user did. All Interaction type events. |
 | `action_value` | string | exact UI label in snake_case | Exact button/link text the user clicked, in snake_case. Never paraphrased. All Interaction type events. |
-| `entity_type` | string | `account`, `pricing` | Domain the action relates to. All Interaction type events. |
+| `entity_type` | string | `account`, `pricing`, `meeting` | Domain the action relates to. All Interaction type events. |
 | `component` | string | see per-event specs | Exact page location of the UI element — specific enough to locate without seeing the screen. All Interaction type events. |
 | `entry_point` | string | `direct`, `email_invite`, `share_link`, `sso_redirect` | How the user arrived at the platform. Derived from a `?context=` URL param (to be added). Page Viewed on auth pages only. |
 | `auth_method` | enum | `email`, `sso`, `impersonate` | How the user authenticated. `impersonate` is for staff testing customer accounts. Auth Login events only. |
@@ -294,7 +295,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `previous_page_context` | string | varies | Page before pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
 | `component` | string | `pricing_billing_toggle` | Monthly/Annual toggle above plan cards |
-| `billing_cycle` | enum | `monthly`, `annual` | Same as `action_value` — the selected billing cycle after toggle |
+| `billing_cycle` | enum | `monthly`, `annual` | Active billing cycle after toggle. Shared property across all pricing events for consistent filtering. |
 
 ---
 
@@ -484,7 +485,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action_value` | string | `request_meeting` | Exact button label "Request meeting" in snake_case |
 | `current_page_context` | string | `request_meeting` | Request meeting form page |
 | `previous_page_context` | string | `pricing` | User came from pricing page |
-| `entity_type` | string | `pricing` | Pricing/sales domain |
+| `entity_type` | string | `meeting` | Meeting/sales domain |
 | `component` | string | `request_meeting_form_submit_button` | Submit button inside the request meeting form |
 
 **Notes:**
@@ -934,14 +935,18 @@ seekout.com/free-trial/             Zapier                    recruit-api
 
 ### Cross-Site Identity Handoff
 
-When a user clicks "Get a free trial" on `app.seekout.io/signIn` and navigates to `seekout.com/pricing/`, PostHog on each site assigns a separate anonymous ID. Without an explicit handoff, PostHog treats them as two different users.
+> **⚠️ Requires engineering review before implementation.** The approach below is a design proposal. Two specific concerns need eng validation: (1) passing `distinct_id` in URLs can leak via `Referer` headers if the user navigates to a third-party site, and (2) the correct PostHog SDK method for linking two anonymous sessions across domains may be `posthog.alias()` rather than `posthog.identify()` — `identify()` is intended for linking anonymous sessions to known user IDs, while `alias()` links two anonymous IDs without needing to know who the person is. Eng should evaluate PostHog's cross-domain stitching options and recommend the safest approach.
 
-**Solution:** Append the PostHog `distinct_id` as a URL parameter when navigating cross-site.
+**Problem:** When a user clicks "Get a free trial" on `app.seekout.io/signIn` and navigates to `seekout.com/pricing/`, PostHog on each site assigns a separate anonymous ID. Without an explicit handoff, PostHog treats them as two different users and cross-site funnels break.
+
+**Proposed solution:** Append the PostHog `distinct_id` as a URL parameter when navigating cross-site.
 
 **Where to implement:**
 - **Login page → Pricing page:** When `Get A Free Trial Link Clicked` fires, the link should include `?ph_id={posthog.get_distinct_id()}`. Example: `seekout.com/pricing/?ph_id=abc123`.
-- **Marketing site pages:** On page load, read `ph_id` from URL params and call `posthog.identify(ph_id)` to link the anonymous marketing site session to the app session.
+- **Marketing site pages:** On page load, read `ph_id` from URL params and call `posthog.alias(ph_id)` to link the anonymous marketing site session to the app session. *(Eng to confirm: `alias()` vs `identify()` vs PostHog's native cross-domain config.)*
 - **Zapier → recruit-api:** Pass the `ph_id` from the form submission through to the `POST /api/auth/workspace/register` request, so the activation link can include it: `seekout.com/completeSignUp?code={shortId}&ph_id={ph_id}`.
-- **Activation page:** On the completeSignUp page, read `ph_id` and call `posthog.identify(ph_id)` before firing any events.
+- **Activation page:** On the completeSignUp page, read `ph_id` and call the appropriate PostHog linking method before firing any events.
 
 **User-visible change:** A query parameter (`?ph_id=abc123`) is added to cross-site URLs. This is standard analytics practice and has no visual impact on the page.
+
+**Privacy consideration:** The `ph_id` value in the URL is a PostHog anonymous ID (not PII), but it can leak via browser `Referer` headers if the user navigates to external sites from the marketing page. Eng should assess whether this is acceptable or if an alternative mechanism (e.g., first-party cookie sharing, PostHog's built-in cross-domain linking) is preferable.
