@@ -19,9 +19,27 @@
 | User Action | What Happens Next | Next Step |
 |---|---|---|
 | Clicks "Sign In" | Submits email/password form → auth flow (not yet captured) | TBD — post-login product experience |
-| Clicks "Sign in with SSO" | Toggles form to SSO mode (email-only field) → SSO redirect (not yet captured) | TBD — SSO auth flow |
+| Clicks "Sign in with SSO" | Toggles form to SSO mode (email-only field) | Flow 1b, Step 1 |
 | Clicks "Get a free trial" | Navigates to `seekout.com/pricing/` (leaves app, enters marketing site) | Flow 2, Step 1 |
 | Clicks "Forgot your password?" | Navigates to `/forgotPassword` (not yet captured) | TBD — password reset flow |
+
+---
+
+# Flow 1b: SSO Login
+
+**Entry:** User clicks "Sign in with SSO" on the login page
+
+| Step | Screenshot | Route | Screen | User Action | What Happens Next |
+|------|-----------|-------|--------|-------------|-------------------|
+| 1 | `08-sso-login-page.png` | `app.seekout.io/signIn?redirect=%2F` | SSO login form — "Single Sign On: Use your organization's network to sign in." Email-only field. "Sign In" button (purple), "Sign in without SSO" link, "Get a free trial" link. Same URL as login page — the form toggles between email/password and SSO modes. | — | See branching below |
+
+### Branching from SSO Form
+
+| User Action | What Happens Next | Next Step |
+|---|---|---|
+| Clicks "Sign In" (SSO form) | Submits email → redirects to organization's SSO provider → auth callback → Auth Login Succeeded/Rejected | TBD — post-login product experience |
+| Clicks "Sign in without SSO" | Toggles form back to email/password mode | Flow 1, Step 1 |
+| Clicks "Get a free trial" | Navigates to `seekout.com/pricing/` | Flow 2, Step 1 |
 
 ---
 
@@ -83,7 +101,7 @@
 |---|---|---|
 | Post-login product experience | What returning users see after successful Sign In or SSO login | App dashboard / landing page |
 | Post-trial signup | What happens after "Request free trial" form is submitted — email confirmation, account activation, first-time product login | Confirmation page, activation email, first login |
-| SSO auth flow | What happens after "Sign in with SSO" — SSO email entry, redirect, SAML flow | SSO form, redirect screens |
+| SSO redirect + callback | What happens after user submits email on SSO form — redirect to identity provider, callback | SSO provider screens (if visible) |
 | Forgot password flow | Password reset from login page | Reset form, email, new password page |
 | Post-demo-request | What happens after "Book a demo" or "Request meeting" form is submitted | Confirmation page |
 
@@ -100,3 +118,4 @@
 | 05 | `05-free-trial-form-from-nav.png` | Free trial form (from nav) | Marketing (`seekout.com`) | `/free-trial/` |
 | 06 | `06-request-meeting-page.png` | Request a meeting | Marketing (`seekout.com`) | `/request-meeting/` |
 | 07 | `07-request-demo-page.png` | Book a demo (Recruit) | Marketing (`seekout.com`) | `/requestdemo/` |
+| 08 | `08-sso-login-page.png` | SSO login form | Product (`app.seekout.io`) | `/signIn` (SSO mode) |

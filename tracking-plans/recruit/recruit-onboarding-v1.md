@@ -32,13 +32,13 @@
 
 ## Scope
 
-1. **Adds 18 new events** — Login page (4), Pricing page (5), Free trial form (2), Request meeting (2), Request demo (1), Backend auth (4)
+1. **21 distinct event names** — Login page (6 frontend), Pricing page (5 marketing site), Free trial form (2 marketing site), Request meeting (2 marketing site), Request demo (1 marketing site), Backend auth lifecycle (5 backend). Page Viewed is reused across 5 page contexts.
 2. **Backend data pipeline** — `trial_signups` table for permanent trial signup records
 3. More events will be added as additional onboarding screens are documented
 
-> **Note:** Events on the pricing, free trial, request meeting, and request demo pages fire on `seekout.com` (marketing site), NOT `app.seekout.io` (product). Implementation will require PostHog setup on the marketing site codebase separately from recruit-ui. The same PostHog project should be used so cross-site funnels work.
+> **Note:** Events on the pricing, free trial, request meeting, and request demo pages fire on `seekout.com` (marketing site), NOT `app.seekout.io` (product). Implementation will require PostHog setup on the marketing site codebase separately from recruit-ui. The same PostHog project must be used, and cross-site identity must be handled by passing the PostHog `distinct_id` as a URL parameter (e.g., `seekout.com/pricing/?ph_id=abc123`) when users navigate from `app.seekout.io` to `seekout.com`. Without this handoff, PostHog will treat the same user as two separate people across sites, and cross-site funnels will not work. See Implementation Notes for details.
 >
-> **Migration note:** Existing Mixpanel events stay as-is. New PostHog events fire in parallel alongside them. No Mixpanel events are removed or modified.
+> **Migration note:** Existing Mixpanel events stay as-is. New PostHog events fire in parallel alongside them. No Mixpanel events are removed or modified. Frontend events will be implemented first, backend events will follow in the same tracking plan — they are not separate initiatives.
 
 ---
 
@@ -50,10 +50,12 @@
 | Sign In Button Clicked | Auth | Interaction | Frontend | User clicks "Sign In" button to submit email/password login | Returning user initiating credential-based login. Fires on form submit, not on successful auth. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 | Sign In With SSO Link Clicked | Auth | Interaction | Frontend | User clicks "Sign in with SSO" link | User switching to SSO auth mode. Toggles the form to SSO email input. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 | Get A Free Trial Link Clicked | Auth | Interaction | Frontend | User clicks "Get a free trial" link | New user CTA — navigates to external pricing page (`seekout.com/pricing`). Indicates trial acquisition intent from login page. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
+| SSO Sign In Button Clicked | Auth | Interaction | Frontend | User clicks "Sign In" button on the SSO form to initiate SSO redirect | User has entered email on SSO form and is submitting to start SSO authentication. This is the actual SSO initiation, not just the toggle. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
+| Sign In Without SSO Link Clicked | Auth | Interaction | Frontend | User clicks "Sign in without SSO" to switch back to email/password form | User toggling back from SSO mode to standard login. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 | Pricing Billing Toggle Clicked | Pricing | Interaction | Marketing Site | User toggles between Monthly and Annual billing | Captures billing preference. Affects displayed prices and "Save $360/yr" badge visibility. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `billing_cycle` | -- | -- | Local |
 | Start Free Trial Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Start free trial" or "Get free trial" on pricing page | Multiple CTAs lead to the same free trial form. `component` distinguishes which CTA was clicked. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
 | Book A Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a demo" under a pricing plan card | Navigates to `seekout.com/requestdemo/`. `pricing_plan` captures which plan they're interested in. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
-| Book A 1:1 Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a 1:1 demo" in the nav bar | Navigates to `seekout.com/request-meeting/` (broader form with product interest dropdown). Different destination from plan-level "Book a demo". | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
+| Book One To One Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a 1:1 demo" in the nav bar | Navigates to `seekout.com/request-meeting/` (broader form with product interest dropdown). Different destination from plan-level "Book a demo". | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
 | See Whats Included Link Clicked | Pricing | Interaction | Marketing Site | User clicks "See what's included" under a pricing plan card | Expands plan feature details inline. `pricing_plan` captures which plan. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
 | Request Free Trial Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Request free trial" on the free trial form page | Form submit on `seekout.com/free-trial/`. User has filled in name, email, company, job title, country. | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
 | Request Meeting Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Request meeting" on the request-meeting form page | Form submit on `seekout.com/request-meeting/`. Includes product interest dropdown. | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
@@ -62,6 +64,9 @@
 | Auth Login Rejected | Auth | Rejected | Backend (recruit-api) | Backend returns auth error (wrong password, locked account, etc.) | User-caused login failure. Not a technical error. | `auth_method`, `rejection_reason` | -- | -- | Local |
 | Auth Login Errored | Auth | Error | Backend (recruit-api) | Technical failure during auth (database error, service timeout) | System failure, not user-caused. | `auth_method`, `error_category`, `error_detail` | -- | -- | Local |
 | Trial Account Created Succeeded | Auth | Success | Backend (recruit-api) | User clicks activation link, sets password, account is created | Fires at `POST /api/auth/register` when a free trial user activates. Not when the form is submitted — when the user actually activates via the email link. | `sku_id`, `trial_duration_days`, `organization_id`, `signup_source` | -- | `$set: sku_id, email, name, company_name`; `$set_once: trial_start_date, trial_sku_id` | Local |
+| Trial Account Request Succeeded | Auth | Success | Backend (recruit-api) | recruit-api accepts the trial request and creates NewUser record | Fires at `POST /api/auth/workspace/register` when validation passes and the NewUser record is created. Before the user activates — just confirms the request was accepted. | `signup_source` | -- | -- | Local |
+| Trial Account Request Rejected | Auth | Rejected | Backend (recruit-api) | recruit-api rejects the trial request | Domain limit reached, email already exists, active license, etc. | `trial_rejection_reason` | -- | -- | Local |
+| Trial Account Request Errored | Auth | Error | Backend (recruit-api) | Technical failure processing the trial request | Service unavailable, database error. | `error_category`, `error_detail` | -- | -- | Local |
 
 ---
 
@@ -88,6 +93,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `trial_duration_days` | number | `14` | Trial length in days. Trial Account Created Succeeded only. |
 | `pricing_plan` | enum | `seekout_recruit_core`, `seekout_recruit_sourcing`, `seekout_recruit_sourcing_integration`, `seekout_recruit_full_recruiting_funnel` | Which pricing plan card the user interacted with. Pricing page events only. |
 | `billing_cycle` | enum | `monthly`, `annual` | Which billing toggle was active when the user clicked. Pricing page events only. |
+| `trial_rejection_reason` | enum | `domain_limit_reached`, `email_already_exists`, `active_free_trial`, `free_trial_completed`, `active_license`, `invalid_email` | Why a trial request was rejected. Trial Account Request Rejected only. |
 
 ---
 
@@ -200,6 +206,54 @@ Properties shared across multiple events are listed once. These follow the same 
 
 ---
 
+### SSO Sign In Button Clicked
+
+| Field | Value |
+|---|---|
+| **Event** | SSO Sign In Button Clicked |
+| **Area** | Auth |
+| **Type** | Interaction |
+| **Trigger** | User clicks "Sign In" button on the SSO form (submits email, initiates SSO redirect to organization's identity provider) |
+| **Source** | Frontend |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | User clicked the button |
+| `action_value` | string | `sign_in` | Exact button label "Sign In" in snake_case |
+| `current_page_context` | string | `sign_in` | Login page (SSO mode) |
+| `previous_page_context` | string | varies | Page before login page |
+| `entity_type` | string | `account` | Auth/account domain |
+| `component` | string | `login_sso_form_submit_button` | Submit button inside the SSO email form |
+
+**Notes:**
+- This is different from Sign In Button Clicked (email/password form). `component` distinguishes them: `login_form_submit_button` vs `login_sso_form_submit_button`.
+- After this fires, the browser redirects to the organization's SSO provider. The result comes back via `Auth Login Succeeded` (`auth_method: sso`).
+
+---
+
+### Sign In Without SSO Link Clicked
+
+| Field | Value |
+|---|---|
+| **Event** | Sign In Without SSO Link Clicked |
+| **Area** | Auth |
+| **Type** | Interaction |
+| **Trigger** | User clicks "Sign in without SSO" link to switch back to email/password form |
+| **Source** | Frontend |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `action` | enum | `click` | User clicked the link |
+| `action_value` | string | `sign_in_without_sso` | Exact link label "Sign in without SSO" in snake_case |
+| `current_page_context` | string | `sign_in` | Login page (SSO mode) |
+| `previous_page_context` | string | varies | Page before login page |
+| `entity_type` | string | `account` | Auth/account domain |
+| `component` | string | `login_sso_form_toggle_link` | Toggle link to switch back to email/password form |
+
+---
+
 ### Page Viewed — Pricing Page
 
 | Field | Value |
@@ -297,11 +351,11 @@ Properties shared across multiple events are listed once. These follow the same 
 
 ---
 
-### Book A 1:1 Demo Button Clicked
+### Book One To One Demo Button Clicked
 
 | Field | Value |
 |---|---|
-| **Event** | Book A 1:1 Demo Button Clicked |
+| **Event** | Book One To One Demo Button Clicked |
 | **Area** | Pricing |
 | **Type** | Interaction |
 | **Trigger** | User clicks "Book a 1:1 demo" in the pricing page nav bar |
@@ -311,7 +365,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `action` | enum | `click` | User clicked the button |
-| `action_value` | string | `book_a_1_1_demo` | Exact button label "Book a 1:1 demo" in snake_case |
+| `action_value` | string | `book_one_to_one_demo` | Exact button label "Book a 1:1 demo" in snake_case |
 | `current_page_context` | string | `pricing` | Pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
 | `component` | string | `pricing_nav_demo_button` | "Book a 1:1 demo" button in the top navigation bar |
@@ -585,6 +639,71 @@ Properties shared across multiple events are listed once. These follow the same 
 
 ---
 
+### Trial Account Request Succeeded
+
+| Field | Value |
+|---|---|
+| **Event** | Trial Account Request Succeeded |
+| **Area** | Auth |
+| **Type** | Success |
+| **Trigger** | recruit-api accepts the trial request, creates NewUser record, and returns activation link to Zapier |
+| **Source** | Backend (recruit-api) |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `signup_source` | enum | `pricing_page`, `direct` | Where the signup originated |
+
+**Notes:**
+- Fires at `POST /api/auth/workspace/register` after validation passes.
+- This is NOT when the user activates — it confirms the backend accepted the request and created the NewUser record.
+- The activation email is sent by Zapier after this event fires.
+
+---
+
+### Trial Account Request Rejected
+
+| Field | Value |
+|---|---|
+| **Event** | Trial Account Request Rejected |
+| **Area** | Auth |
+| **Type** | Rejected |
+| **Trigger** | recruit-api rejects the trial request during validation |
+| **Source** | Backend (recruit-api) |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `trial_rejection_reason` | enum | `domain_limit_reached`, `email_already_exists`, `active_free_trial`, `free_trial_completed`, `active_license`, `invalid_email` | Why the trial request was rejected |
+
+**Notes:**
+- Fires at `POST /api/auth/workspace/register` when any validation check fails.
+- Maps to existing Zapier error codes: `ZAPIER_ERROR_DOMAIN_LIMIT_REACHED`, `ZAPIER_ERROR_ACTIVE_FREE_TRIAL`, etc.
+
+---
+
+### Trial Account Request Errored
+
+| Field | Value |
+|---|---|
+| **Event** | Trial Account Request Errored |
+| **Area** | Auth |
+| **Type** | Error |
+| **Trigger** | Technical failure while processing the trial request |
+| **Source** | Backend (recruit-api) |
+| **Group** | — |
+
+| Property | Type | Values | Description |
+|---|---|---|---|
+| `error_category` | enum | `database`, `service_unavailable`, `internal` | Category of technical failure |
+| `error_detail` | string | error message | Specific error (sanitized, no PII) |
+
+**Notes:**
+- Fires at `POST /api/auth/workspace/register` on technical failures.
+- Maps to existing Zapier error code: `ZAPIER_ERROR_SERVICE_UNAVAILABLE`.
+
+---
+
 ## New Standard Objects
 
 | Object | Entity | Example Events |
@@ -596,13 +715,16 @@ Properties shared across multiple events are listed once. These follow the same 
 | Pricing Billing Toggle | Monthly/Annual billing switch on pricing page | Pricing Billing Toggle Clicked |
 | Start Free Trial Button | Free trial CTAs on pricing page | Start Free Trial Button Clicked |
 | Book A Demo Button | Plan-level demo CTAs on pricing page | Book A Demo Button Clicked |
-| Book A 1:1 Demo Button | Nav bar demo CTA on pricing page | Book A 1:1 Demo Button Clicked |
+| Book One To One Demo Button | Nav bar demo CTA on pricing page | Book One To One Demo Button Clicked |
 | See Whats Included Link | Plan feature detail expanders on pricing page | See Whats Included Link Clicked |
 | Request Free Trial Button | Free trial form submit CTA | Request Free Trial Button Clicked |
 | Request Meeting Button | Request meeting form submit CTA | Request Meeting Button Clicked |
 | Book A Demo Form Button | Request demo form submit CTA | Book A Demo Form Button Clicked |
 | Auth Login | Authentication lifecycle | Auth Login Succeeded, Auth Login Rejected, Auth Login Errored |
+| SSO Sign In Button | SSO form submit CTA | SSO Sign In Button Clicked |
+| Sign In Without SSO Link | SSO mode toggle back to email/password | Sign In Without SSO Link Clicked |
 | Trial Account Created | Trial account activation lifecycle | Trial Account Created Succeeded |
+| Trial Account Request | Trial request processing lifecycle | Trial Account Request Succeeded, Trial Account Request Rejected, Trial Account Request Errored |
 
 ---
 
@@ -615,11 +737,16 @@ Properties shared across multiple events are listed once. These follow the same 
 - [ ] Auth Login Succeeded → Auth section
 - [ ] Auth Login Rejected → Auth section
 - [ ] Auth Login Errored → Auth section
+- [ ] SSO Sign In Button Clicked → Auth section
+- [ ] Sign In Without SSO Link Clicked → Auth section
 - [ ] Trial Account Created Succeeded → Auth section
+- [ ] Trial Account Request Succeeded → Auth section
+- [ ] Trial Account Request Rejected → Auth section
+- [ ] Trial Account Request Errored → Auth section
 - [ ] Pricing Billing Toggle Clicked → Pricing section
 - [ ] Start Free Trial Button Clicked → Pricing section
 - [ ] Book A Demo Button Clicked → Pricing section
-- [ ] Book A 1:1 Demo Button Clicked → Pricing section
+- [ ] Book One To One Demo Button Clicked → Pricing section
 - [ ] See Whats Included Link Clicked → Pricing section
 - [ ] Request Free Trial Button Clicked → Pricing section
 - [ ] Request Meeting Button Clicked → Pricing section
@@ -632,8 +759,9 @@ Properties shared across multiple events are listed once. These follow the same 
 | Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
 |---|---|---|---|---|
 | Email/password login | Sign In Button Clicked | Auth Login Succeeded | Auth Login Rejected | Auth Login Errored |
-| SSO login | Sign In With SSO Link Clicked | Auth Login Succeeded | Auth Login Rejected | Auth Login Errored |
-| Free trial signup | Request Free Trial Button Clicked | Trial Account Created Succeeded | -- | -- |
+| SSO login | SSO Sign In Button Clicked | Auth Login Succeeded | Auth Login Rejected | Auth Login Errored |
+| Free trial request | Request Free Trial Button Clicked | Trial Account Request Succeeded | Trial Account Request Rejected | Trial Account Request Errored |
+| Free trial activation | Trial Account Request Succeeded | Trial Account Created Succeeded | -- | -- |
 
 ---
 
@@ -651,9 +779,10 @@ Properties shared across multiple events are listed once. These follow the same 
 | Billing cycle preference | Pricing Billing Toggle Clicked | Trend | Breakdown by `billing_cycle` | Pricing & Conversion |
 | Plan-level demo interest | Book A Demo Button Clicked | Trend | Breakdown by `pricing_plan` | Pricing & Conversion |
 | Plan feature exploration | See Whats Included Link Clicked | Trend | Breakdown by `pricing_plan` | Pricing & Conversion |
-| Trial signup conversion | Start Free Trial Button Clicked → Request Free Trial Button Clicked | Funnel | Breakdown by `component` (which CTA) | Pricing & Conversion |
+| Trial signup conversion | Start Free Trial Button Clicked → Request Free Trial Button Clicked | Funnel | -- | Pricing & Conversion |
 | Trial activation rate | Request Free Trial Button Clicked → Trial Account Created Succeeded | Funnel | -- | Pricing & Conversion |
-| Demo request conversion | Book A Demo Button Clicked → Book A Demo Form Button Clicked | Funnel | Breakdown by `pricing_plan` | Pricing & Conversion |
+| Demo request conversion | Book A Demo Button Clicked → Book A Demo Form Button Clicked | Funnel | Use pricing page click step for plan breakdown | Pricing & Conversion |
+| Trial request acceptance rate | Trial Account Request Succeeded vs Trial Account Request Rejected | Trend | Breakdown by `trial_rejection_reason` | Pricing & Conversion |
 | Users by plan | Any event | Trend | Breakdown by `sku_id` | Platform Health |
 
 ---
@@ -679,9 +808,10 @@ Properties shared across multiple events are listed once. These follow the same 
 | 3 | Start Free Trial Button Clicked | — |
 | 4 | Page Viewed | `current_page_context = free_trial` |
 | 5 | Request Free Trial Button Clicked | — |
-| 6 | Trial Account Created Succeeded | — |
+| 6 | Trial Account Request Succeeded | — |
+| 7 | Trial Account Created Succeeded | — |
 
-**Purpose:** End-to-end conversion from login page trial interest to activated account. Step 5→6 drop = users who submitted the form but never clicked the activation email.
+**Purpose:** End-to-end conversion from login page trial interest to activated account. Step 5→6 drop = form submitted but backend rejected. Step 6→7 drop = request accepted but user never clicked activation email.
 
 ### Pricing Page → Demo Request by Plan
 
@@ -793,3 +923,17 @@ seekout.com/free-trial/             Zapier                    recruit-api
 | Companies that requested but never activated | `WHERE activation_status IN ('pending', 'expired')` |
 | Trial → paid conversion rate | `COUNT(converted_to_paid = true) / COUNT(activated)` |
 | Time from activation to paid conversion | `AVG(converted_at - activated_at)` |
+
+### Cross-Site Identity Handoff
+
+When a user clicks "Get a free trial" on `app.seekout.io/signIn` and navigates to `seekout.com/pricing/`, PostHog on each site assigns a separate anonymous ID. Without an explicit handoff, PostHog treats them as two different users.
+
+**Solution:** Append the PostHog `distinct_id` as a URL parameter when navigating cross-site.
+
+**Where to implement:**
+- **Login page → Pricing page:** When `Get A Free Trial Link Clicked` fires, the link should include `?ph_id={posthog.get_distinct_id()}`. Example: `seekout.com/pricing/?ph_id=abc123`.
+- **Marketing site pages:** On page load, read `ph_id` from URL params and call `posthog.identify(ph_id)` to link the anonymous marketing site session to the app session.
+- **Zapier → recruit-api:** Pass the `ph_id` from the form submission through to the `POST /api/auth/workspace/register` request, so the activation link can include it: `seekout.com/completeSignUp?code={shortId}&ph_id={ph_id}`.
+- **Activation page:** On the completeSignUp page, read `ph_id` and call `posthog.identify(ph_id)` before firing any events.
+
+**User-visible change:** A query parameter (`?ph_id=abc123`) is added to cross-site URLs. This is standard analytics practice and has no visual impact on the page.
