@@ -89,7 +89,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `error_category` | enum | `database`, `service_timeout`, `internal` | Category of technical failure. Auth Login Errored only. |
 | `error_detail` | string | error message | Specific error, sanitized — no PII. Auth Login Errored only. |
 | `organization_id` | string | UUID | User's organization ID. Auth Login Succeeded and Trial Account Created Succeeded. |
-| `signup_source` | enum | `pricing_page`, `direct` | Where the trial signup originated. Trial Account Created Succeeded only. |
+| `signup_source` | enum | `pricing_page`, `direct` | Where the trial signup originated. Trial Account Created Succeeded and Trial Account Request Succeeded. |
 | `trial_duration_days` | number | `14` | Trial length in days. Trial Account Created Succeeded only. |
 | `pricing_plan` | enum | `seekout_recruit_core`, `seekout_recruit_sourcing`, `seekout_recruit_sourcing_integration`, `seekout_recruit_full_recruiting_funnel` | Which pricing plan card the user interacted with. Pricing page events only. |
 | `billing_cycle` | enum | `monthly`, `annual` | Which billing toggle was active when the user clicked. Pricing page events only. |
@@ -149,7 +149,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `component` | string | `login_form_submit_button` | Submit button inside the email/password login form |
 
 **Notes:**
-- Fires on form submit, not on successful authentication. Auth result events (Succeeded/Rejected/Errored) will be added separately.
+- Fires on form submit, not on successful authentication. Backend fires Auth Login Succeeded / Rejected / Errored after processing.
 - Currently tracked as `useraction` with `actionLabel: 'Sign In'` — the new event replaces that.
 
 ---
@@ -291,6 +291,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action` | enum | `toggle` | User toggled the billing switch |
 | `action_value` | string | `monthly` or `annual` | The billing option the user switched TO |
 | `current_page_context` | string | `pricing` | Pricing page |
+| `previous_page_context` | string | varies | Page before pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
 | `component` | string | `pricing_billing_toggle` | Monthly/Annual toggle above plan cards |
 | `billing_cycle` | enum | `monthly`, `annual` | Same as `action_value` — the selected billing cycle after toggle |
@@ -313,6 +314,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action` | enum | `click` | User clicked the button |
 | `action_value` | string | `start_free_trial` or `get_free_trial` | Exact button label in snake_case. "Start free trial" on plan card, "Get free trial" on banner. |
 | `current_page_context` | string | `pricing` | Pricing page |
+| `previous_page_context` | string | varies | Page before pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
 | `component` | string | `pricing_banner_free_trial_cta`, `pricing_core_plan_free_trial_button`, `pricing_nav_free_trial_button` | Which CTA was clicked. Banner = top "Take SeekOut for a test drive" banner. Core plan = button inside Core plan card. Nav = top navigation bar button. |
 | `pricing_plan` | enum | `seekout_recruit_core` or `null` | `seekout_recruit_core` when clicked from plan card. `null` when clicked from banner or nav (not plan-specific). |
@@ -340,6 +342,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action` | enum | `click` | User clicked the button |
 | `action_value` | string | `book_a_demo` | Exact button label "Book a demo" in snake_case |
 | `current_page_context` | string | `pricing` | Pricing page |
+| `previous_page_context` | string | varies | Page before pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
 | `component` | string | `pricing_core_plan_demo_button`, `pricing_sourcing_plan_demo_button`, `pricing_sourcing_integration_plan_demo_button`, `pricing_full_funnel_plan_demo_button` | Which plan card's "Book a demo" was clicked |
 | `pricing_plan` | enum | `seekout_recruit_core`, `seekout_recruit_sourcing`, `seekout_recruit_sourcing_integration`, `seekout_recruit_full_recruiting_funnel` | Which plan the user is interested in |
@@ -367,6 +370,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action` | enum | `click` | User clicked the button |
 | `action_value` | string | `book_one_to_one_demo` | Exact button label "Book a 1:1 demo" in snake_case |
 | `current_page_context` | string | `pricing` | Pricing page |
+| `previous_page_context` | string | varies | Page before pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
 | `component` | string | `pricing_nav_demo_button` | "Book a 1:1 demo" button in the top navigation bar |
 
@@ -393,6 +397,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action` | enum | `click` | User clicked the link |
 | `action_value` | string | `see_whats_included` | Exact link label "See what's included" in snake_case |
 | `current_page_context` | string | `pricing` | Pricing page |
+| `previous_page_context` | string | varies | Page before pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
 | `component` | string | `pricing_core_plan_included_link`, `pricing_sourcing_plan_included_link`, `pricing_sourcing_integration_plan_included_link`, `pricing_full_funnel_plan_included_link` | Which plan card's "See what's included" was clicked |
 | `pricing_plan` | enum | `seekout_recruit_core`, `seekout_recruit_sourcing`, `seekout_recruit_sourcing_integration`, `seekout_recruit_full_recruiting_funnel` | Which plan the user wants to see details for |
@@ -434,6 +439,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action` | enum | `submit` | User submitted the form |
 | `action_value` | string | `request_free_trial` | Exact button label "Request free trial" in snake_case |
 | `current_page_context` | string | `free_trial` | Free trial form page |
+| `previous_page_context` | string | `pricing` | User came from pricing page |
 | `entity_type` | string | `account` | Account creation domain |
 | `component` | string | `free_trial_form_submit_button` | Submit button inside the free trial signup form |
 
@@ -477,6 +483,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action` | enum | `submit` | User submitted the form |
 | `action_value` | string | `request_meeting` | Exact button label "Request meeting" in snake_case |
 | `current_page_context` | string | `request_meeting` | Request meeting form page |
+| `previous_page_context` | string | `pricing` | User came from pricing page |
 | `entity_type` | string | `pricing` | Pricing/sales domain |
 | `component` | string | `request_meeting_form_submit_button` | Submit button inside the request meeting form |
 
@@ -520,6 +527,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | `action` | enum | `submit` | User submitted the form |
 | `action_value` | string | `book_a_demo` | Exact button label "Book a demo" in snake_case |
 | `current_page_context` | string | `request_demo` | Request demo form page |
+| `previous_page_context` | string | `pricing` | User came from pricing page |
 | `entity_type` | string | `pricing` | Pricing/sales domain |
 | `component` | string | `request_demo_form_submit_button` | Submit button inside the Recruit demo form |
 
