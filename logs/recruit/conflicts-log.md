@@ -9,14 +9,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-06-26 10:12:52 UTC
-
-**Result: All clear**
-
-All 17 validation rules passed.
-
----
-
 ## Run: 2026-06-26 10:19:23 UTC
 
 **Result: All clear**
@@ -342,3 +334,11 @@ All 13 validation rules passed.
 **Result: All clear**
 
 All 17 validation rules passed.
+
+---
+
+## Run: 2026-07-09 13:33:22 UTC — Tracking Plan: recruit-onboarding-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.

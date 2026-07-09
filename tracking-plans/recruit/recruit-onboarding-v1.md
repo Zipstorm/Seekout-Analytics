@@ -53,7 +53,7 @@
 | Get A Free Trial Link Clicked | Auth | Interaction | Frontend | User clicks "Get a free trial" link | New user CTA — navigates to external pricing page (`seekout.com/pricing`). Indicates trial acquisition intent from login page. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 | SSO Sign In Button Clicked | Auth | Interaction | Frontend | User clicks "Sign In" button on the SSO form to initiate SSO redirect | User has entered email on SSO form and is submitting to start SSO authentication. This is the actual SSO initiation, not just the toggle. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 | Sign In Without SSO Link Clicked | Auth | Interaction | Frontend | User clicks "Sign in without SSO" to switch back to email/password form | User toggling back from SSO mode to standard login. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
-| Pricing Billing Toggle Clicked | Pricing | Interaction | Marketing Site | User toggles between Monthly and Annual billing | Captures billing preference. Affects displayed prices and "Save $360/yr" badge visibility. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `billing_cycle` | -- | -- | Local |
+| Pricing Billing Toggle Clicked | Pricing | Interaction | Marketing Site | User toggles between Monthly and Annual billing | Captures billing preference. Affects displayed prices and "Save $360/yr" badge visibility. | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
 | Start Free Trial Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Start free trial" or "Get free trial" on pricing page | Multiple CTAs lead to the same free trial form. `component` distinguishes which CTA was clicked. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
 | Book A Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a demo" under a pricing plan card | Navigates to `seekout.com/requestdemo/`. `pricing_plan` captures which plan they're interested in. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
 | Book One To One Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a 1:1 demo" in the nav bar | Navigates to `seekout.com/request-meeting/` (broader form with product interest dropdown). Different destination from plan-level "Book a demo". | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
@@ -295,7 +295,6 @@ Properties shared across multiple events are listed once. These follow the same 
 | `previous_page_context` | string | varies | Page before pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
 | `component` | string | `pricing_billing_toggle` | Monthly/Annual toggle above plan cards |
-| `billing_cycle` | enum | `monthly`, `annual` | Active billing cycle after toggle. Shared property across all pricing events for consistent filtering. |
 
 ---
 
