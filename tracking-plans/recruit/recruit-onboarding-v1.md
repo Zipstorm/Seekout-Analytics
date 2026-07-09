@@ -19,10 +19,10 @@
 
 - [x] Draft created
 - [x] Validated
+- [x] PR raised (draft review — pre-implementation)
 - [ ] Codebase implemented
 - [ ] Absorbed from codebase
 - [ ] Re-validated
-- [x] PR raised
 - [ ] PR approved
 - [ ] Merged to catalog
 - [ ] Squash merged to main
@@ -53,20 +53,20 @@
 | Get A Free Trial Link Clicked | Auth | Interaction | Frontend | User clicks "Get a free trial" link | New user CTA — navigates to external pricing page (`seekout.com/pricing`). Indicates trial acquisition intent from login page. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 | SSO Sign In Button Clicked | Auth | Interaction | Frontend | User clicks "Sign In" button on the SSO form to initiate SSO redirect | User has entered email on SSO form and is submitting to start SSO authentication. This is the actual SSO initiation, not just the toggle. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 | Sign In Without SSO Link Clicked | Auth | Interaction | Frontend | User clicks "Sign in without SSO" to switch back to email/password form | User toggling back from SSO mode to standard login. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
-| Pricing Billing Toggle Clicked | Pricing | Interaction | Marketing Site | User toggles between Monthly and Annual billing | Captures billing preference. Affects displayed prices and "Save $360/yr" badge visibility. | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
-| Start Free Trial Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Start free trial" or "Get free trial" on pricing page | Multiple CTAs lead to the same free trial form. `component` distinguishes which CTA was clicked. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
-| Book A Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a demo" under a pricing plan card | Navigates to `seekout.com/requestdemo/`. `pricing_plan` captures which plan they're interested in. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
-| Book One To One Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a 1:1 demo" in the nav bar | Navigates to `seekout.com/request-meeting/` (broader form with product interest dropdown). Different destination from plan-level "Book a demo". | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
-| See Whats Included Link Clicked | Pricing | Interaction | Marketing Site | User clicks "See what's included" under a pricing plan card | Expands plan feature details inline. `pricing_plan` captures which plan. | `action`, `action_value`, `current_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
-| Request Free Trial Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Request free trial" on the free trial form page | Form submit on `seekout.com/free-trial/`. User has filled in name, email, company, job title, country. | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
-| Request Meeting Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Request meeting" on the request-meeting form page | Form submit on `seekout.com/request-meeting/`. Includes product interest dropdown. | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
-| Book A Demo Form Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a demo" on the request-demo form page | Form submit on `seekout.com/requestdemo/`. SeekOut Recruit focused. | `action`, `action_value`, `current_page_context`, `entity_type`, `component` | -- | -- | Local |
+| Pricing Billing Toggle Clicked | Pricing | Interaction | Marketing Site | User toggles between Monthly and Annual billing | Captures billing preference. Affects displayed prices and "Save $360/yr" badge visibility. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
+| Start Free Trial Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Start free trial" or "Get free trial" on pricing page | Multiple CTAs lead to the same free trial form. `component` distinguishes which CTA was clicked. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
+| Book A Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a demo" under a pricing plan card | Navigates to `seekout.com/requestdemo/`. `pricing_plan` captures which plan they're interested in. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
+| Book One To One Demo Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a 1:1 demo" in the nav bar | Navigates to `seekout.com/request-meeting/` (broader form with product interest dropdown). Different destination from plan-level "Book a demo". | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
+| See Whats Included Link Clicked | Pricing | Interaction | Marketing Site | User clicks "See what's included" under a pricing plan card | Expands plan feature details inline. `pricing_plan` captures which plan. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `pricing_plan`, `billing_cycle` | -- | -- | Local |
+| Request Free Trial Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Request free trial" on the free trial form page | Form submit on `seekout.com/free-trial/`. User has filled in name, email, company, job title, country. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
+| Request Meeting Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Request meeting" on the request-meeting form page | Form submit on `seekout.com/request-meeting/`. Includes product interest dropdown. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component`, `product_interest` | -- | -- | Local |
+| Book A Demo Form Button Clicked | Pricing | Interaction | Marketing Site | User clicks "Book a demo" on the request-demo form page | Form submit on `seekout.com/requestdemo/`. SeekOut Recruit focused. | `action`, `action_value`, `current_page_context`, `previous_page_context`, `entity_type`, `component` | -- | -- | Local |
 | Auth Login Succeeded | Auth | Success | Backend (recruit-api) | Backend confirms successful login (email, SSO, or impersonate) | Completes the Sign In Button Clicked → result pattern. Fires for all auth methods. | `auth_method`, `sku_id`, `organization_id` | -- | `$set: sku_id, organization_id, email, name, company_name, last_login_at` | Local |
 | Auth Login Rejected | Auth | Rejected | Backend (recruit-api) | Backend returns auth error (wrong password, locked account, etc.) | User-caused login failure. Not a technical error. | `auth_method`, `rejection_reason` | -- | -- | Local |
 | Auth Login Errored | Auth | Error | Backend (recruit-api) | Technical failure during auth (database error, service timeout) | System failure, not user-caused. | `auth_method`, `error_category`, `error_detail` | -- | -- | Local |
 | Trial Account Created Succeeded | Auth | Success | Backend (recruit-api) | User clicks activation link, sets password, account is created | Fires at `POST /api/auth/register` when a free trial user activates. Not when the form is submitted — when the user actually activates via the email link. | `sku_id`, `trial_duration_days`, `organization_id`, `signup_source` | -- | `$set: sku_id, email, name, company_name`; `$set_once: trial_start_date, trial_sku_id` | Local |
 | Trial Account Request Succeeded | Auth | Success | Backend (recruit-api) | recruit-api accepts the trial request and creates NewUser record | Fires at `POST /api/auth/workspace/register` when validation passes and the NewUser record is created. Before the user activates — just confirms the request was accepted. | `signup_source` | -- | -- | Local |
-| Trial Account Request Rejected | Auth | Rejected | Backend (recruit-api) | recruit-api rejects the trial request | Domain limit reached, email already exists, active license, etc. | `trial_rejection_reason` | -- | -- | Local |
+| Trial Account Request Rejected | Auth | Rejected | Backend (recruit-api) | recruit-api rejects the trial request | Domain limit reached, email already exists, active license, etc. | `trial_rejection_reason`, `signup_source` | -- | -- | Local |
 | Trial Account Request Errored | Auth | Error | Backend (recruit-api) | Technical failure processing the trial request | Service unavailable, database error. | `error_category`, `error_detail` | -- | -- | Local |
 
 ---
@@ -87,13 +87,14 @@ Properties shared across multiple events are listed once. These follow the same 
 | `entry_point` | string | `direct`, `email_invite`, `share_link`, `sso_redirect` | How the user arrived at the platform. Derived from a `?context=` URL param (to be added). Page Viewed on auth pages only. |
 | `auth_method` | enum | `email`, `sso`, `impersonate` | How the user authenticated. `impersonate` is for staff testing customer accounts. Auth Login events only. |
 | `rejection_reason` | enum | `invalid_credentials`, `account_locked`, `account_not_found`, `email_not_verified` | Why a login was rejected. Auth Login Rejected only. |
-| `error_category` | enum | `database`, `service_timeout`, `internal` | Category of technical failure. Auth Login Errored only. |
-| `error_detail` | string | error message | Specific error, sanitized — no PII. Auth Login Errored only. |
+| `error_category` | enum | `database`, `service_unavailable`, `internal` | Category of technical failure. Auth Login Errored and Trial Account Request Errored. |
+| `error_detail` | string | error message | Specific error, sanitized — no PII. Auth Login Errored and Trial Account Request Errored. |
 | `organization_id` | string | UUID | User's organization ID. Auth Login Succeeded and Trial Account Created Succeeded. |
-| `signup_source` | enum | `pricing_page`, `direct` | Where the trial signup originated. Trial Account Created Succeeded and Trial Account Request Succeeded. |
+| `signup_source` | enum | `pricing_page`, `direct` | Where the trial signup originated. Trial Account Created Succeeded, Trial Account Request Succeeded, and Trial Account Request Rejected. |
 | `trial_duration_days` | number | `14` | Trial length in days. Trial Account Created Succeeded only. |
 | `pricing_plan` | enum | `seekout_recruit_core`, `seekout_recruit_sourcing`, `seekout_recruit_sourcing_integration`, `seekout_recruit_full_recruiting_funnel` | Which pricing plan card the user interacted with. Pricing page events only. |
 | `billing_cycle` | enum | `monthly`, `annual` | Which billing toggle was active when the user clicked. Pricing page events only. |
+| `product_interest` | enum | `recruiting_tools`, `recruiting_services`, `both` | Value selected in "What are you interested in?" dropdown. Request Meeting Button Clicked only. |
 | `trial_rejection_reason` | enum | `domain_limit_reached`, `email_already_exists`, `active_free_trial`, `free_trial_completed`, `active_license`, `invalid_email` | Why a trial request was rejected. Trial Account Request Rejected only. |
 
 ---
@@ -368,7 +369,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `action` | enum | `click` | User clicked the button |
-| `action_value` | string | `book_one_to_one_demo` | Exact button label "Book a 1:1 demo" in snake_case |
+| `action_value` | string | `book_a_1_1_demo` | Exact button label "Book a 1:1 demo" in snake_case |
 | `current_page_context` | string | `pricing` | Pricing page |
 | `previous_page_context` | string | varies | Page before pricing page |
 | `entity_type` | string | `pricing` | Pricing domain |
@@ -486,10 +487,10 @@ Properties shared across multiple events are listed once. These follow the same 
 | `previous_page_context` | string | `pricing` | User came from pricing page |
 | `entity_type` | string | `meeting` | Meeting/sales domain |
 | `component` | string | `request_meeting_form_submit_button` | Submit button inside the request meeting form |
+| `product_interest` | enum | `recruiting_tools`, `recruiting_services`, `both` | Value selected in "What are you interested in?" dropdown |
 
 **Notes:**
-- Form includes "What are you interested in?" dropdown — broader scope than the Recruit-specific demo form.
-- Form fields: First Name, Last Name, Business Email, Company Name, Job Title, Phone, Country, Interest dropdown.
+- Form fields: First Name, Last Name, Business Email, Company Name, Job Title, Phone, Country, "What are you interested in?" dropdown.
 
 ---
 
@@ -605,7 +606,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `auth_method` | enum | `email`, `sso` | How the user attempted to authenticate |
-| `error_category` | enum | `database`, `service_timeout`, `internal` | Category of technical failure |
+| `error_category` | enum | `database`, `service_unavailable`, `internal` | Category of technical failure |
 | `error_detail` | string | error message | Specific error (sanitized, no PII) |
 
 **Notes:**
@@ -683,6 +684,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | Property | Type | Values | Description |
 |---|---|---|---|
 | `trial_rejection_reason` | enum | `domain_limit_reached`, `email_already_exists`, `active_free_trial`, `free_trial_completed`, `active_license`, `invalid_email` | Why the trial request was rejected |
+| `signup_source` | enum | `pricing_page`, `direct` | Where the signup originated |
 
 **Notes:**
 - Fires at `POST /api/auth/workspace/register` when any validation check fails.
@@ -784,7 +786,7 @@ Properties shared across multiple events are listed once. These follow the same 
 | Trial interest from login page | Get A Free Trial Link Clicked | Trend | -- | Auth & Onboarding |
 | First-touch attribution | Page Viewed (`entry_point`) | Funnel | Breakdown by `entry_point` | Auth & Onboarding |
 | Pricing page traffic | Page Viewed (`current_page_context = pricing`) | Trend | -- | Pricing & Conversion |
-| Billing cycle preference | Pricing Billing Toggle Clicked | Trend | Breakdown by `billing_cycle` | Pricing & Conversion |
+| Billing cycle preference | Start Free Trial Button Clicked, Book A Demo Button Clicked | Trend | Breakdown by `billing_cycle` | Pricing & Conversion |
 | Plan-level demo interest | Book A Demo Button Clicked | Trend | Breakdown by `pricing_plan` | Pricing & Conversion |
 | Plan feature exploration | See Whats Included Link Clicked | Trend | Breakdown by `pricing_plan` | Pricing & Conversion |
 | Trial signup conversion | Start Free Trial Button Clicked → Request Free Trial Button Clicked | Funnel | -- | Pricing & Conversion |

@@ -9,54 +9,6 @@ Reviewed and suppressed. Remove a line to re-surface it.
 
 ---
 
-## Run: 2026-06-26 10:19:23 UTC
-
-**Result: All clear**
-
-All 17 validation rules passed.
-
----
-
-## Run: 2026-06-26 10:19:24 UTC
-
-**Result: All clear**
-
-All 17 validation rules passed.
-
----
-
-## Run: 2026-06-26 10:35:01 UTC
-
-**Result: All clear**
-
-All 17 validation rules passed.
-
----
-
-## Run: 2026-06-26 10:35:02 UTC
-
-**Result: All clear**
-
-All 17 validation rules passed.
-
----
-
-## Run: 2026-06-26 10:37:36 UTC
-
-**Result: All clear**
-
-All 17 validation rules passed.
-
----
-
-## Run: 2026-06-26 10:37:37 UTC
-
-**Result: All clear**
-
-All 17 validation rules passed.
-
----
-
 ## Run: 2026-06-26 10:38:57 UTC
 
 **Result: All clear**
@@ -342,3 +294,51 @@ All 17 validation rules passed.
 **Result: All clear**
 
 All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-09 13:36:39 UTC — Tracking Plan: recruit-onboarding-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-09 13:36:40 UTC
+
+**Result: All clear**
+
+All 17 validation rules passed.
+
+---
+
+## Run: 2026-07-09 13:37:07 UTC — Tracking Plan: recruit-onboarding-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-09 13:37:42 UTC
+
+**Result: All clear**
+
+All 17 validation rules passed.
+
+---
+
+## Run: 2026-07-09 16:37:51 UTC — Tracking Plan: recruit-onboarding-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.
+
+---
+
+## Run: 2026-07-09 16:37:51 UTC
+
+**Result: All clear**
+
+All 17 validation rules passed.
