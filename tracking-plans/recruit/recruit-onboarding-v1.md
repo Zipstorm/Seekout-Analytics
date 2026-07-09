@@ -69,47 +69,25 @@
 
 Properties shared across multiple events are listed once. These follow the same standard property structure as Helix — ensuring cross-product consistency.
 
-### Standard Event Properties (all frontend events)
-
 | Property | Type | Values | Description |
 |---|---|---|---|
-| `current_page_context` | string | snake_case page identifier | Page where the event fired. Route path transformed to snake_case (e.g., `/signIn` → `sign_in`). |
-| `previous_page_context` | string | snake_case page identifier or `null` | Page the user was on before navigating here. `null` if direct entry / external referrer. |
-| `sku_id` | string | e.g., `WORKSPACES_FREE_TRIAL`, `RECRUIT_CORE_ANNUAL`, `RECRUIT_SOURCING_MONTHLY` | User's current plan/SKU at the time the event fires. Included on every post-auth event so the user's plan is permanently recorded per-event. Pre-auth events (login page, marketing site) will not have this. |
-
-### Interaction Event Properties (all `Interaction` type events)
-
-| Property | Type | Values | Description |
-|---|---|---|---|
-| `action` | enum | `click` | What the user did — `click`, `submit`, `toggle`. |
-| `action_value` | string | exact UI label in snake_case | Exact button/link text the user clicked, in snake_case. Never paraphrased. |
-| `entity_type` | string | `account` | Domain the action relates to (e.g., `account`, `workspace`, `search`). |
-| `component` | string | see per-event specs | Exact page location of the UI element — specific enough to locate without seeing the screen. |
-
-### Login Page–Specific Properties (Page Viewed on auth pages only)
-
-| Property | Type | Values | Description |
-|---|---|---|---|
-| `entry_point` | string | `direct`, `email_invite`, `share_link`, `sso_redirect` | How the user arrived at the platform. Derived from a `?context=` URL param (to be added). Values will be extended as more entry paths are identified. |
-
-### Backend Auth Properties
-
-| Property | Type | Values | Description |
-|---|---|---|---|
-| `auth_method` | enum | `email`, `sso`, `impersonate` | How the user authenticated. `impersonate` is for staff testing customer accounts. |
-| `rejection_reason` | enum | `invalid_credentials`, `account_locked`, `account_not_found`, `email_not_verified` | Why a login was rejected (Auth Login Rejected only). |
-| `error_category` | enum | `database`, `service_timeout`, `internal` | Category of technical failure (Auth Login Errored only). |
-| `error_detail` | string | error message | Specific error, sanitized — no PII (Auth Login Errored only). |
-| `organization_id` | string | UUID | User's organization ID. |
-| `signup_source` | enum | `pricing_page`, `direct` | Where the trial signup originated. |
-| `trial_duration_days` | number | `14` | Trial length in days. |
-
-### Pricing Page Properties (pricing and trial/demo events)
-
-| Property | Type | Values | Description |
-|---|---|---|---|
-| `pricing_plan` | enum | `seekout_recruit_core`, `seekout_recruit_sourcing`, `seekout_recruit_sourcing_integration`, `seekout_recruit_full_recruiting_funnel` | Which pricing plan card the user interacted with. |
-| `billing_cycle` | enum | `monthly`, `annual` | Which billing toggle was active when the user clicked. |
+| `current_page_context` | string | snake_case page identifier | Page where the event fired. Route path transformed to snake_case (e.g., `/signIn` → `sign_in`). All frontend events. |
+| `previous_page_context` | string | snake_case page identifier or `null` | Page the user was on before navigating here. `null` if direct entry / external referrer. All frontend events. |
+| `sku_id` | string | `WORKSPACES_FREE_TRIAL`, `RECRUIT_CORE_ANNUAL`, `RECRUIT_SOURCING_MONTHLY` | User's current plan/SKU at the time the event fires. All post-auth events. Pre-auth events (login page, marketing site) will not have this. |
+| `action` | enum | `click`, `submit`, `toggle` | What the user did. All Interaction type events. |
+| `action_value` | string | exact UI label in snake_case | Exact button/link text the user clicked, in snake_case. Never paraphrased. All Interaction type events. |
+| `entity_type` | string | `account`, `pricing` | Domain the action relates to. All Interaction type events. |
+| `component` | string | see per-event specs | Exact page location of the UI element — specific enough to locate without seeing the screen. All Interaction type events. |
+| `entry_point` | string | `direct`, `email_invite`, `share_link`, `sso_redirect` | How the user arrived at the platform. Derived from a `?context=` URL param (to be added). Page Viewed on auth pages only. |
+| `auth_method` | enum | `email`, `sso`, `impersonate` | How the user authenticated. `impersonate` is for staff testing customer accounts. Auth Login events only. |
+| `rejection_reason` | enum | `invalid_credentials`, `account_locked`, `account_not_found`, `email_not_verified` | Why a login was rejected. Auth Login Rejected only. |
+| `error_category` | enum | `database`, `service_timeout`, `internal` | Category of technical failure. Auth Login Errored only. |
+| `error_detail` | string | error message | Specific error, sanitized — no PII. Auth Login Errored only. |
+| `organization_id` | string | UUID | User's organization ID. Auth Login Succeeded and Trial Account Created Succeeded. |
+| `signup_source` | enum | `pricing_page`, `direct` | Where the trial signup originated. Trial Account Created Succeeded only. |
+| `trial_duration_days` | number | `14` | Trial length in days. Trial Account Created Succeeded only. |
+| `pricing_plan` | enum | `seekout_recruit_core`, `seekout_recruit_sourcing`, `seekout_recruit_sourcing_integration`, `seekout_recruit_full_recruiting_funnel` | Which pricing plan card the user interacted with. Pricing page events only. |
+| `billing_cycle` | enum | `monthly`, `annual` | Which billing toggle was active when the user clicked. Pricing page events only. |
 
 ---
 
@@ -653,12 +631,9 @@ Properties shared across multiple events are listed once. These follow the same 
 
 | Flow | Interaction / Started Event | Success Event | Rejected Event | Error Event |
 |---|---|---|---|---|
-| Email/password login | Sign In Button Clicked | Auth Login Succeeded (`auth_method: email`) | Auth Login Rejected | Auth Login Errored |
-| SSO login | Sign In With SSO Link Clicked | Auth Login Succeeded (`auth_method: sso`) | Auth Login Rejected | Auth Login Errored |
-| Impersonation | *(staff action — no frontend interaction)* | Auth Login Succeeded (`auth_method: impersonate`) | -- | -- |
-| Free trial signup | Start Free Trial Button Clicked → Request Free Trial Button Clicked → *(user clicks activation email)* | Trial Account Created Succeeded | -- | -- |
-| Demo request | Book A Demo Button Clicked → Book A Demo Form Button Clicked | *(external — handled by sales/CRM)* | -- | -- |
-| Meeting request | Book A 1:1 Demo Button Clicked → Request Meeting Button Clicked | *(external — handled by sales/CRM)* | -- | -- |
+| Email/password login | Sign In Button Clicked | Auth Login Succeeded | Auth Login Rejected | Auth Login Errored |
+| SSO login | Sign In With SSO Link Clicked | Auth Login Succeeded | Auth Login Rejected | Auth Login Errored |
+| Free trial signup | Request Free Trial Button Clicked | Trial Account Created Succeeded | -- | -- |
 
 ---
 

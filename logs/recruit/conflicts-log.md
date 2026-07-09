@@ -118,3 +118,203 @@ All 17 validation rules passed.
 **Result: All clear**
 
 All 17 validation rules passed.
+
+---
+
+## Run: 2026-07-09 10:47:16 UTC — Tracking Plan: recruit-onboarding-v1
+
+**Result: 86 errors**
+
+### Errors
+
+- **[Rule TP4]** "Page Viewed": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Page Viewed": property `previous_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Page Viewed": property `entry_point` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `previous_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `previous_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `previous_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `billing_cycle` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `pricing_plan` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `billing_cycle` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `pricing_plan` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `billing_cycle` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `pricing_plan` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `billing_cycle` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Succeeded": property `auth_method` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Succeeded": property `sku_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Succeeded": property `organization_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Rejected": property `auth_method` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Rejected": property `rejection_reason` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Errored": property `auth_method` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Errored": property `error_category` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Errored": property `error_detail` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Trial Account Created Succeeded": property `sku_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Trial Account Created Succeeded": property `trial_duration_days` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Trial Account Created Succeeded": property `organization_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Trial Account Created Succeeded": property `signup_source` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP6]** Result pattern: "(staff action — no frontend interaction)" (interaction / started for "Impersonation") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Start Free Trial Button Clicked → Request Free Trial Button Clicked → *(user clicks activation email)" (interaction / started for "Free trial signup") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Book A Demo Button Clicked → Book A Demo Form Button Clicked" (interaction / started for "Demo request") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "(external — handled by sales/CRM)" (success for "Demo request") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Book A 1:1 Demo Button Clicked → Request Meeting Button Clicked" (interaction / started for "Meeting request") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "(external — handled by sales/CRM)" (success for "Meeting request") not found in catalog or tracking plan
+
+
+---
+
+## Run: 2026-07-09 10:48:08 UTC — Tracking Plan: recruit-onboarding-v1
+
+**Result: 86 errors**
+
+### Errors
+
+- **[Rule TP4]** "Page Viewed": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Page Viewed": property `previous_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Page Viewed": property `entry_point` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `previous_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `previous_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Sign In With SSO Link Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `previous_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Get A Free Trial Link Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Pricing Billing Toggle Clicked": property `billing_cycle` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `pricing_plan` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Start Free Trial Button Clicked": property `billing_cycle` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `pricing_plan` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Button Clicked": property `billing_cycle` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A 1:1 Demo Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `pricing_plan` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "See Whats Included Link Clicked": property `billing_cycle` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Free Trial Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Request Meeting Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `action` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `action_value` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `current_page_context` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `entity_type` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Book A Demo Form Button Clicked": property `component` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Succeeded": property `auth_method` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Succeeded": property `sku_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Succeeded": property `organization_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Rejected": property `auth_method` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Rejected": property `rejection_reason` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Errored": property `auth_method` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Errored": property `error_category` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Auth Login Errored": property `error_detail` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Trial Account Created Succeeded": property `sku_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Trial Account Created Succeeded": property `trial_duration_days` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Trial Account Created Succeeded": property `organization_id` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP4]** "Trial Account Created Succeeded": property `signup_source` not found in catalog Property Dictionary or tracking plan Property Details
+- **[Rule TP6]** Result pattern: "(staff action — no frontend interaction)" (interaction / started for "Impersonation") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Start Free Trial Button Clicked → Request Free Trial Button Clicked → *(user clicks activation email)" (interaction / started for "Free trial signup") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Book A Demo Button Clicked → Book A Demo Form Button Clicked" (interaction / started for "Demo request") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "(external — handled by sales/CRM)" (success for "Demo request") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "Book A 1:1 Demo Button Clicked → Request Meeting Button Clicked" (interaction / started for "Meeting request") not found in catalog or tracking plan
+- **[Rule TP6]** Result pattern: "(external — handled by sales/CRM)" (success for "Meeting request") not found in catalog or tracking plan
+
+
+---
+
+## Run: 2026-07-09 10:50:16 UTC — Tracking Plan: recruit-onboarding-v1
+
+**Result: All clear**
+
+All 13 validation rules passed.
