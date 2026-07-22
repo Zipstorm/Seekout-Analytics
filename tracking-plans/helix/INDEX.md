@@ -12,7 +12,7 @@
 | Job Seeker Profile Setup v1 | — | Merged | [archived/job-seeker-profile-setup-v1.md](./archived/job-seeker-profile-setup-v1.md) | 2026-06-02 |
 | Job Seeker Interview v2 | — | Merged | [archived/job-seeker-interview-v2.md](./archived/job-seeker-interview-v2.md) | 2026-06-12 |
 | Onboarding Flow v1 | [Seekout-Analytics#36](https://github.com/Zipstorm/Seekout-Analytics/pull/36) | Merged | [archived/2026-07-05-onboarding-flow-v1.md](./archived/2026-07-05-onboarding-flow-v1.md) | 2026-07-05 |
-| Onboarding Flow v2 | — | Draft | [2026-07-08-onboarding-flow-v2.md](./2026-07-08-onboarding-flow-v2.md) | 2026-07-08 |
+| Onboarding Flow v2 | [Seekout-Analytics#43](https://github.com/Zipstorm/Seekout-Analytics/pull/43) | Merged | [archived/2026-07-08-onboarding-flow-v2.md](./archived/2026-07-08-onboarding-flow-v2.md) | 2026-07-08 |
 
 ### Status Legend
 

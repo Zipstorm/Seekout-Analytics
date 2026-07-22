@@ -63,6 +63,9 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Conversion funnel: Job Link Viewed → Job Link Engaged → Signup Started → Account Create Succeeded → Activated
 - Activation rate by signup context
 - Onboarding-to-job conversion: Account Create Succeeded → Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Posting Draft Created → Job Posting Published
+- Signup conversion funnel: Page Viewed (`auth_signup`) → Login Started Button Clicked (`auth_signup`) → Auth Login Succeeded → Account Create Succeeded → Onboarding Complete Succeeded. **Identity stitching required:** `posthog.reset()` on auth page mount + `posthog.alias()` before `posthog.identify()` — see event-schema.md PostHog Identity Lifecycle. Do NOT filter by `helix_session_id` across the auth boundary.
+- Signin conversion funnel: Page Viewed (`auth_signin`) → Login Started Button Clicked (`auth_signin`) → Auth Login Succeeded. Breakdown by `auth_method`.
+- Auth page switch rate: Auth Page Switch Link Clicked trend, breakdown by `action_value` (`sign_in_link` vs `sign_up_link`)
 - Retention: WAU, MAU, D7/D30 return rates
 
 ### Prospect Dashboard (Prospect Team)
@@ -132,12 +135,12 @@ Tracks rejected-result and technical-error rates across the Interaction / Starte
 | Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- | -- |
 | Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- | -- |
 | Publishing a job (skipped) | Job Post Wizard Verification Skipped | Job Posting Published | -- | -- |
-| Email verification | -- | Auth Email Verify Code Send Succeeded | Auth Email Verify Rejected | Auth Email Verify Code Send Errored |
+| Email verification | -- | -- | -- | -- |
 | Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | -- | Auth Session Restore Errored |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed | -- |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed | -- |
 | Resume upload | Candidate Resume Upload Button Clicked | Candidate Resume Upload Succeeded | Candidate Resume Upload Rejected | Candidate Resume Upload Errored |
-| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Add Succeeded | Profile Photo Upload Failed | -- |
+| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Add Succeeded | Profile Photo Add Rejected | Profile Photo Add Errored |
 | Profile creation | Build Profile Button Clicked | Candidate Profile Create Succeeded | -- | Candidate Profile Create Errored |
 | Portfolio publish | Candidate Portfolio Publish Button Clicked | Candidate Portfolio Publish Succeeded | -- | Candidate Portfolio Publish Errored |
 | Unpublish portfolio | Candidate Portfolio Unpublish Button Clicked | Candidate Portfolio Unpublish Succeeded | -- | -- |

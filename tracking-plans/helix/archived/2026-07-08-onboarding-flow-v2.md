@@ -22,8 +22,8 @@
 - [x] Codebase implemented
 - [x] Absorbed from codebase (8 deviations applied from helix/.plans/2026-07/2026-07-08-onboarding-flow-v2/tracking-plan-deviations.md)
 - [x] Re-validated (13/13 TP rules passed — 2026-07-22)
-- [ ] PR raised
-- [ ] PR approved
+- [x] PR raised ([#43](https://github.com/Zipstorm/Seekout-Analytics/pull/43))
+- [x] PR approved (self-reviewed — solo contributor, GitHub blocks self-approval)
 - [ ] Merged to catalog
 - [ ] Squash merged to main
 
