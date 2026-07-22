@@ -42,6 +42,7 @@ These are the canonical object names for Helix. Always use these exact names in 
 |--------|--------|---------------|
 | Page | Any meaningful product page/screen | Page Viewed |
 | Auth | Authentication and session lifecycle | Auth Login Succeeded, Auth Login Rejected, Auth Session Restore Succeeded, Auth Session Restore Errored |
+| Auth Page Switch Link | Navigation links between signup and signin pages | Auth Page Switch Link Clicked |
 | Login Started Button | Auth CTA buttons on signup/signin pages | Login Started Button Clicked |
 | Account | User (account-level actions) | Account Activated |
 | Account Create | User account creation | Account Create Succeeded |
@@ -49,8 +50,8 @@ These are the canonical object names for Helix. Always use these exact names in 
 | Onboarding Persona Card | Persona selection card on onboarding page | Onboarding Persona Card Clicked |
 | Onboarding Complete | Full onboarding flow lifecycle | Onboarding Complete Succeeded |
 | Auth Login | Authentication login lifecycle | Auth Login Rejected |
-| Auth Email Verify Code Send | Email OTP dispatch lifecycle | Auth Email Verify Code Send Succeeded, Auth Email Verify Code Send Errored |
-| Auth Email Verify | Email verification lifecycle | Auth Email Verify Succeeded, Auth Email Verify Rejected |
+| Auth Email Verify Code Send | Email OTP dispatch lifecycle | _(events removed — never implemented; email signup path deferred)_ |
+| Auth Email Verify | Email verification lifecycle | _(events removed — never implemented; email signup path deferred)_ |
 | Auth Logout | Logout lifecycle | Auth Logout Succeeded |
 | Auth Session Restore | Session restore lifecycle | Auth Session Restore Errored |
 | Auth Refresh | Token refresh lifecycle | Auth Refresh Errored |
@@ -454,12 +455,12 @@ Current catalog examples that still use old result terminals or non-result names
 | Email verification (job) | Job Verification Code Send Button Clicked | Job Posting Verified | -- | -- |
 | Publishing a job (verified) | Job Post Wizard Verification Completed | Job Posting Published | -- | -- |
 | Publishing a job (skipped) | Job Post Wizard Verification Skipped | Job Posting Published | -- | -- |
-| Email verification | -- | Auth Email Verify Code Send Succeeded | Auth Email Verify Rejected | Auth Email Verify Code Send Errored |
+| Email verification | -- | -- | -- | -- |
 | Session restore | *(implicit — on app load)* | Auth Session Restore Succeeded | -- | Auth Session Restore Errored |
 | Recording intro video | Record Video Button Clicked | Intro Video Created | Intro Video Creation Failed | -- |
 | Persona switch | Switch Persona Button Clicked | Persona Updated | Persona Update Failed | -- |
 | Resume upload | Candidate Resume Upload Button Clicked | Candidate Resume Upload Succeeded | Candidate Resume Upload Rejected | Candidate Resume Upload Errored |
-| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Add Succeeded | Profile Photo Upload Failed | -- |
+| Profile photo upload | Add Profile Photo Button Clicked | Profile Photo Add Succeeded | Profile Photo Add Rejected | Profile Photo Add Errored |
 | Profile creation | Build Profile Button Clicked | Candidate Profile Create Succeeded | -- | Candidate Profile Create Errored |
 | Persona selection | Onboarding Persona Card Clicked | Account Create Succeeded | -- | -- |
 | Intro completion | Onboarding Intro Complete Button Clicked | -- | -- | -- |
