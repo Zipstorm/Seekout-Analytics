@@ -169,6 +169,18 @@ The claim logic is in `candidateInterviewSignup.ts`. ActivateProfile.tsx has no 
 
 ---
 
+## 12. Onboarding Complete Succeeded — Update Status from Dev to Live
+
+**What:** `Onboarding Complete Succeeded` is listed as status `Dev` in `docs/helix/event-catalog.md`, but the PostHog runtime validator confirms it is firing in production (flagged as "Dev event seen in production" on 2026-07-22).
+
+**Why this matters:** The event is used in the live "New-User Onboarding Funnel" on the Adoption & Engagement dashboard (PostHog insight 9871327). Leaving it as `Dev` causes the validator to emit a warning on every run, and downstream consumers may incorrectly ignore it.
+
+**Action:** Update the event's Status column from `Dev` to `Live` in `docs/helix/event-catalog.md`. This touches the event-catalog source of truth, so it should go through a tracking plan update or a dedicated catalog fix PR.
+
+**When to pick up:** Next catalog maintenance pass or tracking plan that touches onboarding events.
+
+---
+
 ## How to Use This Backlog
 
 - Each item is independently scoped, but some items depend on the v1 tracking plan merge or additional validation before pickup

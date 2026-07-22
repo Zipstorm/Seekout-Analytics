@@ -48,14 +48,38 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 
 ## Dashboards
 
-| Dashboard | Owner | Status |
-|-----------|-------|--------|
-| Growth Dashboard | Platform Team | Not Started |
-| Prospect Dashboard | Prospect Team | Not Started |
-| Hiring Dashboard | HM/Recruiter Team | Not Started |
-| Interview Dashboard | Prospect / Hiring Team | Not Started |
-| Viral Loop Dashboard | Platform Team | Not Started |
-| Platform Health Dashboard | Platform Team | Not Started |
+| Dashboard | PostHog Name | Owner | Status |
+|-----------|-------------|-------|--------|
+| Adoption & Engagement | Helix Adoption & Engagement (ID 1807966) | Platform Team | Live |
+| Growth Dashboard | _(not yet created)_ | Platform Team | Not Started |
+| Prospect Dashboard | _(not yet created)_ | Prospect Team | Not Started |
+| Hiring Dashboard | _(not yet created)_ | HM/Recruiter Team | Not Started |
+| Interview Dashboard | _(not yet created)_ | Prospect / Hiring Team | Not Started |
+| Viral Loop Dashboard | _(not yet created)_ | Platform Team | Not Started |
+| Platform Health Dashboard | _(not yet created)_ | Platform Team | Not Started |
+
+### Adoption & Engagement Dashboard (Platform Team) — Live
+
+PostHog dashboard ID: 1807966
+
+#### New-User Onboarding Funnel (Sign-Up to Onboarding Complete)
+
+PostHog insight ID: 9871327
+
+**Config:** Ordered funnel · 14-day conversion window · test accounts filtered (cohort + `@seekout` emails) · `personsOnEventsMode: person_id_override_properties_joined`
+
+| Step | Event | Custom Label | Filters | `helix_session_id` | Notes |
+|------|-------|-------------|---------|-------------------|-------|
+| 1 | Page Viewed | Landing on Helix Entry Page | `current_page_context = auth_signup` | not filtered | Pre-auth — anonymous visitor |
+| 2 | Login Started Button Clicked | Sign Up Button Clicked | `current_page_context = auth_signup` | not filtered | Pre-auth — anonymous visitor |
+| 3 | Auth Login Succeeded | Auth Login Succeeded | `current_persona = unknown`, `is_new_user = true` | not filtered | Auth boundary — identity stitching happens here |
+| 4 | Onboarding Persona Card Clicked | — | `current_page_context = onboarding_role_selection`, `previous_page_context = auth_signup` | `is_set` | Post-auth |
+| 5 | Account Create Succeeded | — | `current_persona ≠ unknown` (not_icontains) | `is_set` | Post-auth — persona assigned |
+| 6 | Onboarding Complete Succeeded | — | `current_persona ≠ unknown` (is_not) | `is_set` | Post-auth — onboarding terminal |
+
+**Identity boundary:** Steps 1–2 are anonymous (pre-auth). Steps 4–6 filter by `helix_session_id is_set` to ensure the user is authenticated. Step 3 is the bridge — `is_new_user = true` ensures only first-time logins are counted. Do NOT add `helix_session_id` filters to steps 1–3.
+
+---
 
 ### Growth Dashboard (Platform Team)
 - New accounts per day/week, broken down by `signup_context`
@@ -63,7 +87,7 @@ Maps events to the K-factor formula: **K = i × c**, where **c = c_view × c_cli
 - Conversion funnel: Job Link Viewed → Job Link Engaged → Signup Started → Account Create Succeeded → Activated
 - Activation rate by signup context
 - Onboarding-to-job conversion: Account Create Succeeded → Job Post Wizard Started → Job Post Wizard Job Details Completed → Job Posting Draft Created → Job Posting Published
-- Signup conversion funnel: Page Viewed (`auth_signup`) → Login Started Button Clicked (`auth_signup`) → Auth Login Succeeded → Account Create Succeeded → Onboarding Complete Succeeded. **Identity stitching required:** `posthog.reset()` on auth page mount + `posthog.alias()` before `posthog.identify()` — see event-schema.md PostHog Identity Lifecycle. Do NOT filter by `helix_session_id` across the auth boundary.
+- Signup conversion funnel: Page Viewed (`auth_signup`) → Login Started Button Clicked (`auth_signup`) → Auth Login Succeeded → Onboarding Persona Card Clicked → Account Create Succeeded → Onboarding Complete Succeeded. **Live in PostHog** as "New-User Onboarding Funnel" on the Adoption & Engagement dashboard — see detailed filter spec below. **Identity stitching required:** `posthog.reset()` on auth page mount + `posthog.alias()` before `posthog.identify()` — see event-schema.md PostHog Identity Lifecycle. Do NOT filter by `helix_session_id` across the auth boundary (steps 1–3 are pre-auth).
 - Signin conversion funnel: Page Viewed (`auth_signin`) → Login Started Button Clicked (`auth_signin`) → Auth Login Succeeded. Breakdown by `auth_method`.
 - Auth page switch rate: Auth Page Switch Link Clicked trend, breakdown by `action_value` (`sign_in_link` vs `sign_up_link`)
 - Retention: WAU, MAU, D7/D30 return rates
